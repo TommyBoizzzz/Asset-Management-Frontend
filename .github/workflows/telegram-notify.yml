@@ -44,7 +44,7 @@ jobs:
             exit 0
           fi
 
-          msg=$(printf '🏢 <b>ASSET MANAGEMENT AAA FRONTEND</b>\n━━━━━━━━━━━━━━━━\n\n📦 <b>Repository</b>\n   %s\n\n🌿 <b>Branch</b>\n   <code>%s</code>\n\n👤 <b>Pushed by</b>\n   %s\n\n📝 <b>Latest Commits</b>\n%s\n\n━━━━━━━━━━━━━━━━\n🔗 <a href="https://github.com/%s">View Repository</a>\n\n🤖 <i>GitHub Actions Notification</i>' \
+          msg=$(printf '🏢 <b>ASSET MANAGEMENT FRONTEND</b>\n━━━━━━━━━━━━━━━━\n\n📦 <b>Repository</b>\n   %s\n\n🌿 <b>Branch</b>\n   <code>%s</code>\n\n👤 <b>Pushed by</b>\n   %s\n\n📝 <b>Latest Commits</b>\n%s\n\n━━━━━━━━━━━━━━━━\n🔗 <a href="https://github.com/%s">View Repository</a>\n\n🤖 <i>GitHub Actions Notification</i>' \
             "$GH_REPOSITORY" \
             "$GH_REF_NAME" \
             "$GH_ACTOR" \
