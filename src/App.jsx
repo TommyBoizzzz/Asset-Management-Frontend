@@ -7,6 +7,8 @@ import {
 
 import Login from "./pages/auth/screens/Login";
 import Dashboard from "./pages/dashboard/screens/Dashboard";
+import Assets from "./pages/asset/screens/asset_home";
+import StaffHome from "./pages/staff/screens/staff_home";
 
 // ========================================
 // Protected Route
@@ -17,11 +19,11 @@ function ProtectedRoute({ children }) {
         localStorage.getItem("isLoggedIn") === "true" ||
         sessionStorage.getItem("isLoggedIn") === "true";
 
-    if (!isLoggedIn) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return children;
+    return isLoggedIn ? (
+        children
+    ) : (
+        <Navigate to="/login" replace />
+    );
 }
 
 // ========================================
@@ -33,9 +35,7 @@ function App() {
         <BrowserRouter>
             <Routes>
 
-                {/* ==================================
-                    Default
-                ================================== */}
+                {/* Default */}
                 <Route
                     path="/"
                     element={
@@ -46,17 +46,13 @@ function App() {
                     }
                 />
 
-                {/* ==================================
-                    Login
-                ================================== */}
+                {/* Login */}
                 <Route
                     path="/login"
                     element={<Login />}
                 />
 
-                {/* ==================================
-                    Protected Dashboard
-                ================================== */}
+                {/* Dashboard */}
                 <Route
                     path="/dashboard"
                     element={
@@ -66,9 +62,27 @@ function App() {
                     }
                 />
 
-                {/* ==================================
-                    Unknown Route
-                ================================== */}
+                {/* Assets */}
+                <Route
+                    path="/assets"
+                    element={
+                        <ProtectedRoute>
+                            <Assets />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Staff */}
+                <Route
+                    path="/staff"
+                    element={
+                        <ProtectedRoute>
+                            <StaffHome />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Unknown */}
                 <Route
                     path="*"
                     element={
