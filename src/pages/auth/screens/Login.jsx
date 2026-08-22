@@ -486,26 +486,46 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // ========================================
+    // Input Change
+    // ========================================
+
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        const { name, value } = e.target;
+
+        setFormData((previous) => ({
+            ...previous,
+            [name]: value,
+        }));
 
         setError("");
     };
 
+    // ========================================
+    // Login
+    // ========================================
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        if (!formData.username || !formData.password) {
-            setError("Please enter your username and password.");
+        // Validate
+        if (!formData.username.trim()) {
+            setError("Please enter your username.");
+            return;
+        }
+
+        if (!formData.password) {
+            setError("Please enter your password.");
             return;
         }
 
         try {
             setLoading(true);
             setError("");
+
+            // ==================================
+            // API Login
+            // ==================================
 
             const response = await UserService.login({
                 username: formData.username,
@@ -516,25 +536,65 @@ export default function Login() {
 
             console.log("Login successful:", user);
 
+            // ==================================
+            // Clear old auth data
+            // ==================================
+
+            localStorage.removeItem("user");
+            localStorage.removeItem("isLoggedIn");
+
+            sessionStorage.removeItem("user");
+            sessionStorage.removeItem("isLoggedIn");
+
+            // ==================================
+            // Remember Me
+            // ==================================
+
             if (rememberMe) {
-                localStorage.setItem("user", JSON.stringify(user));
-                sessionStorage.removeItem("user");
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(user)
+                );
+
+                localStorage.setItem(
+                    "isLoggedIn",
+                    "true"
+                );
             } else {
-                sessionStorage.setItem("user", JSON.stringify(user));
-                localStorage.removeItem("user");
+                sessionStorage.setItem(
+                    "user",
+                    JSON.stringify(user)
+                );
+
+                sessionStorage.setItem(
+                    "isLoggedIn",
+                    "true"
+                );
             }
 
-            navigate("/dashboard");
+            // ==================================
+            // Go Dashboard
+            // ==================================
+
+            navigate("/dashboard", {
+                replace: true,
+            });
 
         } catch (err) {
             console.error("Login error:", err);
 
             if (err.response?.status === 401) {
-                setError("Invalid username or password.");
+                setError(
+                    "Invalid username or password."
+                );
             } else if (err.response?.status === 404) {
-                setError("Login service not found.");
+                setError(
+                    "Login service not found."
+                );
             } else {
-                setError("Unable to connect to the server.");
+                setError(
+                    "Unable to connect to the server."
+                );
             }
 
         } finally {
@@ -544,110 +604,184 @@ export default function Login() {
 
     return (
         <div className="login-page">
-            <style>{styles}</style>
 
-            {/* LEFT SIDE */}
+            <style>
+                {styles}
+            </style>
+
+            {/* ==================================
+                LEFT SIDE
+            ================================== */}
+
             <div className="login-left">
+
                 <div className="left-content">
 
-                    {/* Logo */}
+                    {/* Brand */}
+
                     <div className="brand">
+
                         <div className="brand-logo">
                             <span>◆</span>
                         </div>
 
                         <div>
-                            <h2>BAMS</h2>
-                            <p>Business Asset Management System</p>
+                            <h2>
+                                BAMS
+                            </h2>
+
+                            <p>
+                                Business Asset Management System
+                            </p>
                         </div>
+
                     </div>
 
-                    {/* Heading */}
+                    {/* Hero */}
+
                     <div className="hero-text">
+
                         <h1>
-                            Manage <span>Assets</span>
+                            Manage{" "}
+                            <span>
+                                Assets
+                            </span>
+
                             <br />
+
                             Smarter
                         </h1>
 
                         <p>
-                            Track, manage, and optimize your company's assets
+                            Track, manage, and optimize
+                            your company's assets
                             <br />
                             from one secure platform.
                         </p>
+
                     </div>
 
                     {/* Illustration */}
+
                     <div className="illustration-container">
+
                         <img
                             src={loginIllustration}
                             alt="Asset Management"
                         />
+
                     </div>
 
                     {/* Features */}
+
                     <div className="features">
 
                         <div className="feature-item">
+
                             <div className="feature-icon">
                                 ✓
                             </div>
 
                             <div>
-                                <h3>Real-time Tracking</h3>
-                                <p>Monitor all assets in real-time</p>
+
+                                <h3>
+                                    Real-time Tracking
+                                </h3>
+
+                                <p>
+                                    Monitor all assets in real-time
+                                </p>
+
                             </div>
+
                         </div>
 
                         <div className="feature-item">
+
                             <div className="feature-icon">
                                 ◉
                             </div>
 
                             <div>
-                                <h3>Secure Management</h3>
-                                <p>Your data is protected and safe</p>
+
+                                <h3>
+                                    Secure Management
+                                </h3>
+
+                                <p>
+                                    Your data is protected and safe
+                                </p>
+
                             </div>
+
                         </div>
 
                         <div className="feature-item">
+
                             <div className="feature-icon">
                                 ⚒
                             </div>
 
                             <div>
-                                <h3>Maintenance Monitoring</h3>
-                                <p>Automate service schedules</p>
+
+                                <h3>
+                                    Maintenance Monitoring
+                                </h3>
+
+                                <p>
+                                    Automate service schedules
+                                </p>
+
                             </div>
+
                         </div>
 
                     </div>
+
                 </div>
+
             </div>
 
-            {/* RIGHT SIDE */}
+            {/* ==================================
+                RIGHT SIDE
+            ================================== */}
+
             <div className="login-right">
 
                 <div className="login-card">
 
                     {/* Login Icon */}
+
                     <div className="login-icon">
-                        <span>▣</span>
+                        <span>
+                            ▣
+                        </span>
                     </div>
 
-                    <div className="login-header">
-                        <h1>ASSET MANAGEMENT SYSTEM</h1>
+                    {/* Header */}
 
-                        <p>Sign in to your account</p>
+                    <div className="login-header">
+
+                        <h1>
+                            ASSET MANAGEMENT SYSTEM
+                        </h1>
+
+                        <p>
+                            Sign in to your account
+                        </p>
 
                         <span>
                             Manage your assets in one secure place
                         </span>
+
                     </div>
+
+                    {/* Form */}
 
                     <form onSubmit={handleLogin}>
 
                         {/* Username */}
+
                         <div className="form-group">
 
                             <label htmlFor="username">
@@ -671,9 +805,11 @@ export default function Login() {
                                 />
 
                             </div>
+
                         </div>
 
                         {/* Password */}
+
                         <div className="form-group">
 
                             <label htmlFor="password">
@@ -704,7 +840,10 @@ export default function Login() {
                                     type="button"
                                     className="password-toggle"
                                     onClick={() =>
-                                        setShowPassword(!showPassword)
+                                        setShowPassword(
+                                            (previous) =>
+                                                !previous
+                                        )
                                     }
                                     aria-label={
                                         showPassword
@@ -712,13 +851,17 @@ export default function Login() {
                                             : "Show password"
                                     }
                                 >
-                                    {showPassword ? "◉" : "◌"}
+                                    {showPassword
+                                        ? "◉"
+                                        : "◌"}
                                 </button>
 
                             </div>
+
                         </div>
 
                         {/* Remember / Forgot */}
+
                         <div className="login-options">
 
                             <label className="remember">
@@ -727,7 +870,9 @@ export default function Login() {
                                     type="checkbox"
                                     checked={rememberMe}
                                     onChange={(e) =>
-                                        setRememberMe(e.target.checked)
+                                        setRememberMe(
+                                            e.target.checked
+                                        )
                                     }
                                 />
 
@@ -752,6 +897,7 @@ export default function Login() {
                         </div>
 
                         {/* Error */}
+
                         {error && (
                             <div className="login-error">
                                 {error}
@@ -759,6 +905,7 @@ export default function Login() {
                         )}
 
                         {/* Login Button */}
+
                         <button
                             type="submit"
                             className="login-button"
@@ -772,13 +919,21 @@ export default function Login() {
                     </form>
 
                     {/* Divider */}
+
                     <div className="divider">
-                        <span></span>
-                        <p>or continue with</p>
-                        <span></span>
+
+                        <span />
+
+                        <p>
+                            or continue with
+                        </p>
+
+                        <span />
+
                     </div>
 
                     {/* Register */}
+
                     <div className="register-text">
 
                         <span>
@@ -799,7 +954,9 @@ export default function Login() {
                     </div>
 
                 </div>
+
             </div>
+
         </div>
     );
 }

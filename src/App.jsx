@@ -1,27 +1,82 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
 
-import Login from "../src/pages/auth/screens/Login";
+import Login from "./pages/auth/screens/Login";
+import Dashboard from "./pages/dashboard/Dashboard";
 
-function Dashboard() {
-    return (
-        <div>
-            <h1>Dashboard</h1>
-        </div>
-    );
+// ========================================
+// Protected Route
+// ========================================
+
+function ProtectedRoute({ children }) {
+    const isLoggedIn =
+        localStorage.getItem("isLoggedIn") === "true" ||
+        sessionStorage.getItem("isLoggedIn") === "true";
+
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return children;
 }
+
+// ========================================
+// App
+// ========================================
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
 
-                <Route path="/" element={<Login />} />
+                {/* ==================================
+                    Default
+                ================================== */}
+                <Route
+                    path="/"
+                    element={
+                        <Navigate
+                            to="/login"
+                            replace
+                        />
+                    }
+                />
 
-                <Route path="/login" element={<Login />} />
+                {/* ==================================
+                    Login
+                ================================== */}
+                <Route
+                    path="/login"
+                    element={<Login />}
+                />
 
+                {/* ==================================
+                    Protected Dashboard
+                ================================== */}
                 <Route
                     path="/dashboard"
-                    element={<Dashboard />}
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* ==================================
+                    Unknown Route
+                ================================== */}
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/login"
+                            replace
+                        />
+                    }
                 />
 
             </Routes>
