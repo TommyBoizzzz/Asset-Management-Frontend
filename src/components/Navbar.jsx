@@ -3,6 +3,7 @@ import {
     LayoutDashboard,
     Package,
     Users,
+    UserRoundPlus,
     Wrench,
     History,
     Settings,
@@ -10,7 +11,6 @@ import {
     LogOut,
     X,
 } from "lucide-react";
-
 import "./Navbar.css";
 
 function Navbar({
@@ -35,6 +35,11 @@ function Navbar({
             label: "Staff",
             icon: Users,
             path: "/staff",
+        },
+        {
+            label: "Assign Assets",
+            icon: UserRoundPlus,
+            path: "/assign-assets",
         },
         {
             label: "Maintenance",

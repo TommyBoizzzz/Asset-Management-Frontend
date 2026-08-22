@@ -10,6 +10,10 @@ import Dashboard from "./pages/dashboard/screens/Dashboard";
 import Assets from "./pages/asset/screens/asset_home";
 import StaffHome from "./pages/staff/screens/staff_home";
 import MaintenanceHome from "./pages/matainance/screens/maintenance_home";
+import AssignAssets from "./pages/assign_asset/screens/assign_home";
+import Settings from "./pages/setting/screens/setting_home";
+import History from "./pages/history/screens/history_home";
+import SupportHome from "./pages/support/screens/support_home";
 
 // ========================================
 // Protected Route
@@ -82,6 +86,16 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                
+                {/* Assign Assets */}
+                <Route
+                    path="/assign-assets"
+                    element={
+                        <ProtectedRoute>
+                            <AssignAssets />
+                        </ProtectedRoute>
+                    }
+                />
 
                 {/* Maintenance */}
                 <Route
@@ -89,6 +103,36 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <MaintenanceHome />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* History */}
+                <Route
+                    path="/history"
+                    element={
+                        <ProtectedRoute>
+                            <History />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Settings */}
+                <Route
+                    path="/settings"
+                    element={
+                        <ProtectedRoute>
+                            <Settings />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Support */}
+                <Route
+                    path="/support"
+                    element={
+                        <ProtectedRoute>
+                            <SupportHome />
                         </ProtectedRoute>
                     }
                 />
