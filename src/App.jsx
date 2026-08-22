@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import Login from "./pages/auth/screens/Login";
-import Dashboard from "./pages/dashboard/Dashboard";
+import Dashboard from "./pages/dashboard/screens/Dashboard";
 
 // ========================================
 // Protected Route
