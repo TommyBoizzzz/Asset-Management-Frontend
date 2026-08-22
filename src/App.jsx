@@ -9,6 +9,7 @@ import Login from "./pages/auth/screens/Login";
 import Dashboard from "./pages/dashboard/screens/Dashboard";
 import Assets from "./pages/asset/screens/asset_home";
 import StaffHome from "./pages/staff/screens/staff_home";
+import MaintenanceHome from "./pages/matainance/screens/maintenance_home";
 
 // ========================================
 // Protected Route
@@ -78,6 +79,16 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <StaffHome />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Maintenance */}
+                <Route
+                    path="/maintenance"
+                    element={
+                        <ProtectedRoute>
+                            <MaintenanceHome />
                         </ProtectedRoute>
                     }
                 />
