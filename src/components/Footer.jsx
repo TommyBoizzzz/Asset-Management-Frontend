@@ -1,40 +1,38 @@
+import "./Footer.css";
+
 function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <footer className="border-t border-[#dce2e8] bg-white px-6 py-4">
+        <footer className="app-footer">
 
-            <div className="flex flex-col items-center justify-between gap-2 text-[10px] text-[#7b8794] sm:flex-row">
+            <div className="app-footer-left">
+                <span>
+                    © {year} BAMS Staff Portal
+                </span>
 
-                <p>
-                    © {year} BAMS Staff Portal.
-                    All rights reserved.
-                </p>
+                <span className="app-footer-dot">
+                    •
+                </span>
 
-                <div className="flex items-center gap-5">
+                <span>
+                    Business Asset Management System
+                </span>
+            </div>
 
-                    <button
-                        type="button"
-                        className="transition hover:text-[#008fd1]"
-                    >
-                        Privacy Policy
-                    </button>
+            <div className="app-footer-links">
 
-                    <button
-                        type="button"
-                        className="transition hover:text-[#008fd1]"
-                    >
-                        Terms
-                    </button>
+                <button type="button">
+                    Privacy Policy
+                </button>
 
-                    <button
-                        type="button"
-                        className="transition hover:text-[#008fd1]"
-                    >
-                        Help & Support
-                    </button>
+                <button type="button">
+                    Terms
+                </button>
 
-                </div>
+                <button type="button">
+                    Help & Support
+                </button>
 
             </div>
 

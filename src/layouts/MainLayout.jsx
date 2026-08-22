@@ -4,20 +4,18 @@ import { Menu } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+import "./MainLayout.css";
+
 function MainLayout({
     children,
-    activePage,
-    title,
+    activePage = "Dashboard",
+    title = "Dashboard",
 }) {
     const [mobileOpen, setMobileOpen] =
         useState(false);
 
     return (
-        <div className="min-h-screen bg-[#eef2f5]">
-
-            {/* ==================================
-                Navigation
-            ================================== */}
+        <div className="main-layout">
 
             <Navbar
                 activePage={activePage}
@@ -25,29 +23,25 @@ function MainLayout({
                 setMobileOpen={setMobileOpen}
             />
 
-            {/* ==================================
-                Main Area
-            ================================== */}
-
-            <div className="min-h-screen lg:ml-[250px]">
+            <div className="main-layout-content">
 
                 {/* Header */}
 
-                <header className="sticky top-0 z-30 flex h-[62px] items-center justify-between border-b border-[#d9e0e7] bg-[#f7f9fb] px-4 sm:px-6">
+                <header className="main-header">
 
-                    <div className="flex items-center gap-3">
+                    <div className="main-header-left">
 
                         <button
                             type="button"
+                            className="mobile-menu-button"
                             onClick={() =>
                                 setMobileOpen(true)
                             }
-                            className="rounded-md p-2 text-[#526274] hover:bg-[#e8edf2] lg:hidden"
                         >
-                            <Menu size={20} />
+                            <Menu size={19} />
                         </button>
 
-                        <h1 className="text-[16px] font-semibold text-[#263445]">
+                        <h1>
                             {title}
                         </h1>
 
@@ -55,9 +49,9 @@ function MainLayout({
 
                 </header>
 
-                {/* Page */}
+                {/* Content */}
 
-                <main className="min-h-[calc(100vh-62px)]">
+                <main className="main-content">
                     {children}
                 </main>
 
