@@ -37,6 +37,11 @@ function Navbar({
             path: "/staff",
         },
         {
+            label: "Assign Users",
+            icon: UserRoundPlus,
+            path: "/user-home",
+        },
+        {
             label: "Assign Assets",
             icon: UserRoundPlus,
             path: "/assign-assets",

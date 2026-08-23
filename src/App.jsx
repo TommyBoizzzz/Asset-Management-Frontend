@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import Login from "./pages/auth/screens/Login";
+import UserHome from "./pages/auth/screens/user_home";
 import Dashboard from "./pages/dashboard/screens/Dashboard";
 import Assets from "./pages/asset/screens/asset_home";
 import StaffHome from "./pages/staff/screens/staff_home";
@@ -14,6 +15,7 @@ import AssignAssets from "./pages/assign_asset/screens/assign_home";
 import Settings from "./pages/setting/screens/setting_home";
 import History from "./pages/history/screens/history_home";
 import SupportHome from "./pages/support/screens/support_home";
+
 
 // ========================================
 // Protected Route
@@ -83,6 +85,16 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <StaffHome />
+                        </ProtectedRoute>
+                    }
+                />
+                
+                {/* User Home */}
+                <Route
+                    path="/user-home"
+                    element={
+                        <ProtectedRoute>
+                            <UserHome />
                         </ProtectedRoute>
                     }
                 />
