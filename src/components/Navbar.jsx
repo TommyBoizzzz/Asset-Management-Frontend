@@ -3,7 +3,8 @@ import {
     LayoutDashboard,
     Package,
     Users,
-    UserRoundPlus,
+    UserPlus,
+    PackageCheck,
     Wrench,
     History,
     Settings,
@@ -38,12 +39,12 @@ function Navbar({
         },
         {
             label: "Assign Users",
-            icon: UserRoundPlus,
+            icon: UserPlus,
             path: "/user-home",
         },
         {
             label: "Assign Assets",
-            icon: UserRoundPlus,
+            icon: PackageCheck,
             path: "/assign-assets",
         },
         {
@@ -89,7 +90,9 @@ function Navbar({
 
     return (
         <>
-            {/* Mobile overlay */}
+            {/* =========================
+                MOBILE OVERLAY
+            ========================= */}
             {mobileOpen && (
                 <div
                     className="navbar-overlay"
@@ -97,12 +100,20 @@ function Navbar({
                 />
             )}
 
+            {/* =========================
+                SIDEBAR
+            ========================= */}
             <aside
                 className={`navbar-sidebar ${
-                    mobileOpen ? "navbar-sidebar-open" : ""
+                    mobileOpen
+                        ? "navbar-sidebar-open"
+                        : ""
                 }`}
             >
-                {/* Logo */}
+
+                {/* =========================
+                    LOGO / BRAND
+                ========================= */}
                 <div className="navbar-brand">
 
                     <div className="navbar-brand-logo">
@@ -114,16 +125,23 @@ function Navbar({
                         <p>STAFF PORTAL</p>
                     </div>
 
+                    {/* Mobile Close */}
                     <button
+                        type="button"
                         className="navbar-mobile-close"
-                        onClick={() => setMobileOpen(false)}
+                        onClick={() =>
+                            setMobileOpen(false)
+                        }
+                        aria-label="Close menu"
                     >
                         <X size={19} />
                     </button>
 
                 </div>
 
-                {/* Menu */}
+                {/* =========================
+                    MAIN MENU
+                ========================= */}
                 <nav className="navbar-menu">
 
                     <div className="navbar-section-title">
@@ -151,27 +169,35 @@ function Navbar({
                                     )
                                 }
                             >
+
+                                {/* Active indicator */}
                                 {isActive && (
                                     <span className="navbar-active-line" />
                                 )}
 
+                                {/* Tab Icon */}
                                 <Icon
-                                    size={16}
+                                    size={17}
                                     strokeWidth={1.8}
                                 />
 
+                                {/* Tab Label */}
                                 <span>
                                     {item.label}
                                 </span>
+
                             </button>
                         );
                     })}
 
                 </nav>
 
-                {/* Bottom */}
+                {/* =========================
+                    BOTTOM MENU
+                ========================= */}
                 <div className="navbar-bottom">
 
+                    {/* Support */}
                     <button
                         type="button"
                         className="navbar-bottom-item"
@@ -179,17 +205,30 @@ function Navbar({
                             handleNavigation("/support")
                         }
                     >
-                        <Headphones size={16} />
-                        <span>Support</span>
+                        <Headphones
+                            size={17}
+                            strokeWidth={1.8}
+                        />
+
+                        <span>
+                            Support
+                        </span>
                     </button>
 
+                    {/* Logout */}
                     <button
                         type="button"
                         className="navbar-bottom-item navbar-logout"
                         onClick={handleLogout}
                     >
-                        <LogOut size={16} />
-                        <span>Logout</span>
+                        <LogOut
+                            size={17}
+                            strokeWidth={1.8}
+                        />
+
+                        <span>
+                            Logout
+                        </span>
                     </button>
 
                 </div>
