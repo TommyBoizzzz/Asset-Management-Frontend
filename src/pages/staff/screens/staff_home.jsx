@@ -1,90 +1,38 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
-    Check,
+    CheckCircle2,
     Clock3,
     Edit3,
     Filter,
-    LockKeyhole,
     Plus,
     Search,
+    UserX,
     Users,
     X
 } from "lucide-react";
+import StaffService from "../services/staff_home";
 import "../css/staff_home.css";
 
-const initialStaffData = [
-    {
-        id: 1,
-        firstName: "John",
-        lastName: "Smith",
-        email: "john@company.com",
-        phone: "012 345 678",
-        department: "IT Department",
-        position: "Software Developer",
-        role: "Manager",
-        status: "Active"
-    },
-    {
-        id: 2,
-        firstName: "Sarah",
-        lastName: "Miller",
-        email: "sarah@company.com",
-        phone: "023 456 789",
-        department: "Human Resources",
-        position: "HR Specialist",
-        role: "Staff",
-        status: "Active"
-    },
-    {
-        id: 3,
-        firstName: "David",
-        lastName: "Wilson",
-        email: "david@company.com",
-        phone: "034 567 890",
-        department: "Finance",
-        position: "Accountant",
-        role: "Viewer",
-        status: "Pending"
-    },
-    {
-        id: 4,
-        firstName: "Lisa",
-        lastName: "Kim",
-        email: "lisa@company.com",
-        phone: "045 678 901",
-        department: "Operations",
-        position: "Operations Manager",
-        role: "Admin",
-        status: "Active"
-    }
-];
-
 const emptyStaffForm = {
-    firstName: "",
-    lastName: "",
-    email: "",
+    staffCode: "",
+    fullName: "",
     phone: "",
-    department: "",
+    email: "",
     position: "",
-    role: "Staff",
-    status: "Active"
+    status: "ACTIVE"
 };
 
-const roleOptions = ["Admin", "Manager", "Staff", "Viewer"];
-const statusOptions = ["Active", "Pending", "Inactive", "Suspended"];
-
-const avatarThemes = [
-    "avatar-blue",
-    "avatar-purple",
-    "avatar-orange",
-    "avatar-green"
+const statusOptions = [
+    { value: "ACTIVE", label: "Active" },
+    { value: "PENDING", label: "Pending" },
+    { value: "INACTIVE", label: "Inactive" }
 ];
 
 function StaffHome() {
-    const [staffList, setStaffList] = useState(initialStaffData);
+    const [staffList, setStaffList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState("ALL");
     const [showFilter, setShowFilter] = useState(false);
 
     const [dialogMode, setDialogMode] = useState(null);
@@ -92,39 +40,100 @@ function StaffHome() {
     const [formData, setFormData] = useState(emptyStaffForm);
     const [formErrors, setFormErrors] = useState({});
 
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [pageError, setPageError] = useState("");
+    const [submitError, setSubmitError] = useState("");
+
+    useEffect(() => {
+        loadStaff();
+    }, []);
+
+    const loadStaff = async () => {
+        setLoading(true);
+        setPageError("");
+
+        try {
+            const response = await StaffService.getAll();
+            const data = response.data;
+
+            /*
+             * Supports either:
+             * 1. A normal array response
+             * 2. A Spring Page response containing `content`
+             */
+            const records = Array.isArray(data)
+                ? data
+                : Array.isArray(data.content)
+                    ? data.content
+                    : [];
+
+            setStaffList(records);
+        } catch (error) {
+            console.error("Load staff error:", error);
+            setPageError(
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.message ||
+                "Unable to load staff. Check your backend connection."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredStaff = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
 
         return staffList.filter((staff) => {
-            const matchesSearch =
-                !query ||
-                `${staff.firstName} ${staff.lastName}`
-                    .toLowerCase()
-                    .includes(query) ||
-                staff.email.toLowerCase().includes(query) ||
-                staff.department.toLowerCase().includes(query) ||
-                staff.position.toLowerCase().includes(query) ||
-                staff.role.toLowerCase().includes(query);
+            const status = staff.status?.toUpperCase() || "INACTIVE";
 
             const matchesStatus =
-                statusFilter === "All" || staff.status === statusFilter;
+                statusFilter === "ALL" || status === statusFilter;
 
-            return matchesSearch && matchesStatus;
+            const searchableContent = [
+                staff.staffCode,
+                staff.fullName,
+                staff.phone,
+                staff.email,
+                staff.position,
+                staff.status
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+            const matchesSearch =
+                query === "" || searchableContent.includes(query);
+
+            return matchesStatus && matchesSearch;
         });
     }, [staffList, searchTerm, statusFilter]);
 
-    const stats = {
-        total: staffList.length,
-        active: staffList.filter((staff) => staff.status === "Active").length,
-        pending: staffList.filter((staff) => staff.status === "Pending").length,
-        administrators: staffList.filter((staff) => staff.role === "Admin").length
-    };
+    const stats = useMemo(() => {
+        return {
+            total: staffList.length,
+
+            active: staffList.filter(
+                (staff) => staff.status?.toUpperCase() === "ACTIVE"
+            ).length,
+
+            pending: staffList.filter(
+                (staff) => staff.status?.toUpperCase() === "PENDING"
+            ).length,
+
+            inactive: staffList.filter(
+                (staff) => staff.status?.toUpperCase() === "INACTIVE"
+            ).length
+        };
+    }, [staffList]);
 
     const openCreateDialog = () => {
         setDialogMode("create");
         setSelectedStaffId(null);
         setFormData(emptyStaffForm);
         setFormErrors({});
+        setSubmitError("");
     };
 
     const openUpdateDialog = (staff) => {
@@ -132,24 +141,28 @@ function StaffHome() {
         setSelectedStaffId(staff.id);
 
         setFormData({
-            firstName: staff.firstName,
-            lastName: staff.lastName,
-            email: staff.email,
+            staffCode: staff.staffCode || "",
+            fullName: staff.fullName || "",
             phone: staff.phone || "",
-            department: staff.department,
-            position: staff.position,
-            role: staff.role,
-            status: staff.status
+            email: staff.email || "",
+            position: staff.position || "",
+            status: staff.status?.toUpperCase() || "ACTIVE"
         });
 
         setFormErrors({});
+        setSubmitError("");
     };
 
     const closeDialog = () => {
+        if (saving) {
+            return;
+        }
+
         setDialogMode(null);
         setSelectedStaffId(null);
         setFormData(emptyStaffForm);
         setFormErrors({});
+        setSubmitError("");
     };
 
     const handleInputChange = (event) => {
@@ -166,42 +179,51 @@ function StaffHome() {
                 [name]: ""
             }));
         }
+
+        if (submitError) {
+            setSubmitError("");
+        }
     };
 
     const validateForm = () => {
         const errors = {};
 
-        if (!formData.firstName.trim()) {
-            errors.firstName = "First name is required.";
+        if (!formData.staffCode.trim()) {
+            errors.staffCode = "Staff code is required.";
+        } else if (formData.staffCode.trim().length > 50) {
+            errors.staffCode =
+                "Staff code cannot be longer than 50 characters.";
         }
 
-        if (!formData.lastName.trim()) {
-            errors.lastName = "Last name is required.";
+        if (!formData.fullName.trim()) {
+            errors.fullName = "Full name is required.";
+        } else if (formData.fullName.trim().length > 150) {
+            errors.fullName =
+                "Full name cannot be longer than 150 characters.";
         }
 
-        if (!formData.email.trim()) {
-            errors.email = "Email address is required.";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        if (formData.phone.trim().length > 30) {
+            errors.phone =
+                "Phone number cannot be longer than 30 characters.";
+        }
+
+        if (
+            formData.email.trim() &&
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+        ) {
             errors.email = "Enter a valid email address.";
-        } else {
-            const emailExists = staffList.some(
-                (staff) =>
-                    staff.email.toLowerCase() ===
-                        formData.email.trim().toLowerCase() &&
-                    staff.id !== selectedStaffId
-            );
-
-            if (emailExists) {
-                errors.email = "This email address is already in use.";
-            }
+        } else if (formData.email.trim().length > 150) {
+            errors.email =
+                "Email cannot be longer than 150 characters.";
         }
 
-        if (!formData.department.trim()) {
-            errors.department = "Department is required.";
+        if (formData.position.trim().length > 100) {
+            errors.position =
+                "Position cannot be longer than 100 characters.";
         }
 
-        if (!formData.position.trim()) {
-            errors.position = "Position is required.";
+        if (!formData.status) {
+            errors.status = "Status is required.";
         }
 
         setFormErrors(errors);
@@ -209,43 +231,57 @@ function StaffHome() {
         return Object.keys(errors).length === 0;
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (!validateForm()) {
             return;
         }
 
-        const cleanStaff = {
-            ...formData,
-            firstName: formData.firstName.trim(),
-            lastName: formData.lastName.trim(),
-            email: formData.email.trim(),
-            phone: formData.phone.trim(),
-            department: formData.department.trim(),
-            position: formData.position.trim()
+        setSaving(true);
+        setSubmitError("");
+
+        const payload = {
+            staffCode: formData.staffCode.trim(),
+            fullName: formData.fullName.trim(),
+            phone: formData.phone.trim() || null,
+            email: formData.email.trim() || null,
+            position: formData.position.trim() || null,
+            status: formData.status
         };
 
-        if (dialogMode === "create") {
-            const newStaff = {
-                id: Date.now(),
-                ...cleanStaff
-            };
+        try {
+            if (dialogMode === "update") {
+                await StaffService.update(selectedStaffId, payload);
+            } else {
+                await StaffService.create(payload);
+            }
 
-            setStaffList((current) => [newStaff, ...current]);
-        }
-
-        if (dialogMode === "update") {
-            setStaffList((current) =>
-                current.map((staff) =>
-                    staff.id === selectedStaffId
-                        ? { ...staff, ...cleanStaff }
-                        : staff
-                )
+            /*
+             * Some APIs return the saved object, while others return
+             * an empty response. Reloading guarantees fresh data.
+             */
+            await loadStaff();
+            closeDialogAfterSave();
+        } catch (error) {
+            console.error("Save staff error:", error);
+            setSubmitError(
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.message ||
+                "Unable to save staff."
             );
+        } finally {
+            setSaving(false);
         }
+    };
 
-        closeDialog();
+    const closeDialogAfterSave = () => {
+        setDialogMode(null);
+        setSelectedStaffId(null);
+        setFormData(emptyStaffForm);
+        setFormErrors({});
+        setSubmitError("");
     };
 
     return (
@@ -256,7 +292,7 @@ function StaffHome() {
                     <div>
                         <h2>Staff</h2>
                         <p>
-                            Manage your company staff members and their access.
+                            Manage company staff members and their information.
                         </p>
                     </div>
 
@@ -266,7 +302,9 @@ function StaffHome() {
                         onClick={openCreateDialog}
                     >
                         <Plus size={16} />
-                        <span className="add-staff-label">Add Staff</span>
+                        <span className="add-staff-label">
+                            Add Staff
+                        </span>
                     </button>
                 </header>
 
@@ -284,7 +322,7 @@ function StaffHome() {
                         label="Active Staff"
                         value={stats.active}
                         description="Currently active"
-                        icon={<Check size={20} />}
+                        icon={<CheckCircle2 size={20} />}
                         theme="green"
                     />
 
@@ -297,20 +335,22 @@ function StaffHome() {
                     />
 
                     <StatCard
-                        label="Administrators"
-                        value={stats.administrators}
-                        description="System administrators"
-                        icon={<LockKeyhole size={20} />}
+                        label="Inactive"
+                        value={stats.inactive}
+                        description="Inactive accounts"
+                        icon={<UserX size={20} />}
                         theme="purple"
                     />
                 </section>
 
-                {/* Main card */}
+                {/* Main table card */}
                 <section className="staff-main-card">
                     <div className="staff-card-header">
                         <div>
                             <h3>Staff Members</h3>
-                            <p>View and manage your company&apos;s staff.</p>
+                            <p>
+                                View, create, and update company staff.
+                            </p>
                         </div>
 
                         <div className="staff-actions">
@@ -347,40 +387,60 @@ function StaffHome() {
                                             Status
                                         </span>
 
-                                        {["All", ...statusOptions].map(
-                                            (status) => (
-                                                <button
-                                                    key={status}
-                                                    type="button"
-                                                    className={
-                                                        statusFilter === status
-                                                            ? "active"
-                                                            : ""
-                                                    }
-                                                    onClick={() => {
-                                                        setStatusFilter(status);
-                                                        setShowFilter(false);
-                                                    }}
-                                                >
-                                                    {status}
-                                                </button>
-                                            )
-                                        )}
+                                        <FilterOption
+                                            label="All"
+                                            active={
+                                                statusFilter === "ALL"
+                                            }
+                                            onClick={() => {
+                                                setStatusFilter("ALL");
+                                                setShowFilter(false);
+                                            }}
+                                        />
+
+                                        {statusOptions.map((option) => (
+                                            <FilterOption
+                                                key={option.value}
+                                                label={option.label}
+                                                active={
+                                                    statusFilter ===
+                                                    option.value
+                                                }
+                                                onClick={() => {
+                                                    setStatusFilter(
+                                                        option.value
+                                                    );
+                                                    setShowFilter(false);
+                                                }}
+                                            />
+                                        ))}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Table */}
+                    {pageError && (
+                        <div className="staff-page-error">
+                            <span>{pageError}</span>
+
+                            <button
+                                type="button"
+                                onClick={loadStaff}
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    )}
+
                     <div className="staff-table-wrapper">
                         <table className="staff-table">
                             <thead>
                                 <tr>
                                     <th>Staff</th>
-                                    <th>Department</th>
+                                    <th>Staff Code</th>
+                                    <th>Phone</th>
                                     <th>Position</th>
-                                    <th>Role</th>
                                     <th>Status</th>
                                     <th className="staff-action-column">
                                         Action
@@ -389,66 +449,18 @@ function StaffHome() {
                             </thead>
 
                             <tbody>
-                                {filteredStaff.length > 0 ? (
+                                {loading ? (
+                                    <TableLoading />
+                                ) : filteredStaff.length > 0 ? (
                                     filteredStaff.map((staff, index) => (
-                                        <tr key={staff.id}>
-                                            <td>
-                                                <div className="staff-user">
-                                                    <div
-                                                        className={`avatar ${
-                                                            avatarThemes[
-                                                                index %
-                                                                    avatarThemes.length
-                                                            ]
-                                                        }`}
-                                                    >
-                                                        {getInitials(staff)}
-                                                    </div>
-
-                                                    <div>
-                                                        <strong>
-                                                            {staff.firstName}{" "}
-                                                            {staff.lastName}
-                                                        </strong>
-                                                        <span>{staff.email}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            <td>{staff.department}</td>
-                                            <td>{staff.position}</td>
-
-                                            <td>
-                                                <span
-                                                    className={`role-badge ${staff.role.toLowerCase()}`}
-                                                >
-                                                    {staff.role}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span
-                                                    className={`status-badge ${staff.status.toLowerCase()}`}
-                                                >
-                                                    <i />
-                                                    {staff.status}
-                                                </span>
-                                            </td>
-
-                                            <td className="staff-action-column">
-                                                <button
-                                                    type="button"
-                                                    className="staff-edit-btn"
-                                                    title="Update staff"
-                                                    aria-label={`Update ${staff.firstName} ${staff.lastName}`}
-                                                    onClick={() =>
-                                                        openUpdateDialog(staff)
-                                                    }
-                                                >
-                                                    <Edit3 size={15} />
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <StaffRow
+                                            key={staff.id}
+                                            staff={staff}
+                                            index={index}
+                                            onEdit={() =>
+                                                openUpdateDialog(staff)
+                                            }
+                                        />
                                     ))
                                 ) : (
                                     <tr>
@@ -464,25 +476,25 @@ function StaffHome() {
                         </table>
                     </div>
 
-                    {/* Footer */}
                     <div className="staff-table-footer">
                         <span>
                             Showing{" "}
-                            <strong>
-                                {filteredStaff.length === 0
-                                    ? "0"
-                                    : `1–${filteredStaff.length}`}
-                            </strong>{" "}
-                            of <strong>{staffList.length}</strong> staff
+                            <strong>{filteredStaff.length}</strong> of{" "}
+                            <strong>{staffList.length}</strong> staff
                         </span>
 
                         <div className="pagination">
                             <button type="button" disabled>
                                 ‹
                             </button>
-                            <button type="button" className="current">
+
+                            <button
+                                type="button"
+                                className="current"
+                            >
                                 1
                             </button>
+
                             <button type="button" disabled>
                                 ›
                             </button>
@@ -490,12 +502,13 @@ function StaffHome() {
                     </div>
                 </section>
 
-                {/* Create/update dialog */}
                 {dialogMode && (
                     <StaffDialog
                         mode={dialogMode}
                         formData={formData}
                         errors={formErrors}
+                        submitError={submitError}
+                        saving={saving}
                         onChange={handleInputChange}
                         onSubmit={handleSubmit}
                         onClose={closeDialog}
@@ -506,17 +519,75 @@ function StaffHome() {
     );
 }
 
-function StatCard({ label, value, description, icon, theme }) {
-    return (
-        <div className="staff-stat-card">
-            <div className="stat-content">
-                <span>{label}</span>
-                <strong>{value}</strong>
-                <small>{description}</small>
-            </div>
+function StaffRow({ staff, index, onEdit }) {
+    const avatarThemes = [
+        "avatar-blue",
+        "avatar-purple",
+        "avatar-orange",
+        "avatar-green"
+    ];
 
-            <div className={`stat-icon ${theme}`}>{icon}</div>
-        </div>
+    const normalizedStatus =
+        staff.status?.toLowerCase() || "inactive";
+
+    return (
+        <tr>
+            <td>
+                <div className="staff-user">
+                    <div
+                        className={`avatar ${
+                            avatarThemes[index % avatarThemes.length]
+                        }`}
+                    >
+                        {getInitials(staff.fullName)}
+                    </div>
+
+                    <div>
+                        <strong>{staff.fullName}</strong>
+                        <span>{staff.email || "No email address"}</span>
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                <span className="staff-code">
+                    {staff.staffCode}
+                </span>
+            </td>
+
+            <td>
+                {staff.phone || (
+                    <span className="staff-empty-value">—</span>
+                )}
+            </td>
+
+            <td>
+                {staff.position || (
+                    <span className="staff-empty-value">Unassigned</span>
+                )}
+            </td>
+
+            <td>
+                <span
+                    className={`status-badge ${normalizedStatus}`}
+                >
+                    <i />
+                    {formatStatus(staff.status)}
+                </span>
+            </td>
+
+            <td className="staff-action-column">
+                <button
+                    type="button"
+                    className="staff-edit-btn"
+                    title="Update staff"
+                    aria-label={`Update ${staff.fullName}`}
+                    onClick={onEdit}
+                >
+                    <Edit3 size={15} />
+                </button>
+            </td>
+        </tr>
     );
 }
 
@@ -524,6 +595,8 @@ function StaffDialog({
     mode,
     formData,
     errors,
+    submitError,
+    saving,
     onChange,
     onSubmit,
     onClose
@@ -533,7 +606,6 @@ function StaffDialog({
     return (
         <div
             className="staff-modal-overlay"
-            role="presentation"
             onMouseDown={onClose}
         >
             <div
@@ -546,43 +618,64 @@ function StaffDialog({
                 <div className="staff-modal-header">
                     <div>
                         <h3 id="staff-dialog-title">
-                            {isUpdate ? "Update Staff" : "Add Staff"}
+                            {isUpdate
+                                ? "Update Staff"
+                                : "Add New Staff"}
                         </h3>
 
                         <p>
                             {isUpdate
-                                ? "Update the staff member's information and access."
-                                : "Enter the new staff member's information and access."}
+                                ? "Update this staff member's information."
+                                : "Enter information for the new staff member."}
                         </p>
                     </div>
 
                     <button
                         type="button"
                         className="staff-close-btn"
-                        aria-label="Close dialog"
+                        aria-label="Close"
+                        disabled={saving}
                         onClick={onClose}
                     >
                         <X size={18} />
                     </button>
                 </div>
 
-                <form className="staff-form" onSubmit={onSubmit}>
+                <form
+                    className="staff-form"
+                    onSubmit={onSubmit}
+                >
                     <div className="staff-form-grid">
                         <FormField
-                            label="First name"
-                            name="firstName"
-                            value={formData.firstName}
-                            error={errors.firstName}
-                            placeholder="Enter first name"
+                            label="Staff code"
+                            name="staffCode"
+                            value={formData.staffCode}
+                            error={errors.staffCode}
+                            placeholder="Example: STF-001"
+                            maxLength={50}
+                            required
                             onChange={onChange}
                         />
 
                         <FormField
-                            label="Last name"
-                            name="lastName"
-                            value={formData.lastName}
-                            error={errors.lastName}
-                            placeholder="Enter last name"
+                            label="Full name"
+                            name="fullName"
+                            value={formData.fullName}
+                            error={errors.fullName}
+                            placeholder="Enter full name"
+                            maxLength={150}
+                            required
+                            onChange={onChange}
+                        />
+
+                        <FormField
+                            label="Phone number"
+                            name="phone"
+                            type="tel"
+                            value={formData.phone}
+                            error={errors.phone}
+                            placeholder="Enter phone number"
+                            maxLength={30}
                             onChange={onChange}
                         />
 
@@ -593,24 +686,7 @@ function StaffDialog({
                             value={formData.email}
                             error={errors.email}
                             placeholder="name@company.com"
-                            onChange={onChange}
-                        />
-
-                        <FormField
-                            label="Phone number"
-                            name="phone"
-                            type="tel"
-                            value={formData.phone}
-                            placeholder="Enter phone number"
-                            onChange={onChange}
-                        />
-
-                        <FormField
-                            label="Department"
-                            name="department"
-                            value={formData.department}
-                            error={errors.department}
-                            placeholder="Example: IT Department"
+                            maxLength={150}
                             onChange={onChange}
                         />
 
@@ -620,30 +696,56 @@ function StaffDialog({
                             value={formData.position}
                             error={errors.position}
                             placeholder="Example: Software Developer"
+                            maxLength={100}
                             onChange={onChange}
                         />
 
-                        <SelectField
-                            label="Role"
-                            name="role"
-                            value={formData.role}
-                            options={roleOptions}
-                            onChange={onChange}
-                        />
+                        <div className="staff-form-group">
+                            <label htmlFor="staff-status">
+                                Status
+                                <span className="required-mark">*</span>
+                            </label>
 
-                        <SelectField
-                            label="Status"
-                            name="status"
-                            value={formData.status}
-                            options={statusOptions}
-                            onChange={onChange}
-                        />
+                            <select
+                                id="staff-status"
+                                name="status"
+                                value={formData.status}
+                                className={
+                                    errors.status
+                                        ? "input-error"
+                                        : ""
+                                }
+                                onChange={onChange}
+                            >
+                                {statusOptions.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {errors.status && (
+                                <span className="staff-form-error">
+                                    {errors.status}
+                                </span>
+                            )}
+                        </div>
                     </div>
+
+                    {submitError && (
+                        <div className="staff-submit-error">
+                            {submitError}
+                        </div>
+                    )}
 
                     <div className="staff-modal-footer">
                         <button
                             type="button"
                             className="staff-cancel-btn"
+                            disabled={saving}
                             onClick={onClose}
                         >
                             Cancel
@@ -652,8 +754,13 @@ function StaffDialog({
                         <button
                             type="submit"
                             className="staff-submit-btn"
+                            disabled={saving}
                         >
-                            {isUpdate ? "Save Changes" : "Add Staff"}
+                            {saving
+                                ? "Saving..."
+                                : isUpdate
+                                    ? "Save Changes"
+                                    : "Add Staff"}
                         </button>
                     </div>
                 </form>
@@ -667,13 +774,21 @@ function FormField({
     name,
     type = "text",
     value,
-    placeholder,
     error,
+    placeholder,
+    maxLength,
+    required = false,
     onChange
 }) {
     return (
         <div className="staff-form-group">
-            <label htmlFor={`staff-${name}`}>{label}</label>
+            <label htmlFor={`staff-${name}`}>
+                {label}
+
+                {required && (
+                    <span className="required-mark">*</span>
+                )}
+            </label>
 
             <input
                 id={`staff-${name}`}
@@ -681,38 +796,86 @@ function FormField({
                 type={type}
                 value={value}
                 placeholder={placeholder}
+                maxLength={maxLength}
                 className={error ? "input-error" : ""}
                 onChange={onChange}
             />
 
-            {error && <span className="staff-form-error">{error}</span>}
+            {error && (
+                <span className="staff-form-error">
+                    {error}
+                </span>
+            )}
         </div>
     );
 }
 
-function SelectField({ label, name, value, options, onChange }) {
+function StatCard({
+    label,
+    value,
+    description,
+    icon,
+    theme
+}) {
     return (
-        <div className="staff-form-group">
-            <label htmlFor={`staff-${name}`}>{label}</label>
+        <div className="staff-stat-card">
+            <div className="stat-content">
+                <span>{label}</span>
+                <strong>{value}</strong>
+                <small>{description}</small>
+            </div>
 
-            <select
-                id={`staff-${name}`}
-                name={name}
-                value={value}
-                onChange={onChange}
-            >
-                {options.map((option) => (
-                    <option key={option} value={option}>
-                        {option}
-                    </option>
-                ))}
-            </select>
+            <div className={`stat-icon ${theme}`}>
+                {icon}
+            </div>
         </div>
     );
 }
 
-function getInitials(staff) {
-    return `${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}`.toUpperCase();
+function FilterOption({ label, active, onClick }) {
+    return (
+        <button
+            type="button"
+            className={active ? "active" : ""}
+            onClick={onClick}
+        >
+            {label}
+        </button>
+    );
+}
+
+function TableLoading() {
+    return (
+        <tr>
+            <td colSpan="6" className="staff-no-data">
+                Loading staff...
+            </td>
+        </tr>
+    );
+}
+
+function getInitials(fullName = "") {
+    const words = fullName
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (words.length === 0) {
+        return "ST";
+    }
+
+    if (words.length === 1) {
+        return words[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+}
+
+function formatStatus(status = "") {
+    return status
+        .toLowerCase()
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 export default StaffHome;
