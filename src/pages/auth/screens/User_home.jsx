@@ -946,13 +946,13 @@ function RoleDialog({
     onSave,
 }) {
     const [name, setName] = useState(role?.name || "");
+
     const [description, setDescription] = useState(
         role?.description || ""
     );
 
-    const [selectedPermissions, setSelectedPermissions] = useState(
-        role?.permissions || []
-    );
+    const [selectedPermissions, setSelectedPermissions] =
+        useState(role?.permissions || []);
 
     const isEdit = Boolean(role);
 
@@ -969,9 +969,10 @@ function RoleDialog({
     };
 
     const selectAll = () => {
-        const allPermissions = PERMISSION_GROUPS.flatMap(
-            (group) => group.items
-        );
+        const allPermissions =
+            PERMISSION_GROUPS.flatMap(
+                (group) => group.items
+            );
 
         setSelectedPermissions(allPermissions);
     };
@@ -989,18 +990,30 @@ function RoleDialog({
 
         onSave({
             id: role?.id || null,
-            name,
-            description,
+            name: name.trim(),
+            description: description.trim(),
             permissions: selectedPermissions,
         });
     };
 
     return (
-        <div className="dialog-overlay" onMouseDown={onClose}>
+        <div
+            className="dialog-overlay"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div
                 className="dialog role-dialog"
-                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
             >
+
+                {/* =================================================
+                    HEADER
+                ================================================= */}
+
                 <div className="dialog-header">
                     <div className="dialog-title">
                         <div className="dialog-icon role">
@@ -1015,12 +1028,14 @@ function RoleDialog({
                             </h3>
 
                             <p>
-                                Create a role and select its permissions.
+                                Create a role and select its
+                                permissions.
                             </p>
                         </div>
                     </div>
 
                     <button
+                        type="button"
                         className="dialog-close"
                         onClick={onClose}
                     >
@@ -1028,28 +1043,50 @@ function RoleDialog({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="dialog-body">
+                {/* =================================================
+                    FORM
+                ================================================= */}
+
+                <form
+                    className="role-dialog-form"
+                    onSubmit={handleSubmit}
+                >
+
+                    {/* =================================================
+                        SCROLLABLE BODY
+                    ================================================= */}
+
+                    <div className="dialog-body role-dialog-body">
+
+                        {/* ROLE INFORMATION */}
 
                         <div className="dialog-section-title">
                             Role Information
                         </div>
 
                         <div className="role-form-top">
+
                             <div className="form-group">
-                                <label>Role Name</label>
+                                <label>
+                                    Role Name
+                                </label>
 
                                 <input
+                                    type="text"
                                     value={name}
                                     onChange={(e) =>
-                                        setName(e.target.value)
+                                        setName(
+                                            e.target.value
+                                        )
                                     }
                                     placeholder="e.g. Asset Manager"
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label>Description</label>
+                                <label>
+                                    Description
+                                </label>
 
                                 <textarea
                                     value={description}
@@ -1058,21 +1095,32 @@ function RoleDialog({
                                             e.target.value
                                         )
                                     }
-                                    rows="3"
+                                    rows={3}
                                     placeholder="Describe this role..."
                                 />
                             </div>
+
                         </div>
 
+                        {/* =================================================
+                            PERMISSIONS HEADER
+                        ================================================= */}
+
                         <div className="permissions-dialog-header">
+
                             <div>
-                                <h4>Permissions</h4>
+                                <h4>
+                                    Permissions
+                                </h4>
+
                                 <p>
-                                    Choose what this role is allowed to access.
+                                    Choose what this role is
+                                    allowed to access.
                                 </p>
                             </div>
 
                             <div className="permission-actions">
+
                                 <button
                                     type="button"
                                     onClick={selectAll}
@@ -1086,73 +1134,101 @@ function RoleDialog({
                                 >
                                     Clear
                                 </button>
+
                             </div>
+
                         </div>
+
+                        {/* =================================================
+                            PERMISSIONS
+                        ================================================= */}
 
                         <div className="permissions-dialog-list">
-                            {PERMISSION_GROUPS.map((group) => (
-                                <div
-                                    className="permission-dialog-group"
-                                    key={group.category}
-                                >
-                                    <div className="permission-dialog-category">
-                                        {group.category}
-                                    </div>
 
-                                    <div className="permission-dialog-items">
-                                        {group.items.map(
-                                            (permission) => {
-                                                const checked =
-                                                    selectedPermissions.includes(
-                                                        permission
-                                                    );
+                            {PERMISSION_GROUPS.map(
+                                (group) => (
+                                    <div
+                                        className="permission-dialog-group"
+                                        key={group.category}
+                                    >
 
-                                                return (
-                                                    <label
-                                                        className={`permission-checkbox ${
-                                                            checked
-                                                                ? "checked"
-                                                                : ""
-                                                        }`}
-                                                        key={permission}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={
+                                        <div className="permission-dialog-category">
+                                            {group.category}
+                                        </div>
+
+                                        <div className="permission-dialog-items">
+
+                                            {group.items.map(
+                                                (
+                                                    permission
+                                                ) => {
+                                                    const checked =
+                                                        selectedPermissions.includes(
+                                                            permission
+                                                        );
+
+                                                    return (
+                                                        <label
+                                                            className={`permission-checkbox ${
                                                                 checked
-                                                            }
-                                                            onChange={() =>
-                                                                togglePermission(
-                                                                    permission
-                                                                )
-                                                            }
-                                                        />
-
-                                                        <span className="checkbox-ui">
-                                                            {checked && "✓"}
-                                                        </span>
-
-                                                        <span>
-                                                            {
+                                                                    ? "checked"
+                                                                    : ""
+                                                            }`}
+                                                            key={
                                                                 permission
                                                             }
-                                                        </span>
-                                                    </label>
-                                                );
-                                            }
-                                        )}
+                                                        >
+
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={
+                                                                    checked
+                                                                }
+                                                                onChange={() =>
+                                                                    togglePermission(
+                                                                        permission
+                                                                    )
+                                                                }
+                                                            />
+
+                                                            <span className="checkbox-ui">
+                                                                {checked &&
+                                                                    "✓"}
+                                                            </span>
+
+                                                            <span>
+                                                                {
+                                                                    permission
+                                                                }
+                                                            </span>
+
+                                                        </label>
+                                                    );
+                                                }
+                                            )}
+
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            )}
+
                         </div>
+
                     </div>
 
+                    {/* =================================================
+                        FOOTER
+                    ================================================= */}
+
                     <div className="dialog-footer">
+
                         <span className="selected-permissions">
-                            {selectedPermissions.length} permissions selected
+                            {selectedPermissions.length}{" "}
+                            permissions selected
                         </span>
 
                         <div className="dialog-footer-actions">
+
                             <button
                                 type="button"
                                 className="secondary-button"
@@ -1177,8 +1253,11 @@ function RoleDialog({
                                     </>
                                 )}
                             </button>
+
                         </div>
+
                     </div>
+
                 </form>
             </div>
         </div>
