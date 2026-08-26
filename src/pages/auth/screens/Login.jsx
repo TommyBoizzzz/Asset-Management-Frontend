@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import UserService from "../services/UserService";
+import UserService from "../services/LoginService";
 import loginIllustration from "../../../assets/login-illustration.png";
 import "../css/Login.css";
 
