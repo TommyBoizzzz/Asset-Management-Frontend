@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
     Package,
     CheckCircle,
@@ -16,160 +17,54 @@ import {
     Armchair,
     Boxes,
     Tag,
-    MoreHorizontal,
     ChevronDown,
 } from "lucide-react";
 
 import MainLayout from "../../../layouts/MainLayout";
 import "../css/asset_home.css";
 
+import AssetService from "../services/AssetService";
+import AssetCategoryService from "../services/AssetCategoryService";
+
+
 function Assets() {
-
-    /* =========================================================
-       DEFAULT DATA
-    ========================================================= */
-
-    const defaultCategories = [
-        {
-            id: 1,
-            name: "Laptop",
-            description: "Portable computers",
-        },
-        {
-            id: 2,
-            name: "Desktop",
-            description: "Desktop computers",
-        },
-        {
-            id: 3,
-            name: "Monitor",
-            description: "Computer displays",
-        },
-        {
-            id: 4,
-            name: "Printer",
-            description: "Printing devices",
-        },
-        {
-            id: 5,
-            name: "Furniture",
-            description: "Office furniture",
-        },
-    ];
-
-    const defaultAssets = [
-        {
-            id: 1,
-            code: "AST-001",
-            name: "Dell Latitude 5420",
-            category: "Laptop",
-            location: "IT Department",
-            status: "Active",
-            value: "1200",
-        },
-        {
-            id: 2,
-            code: "AST-002",
-            name: "HP LaserJet Pro",
-            category: "Printer",
-            location: "Finance Department",
-            status: "Active",
-            value: "450",
-        },
-        {
-            id: 3,
-            code: "AST-003",
-            name: "Office Desk",
-            category: "Furniture",
-            location: "HR Department",
-            status: "Maintenance",
-            value: "280",
-        },
-        {
-            id: 4,
-            code: "AST-004",
-            name: "MacBook Pro 14",
-            category: "Laptop",
-            location: "Management",
-            status: "Active",
-            value: "2100",
-        },
-        {
-            id: 5,
-            code: "AST-005",
-            name: "Samsung Monitor",
-            category: "Monitor",
-            location: "IT Department",
-            status: "Inactive",
-            value: "350",
-        },
-    ];
-
 
     /* =========================================================
        STATE
     ========================================================= */
 
-    const [assets, setAssets] = useState(() => {
+    const [assets, setAssets] = useState([]);
+    const [categories, setCategories] = useState([]);
 
-        const saved = localStorage.getItem("assets");
-
-        return saved
-            ? JSON.parse(saved)
-            : defaultAssets;
-    });
-
-
-    const [categories, setCategories] = useState(() => {
-
-        const saved = localStorage.getItem("assetCategories");
-
-        return saved
-            ? JSON.parse(saved)
-            : defaultCategories;
-    });
-
+    const [loadingAssets, setLoadingAssets] = useState(true);
+    const [loadingCategories, setLoadingCategories] = useState(true);
 
     const [assetSearch, setAssetSearch] = useState("");
     const [categorySearch, setCategorySearch] = useState("");
 
-    const [activeCategory, setActiveCategory] =
-        useState("All");
+    const [activeCategory, setActiveCategory] = useState("All");
 
 
     /* =========================================================
        MODALS
     ========================================================= */
 
-    const [showAssetModal, setShowAssetModal] =
-        useState(false);
+    const [showAssetModal, setShowAssetModal] = useState(false);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
 
-    const [showCategoryModal, setShowCategoryModal] =
-        useState(false);
-
-    const [showAssetView, setShowAssetView] =
-        useState(false);
-
-    const [showCategoryView, setShowCategoryView] =
-        useState(false);
+    const [showAssetView, setShowAssetView] = useState(false);
+    const [showCategoryView, setShowCategoryView] = useState(false);
 
 
     /* =========================================================
        EDIT STATES
     ========================================================= */
 
-    const [editingAsset, setEditingAsset] =
-        useState(null);
+    const [editingAsset, setEditingAsset] = useState(null);
+    const [editingCategory, setEditingCategory] = useState(null);
 
-    const [editingCategory, setEditingCategory] =
-        useState(null);
-
-
-    const [selectedAsset, setSelectedAsset] =
-        useState(null);
-
-    const [selectedCategory, setSelectedCategory] =
-        useState(null);
+    const [selectedAsset, setSelectedAsset] = useState(null);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
 
     /* =========================================================
@@ -177,49 +72,108 @@ function Assets() {
     ========================================================= */
 
     const emptyAsset = {
-        code: "",
+        assetCode: "",
         name: "",
         category: "",
+        brand: "",
+        model: "",
+        serialNumber: "",
+        purchaseDate: "",
+        purchasePrice: "",
+        warrantyEndDate: "",
+        condition: "",
         location: "",
         status: "Active",
-        value: "",
+        description: "",
     };
 
     const emptyCategory = {
         name: "",
         description: "",
+        status: "Active",
     };
 
 
-    const [assetForm, setAssetForm] =
-        useState(emptyAsset);
-
-    const [categoryForm, setCategoryForm] =
-        useState(emptyCategory);
+    const [assetForm, setAssetForm] = useState(emptyAsset);
+    const [categoryForm, setCategoryForm] = useState(emptyCategory);
 
 
     /* =========================================================
-       SAVE DATA
+       LOAD ASSETS
+    ========================================================= */
+
+    const loadAssets = async () => {
+
+        try {
+
+            setLoadingAssets(true);
+
+            const response = await AssetService.getAll();
+
+            setAssets(response.data || []);
+
+        } catch (error) {
+
+            console.error("Failed to load assets:", error);
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to load assets."
+            );
+
+        } finally {
+
+            setLoadingAssets(false);
+
+        }
+    };
+
+
+    /* =========================================================
+       LOAD CATEGORIES
+    ========================================================= */
+
+    const loadCategories = async () => {
+
+        try {
+
+            setLoadingCategories(true);
+
+            const response =
+                await AssetCategoryService.getAll();
+
+            setCategories(response.data || []);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load categories:",
+                error
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to load categories."
+            );
+
+        } finally {
+
+            setLoadingCategories(false);
+
+        }
+    };
+
+
+    /* =========================================================
+       INITIAL LOAD
     ========================================================= */
 
     useEffect(() => {
 
-        localStorage.setItem(
-            "assets",
-            JSON.stringify(assets)
-        );
+        loadAssets();
+        loadCategories();
 
-    }, [assets]);
-
-
-    useEffect(() => {
-
-        localStorage.setItem(
-            "assetCategories",
-            JSON.stringify(categories)
-        );
-
-    }, [categories]);
+    }, []);
 
 
     /* =========================================================
@@ -290,6 +244,24 @@ function Assets() {
 
 
     /* =========================================================
+       GET CATEGORY NAME FROM ASSET
+    ========================================================= */
+
+    const getAssetCategoryName = (asset) => {
+
+        if (!asset?.category) {
+            return "Other";
+        }
+
+        if (typeof asset.category === "string") {
+            return asset.category;
+        }
+
+        return asset.category.name || "Other";
+    };
+
+
+    /* =========================================================
        CATEGORY COUNT
     ========================================================= */
 
@@ -297,13 +269,13 @@ function Assets() {
 
         return assets.filter(
             (asset) =>
-                asset.category === categoryName
+                getAssetCategoryName(asset) === categoryName
         ).length;
     };
 
 
     /* =========================================================
-       ASSET STATISTICS
+       STATISTICS
     ========================================================= */
 
     const totalAssets = assets.length;
@@ -337,26 +309,29 @@ function Assets() {
 
         return assets.filter((asset) => {
 
+            const categoryName =
+                getAssetCategoryName(asset);
+
             const matchesSearch =
-                asset.name
+                (asset.name || "")
                     .toLowerCase()
                     .includes(search) ||
 
-                asset.code
+                (asset.assetCode || "")
                     .toLowerCase()
                     .includes(search) ||
 
-                asset.category
+                categoryName
                     .toLowerCase()
                     .includes(search) ||
 
-                asset.location
+                (asset.location || "")
                     .toLowerCase()
                     .includes(search);
 
             const matchesCategory =
                 activeCategory === "All" ||
-                asset.category === activeCategory;
+                categoryName === activeCategory;
 
             return (
                 matchesSearch &&
@@ -377,7 +352,7 @@ function Assets() {
 
     const filteredCategories =
         categories.filter((category) =>
-            category.name
+            (category.name || "")
                 .toLowerCase()
                 .includes(
                     categorySearch
@@ -388,7 +363,7 @@ function Assets() {
 
 
     /* =========================================================
-       OPEN ADD ASSET
+       ADD ASSET
     ========================================================= */
 
     const handleAddAsset = () => {
@@ -397,10 +372,15 @@ function Assets() {
 
         setAssetForm({
             ...emptyAsset,
+
             category:
                 categories.length > 0
-                    ? categories[0].name
+                    ? categories[0].id
                     : "",
+
+            condition: "GOOD",
+
+            status: "Active",
         });
 
         setShowAssetModal(true);
@@ -408,20 +388,63 @@ function Assets() {
 
 
     /* =========================================================
-       OPEN EDIT ASSET
+       EDIT ASSET
     ========================================================= */
 
     const handleEditAsset = (asset) => {
 
         setEditingAsset(asset);
 
+        const categoryId =
+            typeof asset.category === "object"
+                ? asset.category?.id
+                : categories.find(
+                    (category) =>
+                        category.name === asset.category
+                )?.id || "";
+
+
         setAssetForm({
-            code: asset.code,
-            name: asset.name,
-            category: asset.category,
-            location: asset.location,
-            status: asset.status,
-            value: asset.value,
+
+            assetCode:
+                asset.assetCode || "",
+
+            name:
+                asset.name || "",
+
+            category:
+                categoryId,
+
+            brand:
+                asset.brand || "",
+
+            model:
+                asset.model || "",
+
+            serialNumber:
+                asset.serialNumber || "",
+
+            purchaseDate:
+                asset.purchaseDate || "",
+
+            purchasePrice:
+                asset.purchasePrice ?? "",
+
+            warrantyEndDate:
+                asset.warrantyEndDate || "",
+
+            condition:
+                asset.condition || "GOOD",
+
+            location:
+                asset.location || "",
+
+            status:
+                asset.status || "Active",
+
+            description:
+                asset.description || "",
+
         });
 
         setShowAssetModal(true);
@@ -429,64 +452,266 @@ function Assets() {
 
 
     /* =========================================================
-       SAVE ASSET
+       CREATE / UPDATE ASSET
+       
+       REQUIRED:
+       assetCode
+       name
+       category
+       condition
+       status
+
+       OPTIONAL:
+       brand
+       model
+       serialNumber
+       purchaseDate
+       purchasePrice
+       warrantyEndDate
+       location
+       description
+
+       Empty optional fields are NOT sent.
     ========================================================= */
 
-    const handleAssetSubmit = (e) => {
+    const handleAssetSubmit = async (e) => {
 
         e.preventDefault();
 
-        if (
-            !assetForm.code.trim() ||
-            !assetForm.name.trim() ||
-            !assetForm.category ||
-            !assetForm.location.trim() ||
-            !assetForm.value
-        ) {
 
-            alert(
-                "Please fill in all asset fields."
-            );
+        const assetCode =
+            assetForm.assetCode?.trim();
+
+        const name =
+            assetForm.name?.trim();
+
+        const condition =
+            assetForm.condition?.trim();
+
+        const category =
+            assetForm.category;
+
+
+        /* =====================================================
+           REQUIRED VALIDATION
+        ===================================================== */
+
+        if (!assetCode) {
+
+            alert("Asset Code is required.");
 
             return;
         }
 
 
-        if (editingAsset) {
+        if (!name) {
 
-            setAssets((prev) =>
-                prev.map((asset) =>
-                    asset.id === editingAsset.id
-                        ? {
-                            ...asset,
-                            ...assetForm,
-                        }
-                        : asset
-                )
-            );
+            alert("Asset Name is required.");
 
-            alert(
-                "Asset updated successfully!"
-            );
-
-        } else {
-
-            const newAsset = {
-                id: Date.now(),
-                ...assetForm,
-            };
-
-            setAssets((prev) => [
-                ...prev,
-                newAsset,
-            ]);
-
-            alert(
-                "Asset created successfully!"
-            );
+            return;
         }
 
-        setShowAssetModal(false);
+
+        if (!category) {
+
+            alert("Category is required.");
+
+            return;
+        }
+
+
+        if (!condition) {
+
+            alert("Condition is required.");
+
+            return;
+        }
+
+
+        if (!assetForm.status) {
+
+            alert("Status is required.");
+
+            return;
+        }
+
+
+        try {
+
+            /* =================================================
+               REQUIRED FIELDS
+            ================================================= */
+
+            const payload = {
+
+                assetCode,
+
+                name,
+
+                category: {
+                    id: Number(category),
+                },
+
+                condition,
+
+                status:
+                    assetForm.status,
+            };
+
+
+            /* =================================================
+               OPTIONAL FIELDS
+
+               Only add the property when it has a value.
+            ================================================= */
+
+            if (
+                assetForm.brand &&
+                assetForm.brand.trim()
+            ) {
+
+                payload.brand =
+                    assetForm.brand.trim();
+            }
+
+
+            if (
+                assetForm.model &&
+                assetForm.model.trim()
+            ) {
+
+                payload.model =
+                    assetForm.model.trim();
+            }
+
+
+            if (
+                assetForm.serialNumber &&
+                assetForm.serialNumber.trim()
+            ) {
+
+                payload.serialNumber =
+                    assetForm.serialNumber.trim();
+            }
+
+
+            if (assetForm.purchaseDate) {
+
+                payload.purchaseDate =
+                    assetForm.purchaseDate;
+            }
+
+
+            if (
+                assetForm.purchasePrice !== "" &&
+                assetForm.purchasePrice !== null &&
+                assetForm.purchasePrice !== undefined
+            ) {
+
+                payload.purchasePrice =
+                    Number(
+                        assetForm.purchasePrice
+                    );
+            }
+
+
+            if (assetForm.warrantyEndDate) {
+
+                payload.warrantyEndDate =
+                    assetForm.warrantyEndDate;
+            }
+
+
+            if (
+                assetForm.location &&
+                assetForm.location.trim()
+            ) {
+
+                payload.location =
+                    assetForm.location.trim();
+            }
+
+
+            if (
+                assetForm.description &&
+                assetForm.description.trim()
+            ) {
+
+                payload.description =
+                    assetForm.description.trim();
+            }
+
+
+            /* =================================================
+               DEBUG
+            ================================================= */
+
+            console.log(
+                "Asset payload:",
+                payload
+            );
+
+
+            /* =================================================
+               CREATE / UPDATE
+            ================================================= */
+
+            if (editingAsset) {
+
+                await AssetService.update(
+                    editingAsset.id,
+                    payload
+                );
+
+                alert(
+                    "Asset updated successfully!"
+                );
+
+            } else {
+
+                await AssetService.create(
+                    payload
+                );
+
+                alert(
+                    "Asset created successfully!"
+                );
+            }
+
+
+            /* =================================================
+               RESET
+            ================================================= */
+
+            setShowAssetModal(false);
+
+            setEditingAsset(null);
+
+            setAssetForm({
+                ...emptyAsset
+            });
+
+
+            await loadAssets();
+
+
+        } catch (error) {
+
+            console.error(
+                "Asset save error:",
+                error
+            );
+
+            console.error(
+                "Backend response:",
+                error.response?.data
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to save asset."
+            );
+        }
     };
 
 
@@ -494,32 +719,48 @@ function Assets() {
        DELETE ASSET
     ========================================================= */
 
-    const handleDeleteAsset = (id) => {
+    const handleDeleteAsset = async (id) => {
 
         const asset =
             assets.find(
-                (item) => item.id === id
+                (item) =>
+                    item.id === id
             );
 
         if (!asset) return;
+
 
         const confirmed =
             window.confirm(
                 `Delete "${asset.name}"?`
             );
 
+
         if (!confirmed) return;
 
-        setAssets((prev) =>
-            prev.filter(
-                (item) =>
-                    item.id !== id
-            )
-        );
 
-        alert(
-            "Asset deleted successfully!"
-        );
+        try {
+
+            await AssetService.delete(id);
+
+            alert(
+                "Asset deleted successfully!"
+            );
+
+            await loadAssets();
+
+        } catch (error) {
+
+            console.error(
+                "Delete asset error:",
+                error
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to delete asset."
+            );
+        }
     };
 
 
@@ -554,23 +795,23 @@ function Assets() {
 
 
     /* =========================================================
-       OPEN ADD CATEGORY
+       ADD CATEGORY
     ========================================================= */
 
     const handleAddCategory = () => {
 
         setEditingCategory(null);
 
-        setCategoryForm(
-            emptyCategory
-        );
+        setCategoryForm({
+            ...emptyCategory,
+        });
 
         setShowCategoryModal(true);
     };
 
 
     /* =========================================================
-       OPEN EDIT CATEGORY
+       EDIT CATEGORY
     ========================================================= */
 
     const handleEditCategory = (
@@ -580,9 +821,15 @@ function Assets() {
         setEditingCategory(category);
 
         setCategoryForm({
-            name: category.name,
+
+            name:
+                category.name || "",
+
             description:
-                category.description,
+                category.description || "",
+
+            status:
+                category.status || "Active",
         });
 
         setShowCategoryModal(true);
@@ -590,18 +837,21 @@ function Assets() {
 
 
     /* =========================================================
-       SAVE CATEGORY
+       CREATE / UPDATE CATEGORY
+       
+       Empty description is skipped.
     ========================================================= */
 
-    const handleCategorySubmit = (e) => {
+    const handleCategorySubmit = async (e) => {
 
         e.preventDefault();
 
+
         const name =
-            categoryForm.name.trim();
+            categoryForm.name?.trim();
 
         const description =
-            categoryForm.description.trim();
+            categoryForm.description?.trim();
 
 
         if (!name) {
@@ -619,9 +869,10 @@ function Assets() {
                 (category) =>
                     category.name
                         .toLowerCase() ===
-                        name.toLowerCase() &&
+                    name.toLowerCase() &&
+
                     category.id !==
-                        editingCategory?.id
+                    editingCategory?.id
             );
 
 
@@ -635,68 +886,96 @@ function Assets() {
         }
 
 
-        if (editingCategory) {
+        try {
 
-            const oldName =
-                editingCategory.name;
+            /* ================================================
+               REQUIRED CATEGORY FIELD
+            ================================================= */
+
+            const payload = {
+                name,
+
+                status:
+                    categoryForm.status ||
+                    "Active",
+            };
 
 
-            setCategories((prev) =>
-                prev.map(
-                    (category) =>
-                        category.id ===
-                        editingCategory.id
-                            ? {
-                                ...category,
-                                name,
-                                description,
-                            }
-                            : category
-                )
+            /* ================================================
+               OPTIONAL DESCRIPTION
+            ================================================= */
+
+            if (description) {
+
+                payload.description =
+                    description;
+            }
+
+
+            console.log(
+                "Category payload:",
+                payload
             );
 
 
-            /* Update asset category names */
+            /* ================================================
+               CREATE / UPDATE
+            ================================================= */
 
-            if (oldName !== name) {
+            if (editingCategory) {
 
-                setAssets((prev) =>
-                    prev.map((asset) =>
-                        asset.category ===
-                        oldName
-                            ? {
-                                ...asset,
-                                category: name,
-                            }
-                            : asset
-                    )
+                await AssetCategoryService.update(
+                    editingCategory.id,
+                    payload
+                );
+
+                alert(
+                    "Category updated successfully!"
+                );
+
+            } else {
+
+                await AssetCategoryService.create(
+                    payload
+                );
+
+                alert(
+                    "Category created successfully!"
                 );
             }
 
 
-            alert(
-                "Category updated successfully!"
+            setShowCategoryModal(false);
+
+            setEditingCategory(null);
+
+            setCategoryForm({
+                ...emptyCategory
+            });
+
+
+            await loadCategories();
+
+            await loadAssets();
+
+
+        } catch (error) {
+
+            console.error(
+                "Category save error:",
+                error
             );
 
-        } else {
-
-            const newCategory = {
-                id: Date.now(),
-                name,
-                description,
-            };
-
-            setCategories((prev) => [
-                ...prev,
-                newCategory,
-            ]);
+            console.error(
+                "Backend response:",
+                error.response?.data
+            );
 
             alert(
-                "Category created successfully!"
+                error.response?.data?.message ||
+                "Failed to save category."
             );
         }
-
-        setShowCategoryModal(false);
     };
 
 
@@ -704,7 +983,7 @@ function Assets() {
        DELETE CATEGORY
     ========================================================= */
 
-    const handleDeleteCategory = (
+    const handleDeleteCategory = async (
         category
     ) => {
 
@@ -729,21 +1008,34 @@ function Assets() {
                 `Delete category "${category.name}"?`
             );
 
+
         if (!confirmed) return;
 
 
-        setCategories((prev) =>
-            prev.filter(
-                (item) =>
-                    item.id !==
-                    category.id
-            )
-        );
+        try {
 
+            await AssetCategoryService.delete(
+                category.id
+            );
 
-        alert(
-            "Category deleted successfully!"
-        );
+            alert(
+                "Category deleted successfully!"
+            );
+
+            await loadCategories();
+
+        } catch (error) {
+
+            console.error(
+                "Delete category error:",
+                error
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to delete category."
+            );
+        }
     };
 
 
@@ -781,13 +1073,85 @@ function Assets() {
     };
 
 
+    /* =========================================================
+       CLOSE ASSET MODAL
+    ========================================================= */
+
+    const closeAssetModal = () => {
+
+        setShowAssetModal(false);
+
+        setEditingAsset(null);
+
+        setAssetForm({
+            ...emptyAsset
+        });
+    };
+
+
+    /* =========================================================
+       CLOSE CATEGORY MODAL
+    ========================================================= */
+
+    const closeCategoryModal = () => {
+
+        setShowCategoryModal(false);
+
+        setEditingCategory(null);
+
+        setCategoryForm({
+            ...emptyCategory
+        });
+    };
+
+
+    /* =========================================================
+       LOADING
+    ========================================================= */
+
+    if (
+        loadingAssets &&
+        loadingCategories
+    ) {
+
+        return (
+            <MainLayout
+                activePage="Assets"
+                title="Assets"
+            >
+
+                <div className="assets-page">
+
+                    <div className="page-loading">
+
+                        <div className="loading-spinner" />
+
+                        <h3>
+                            Loading Asset Management...
+                        </h3>
+
+                        <p>
+                            Please wait while we load your assets and categories.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </MainLayout>
+        );
+    }
+
+
     return (
+
         <MainLayout
             activePage="Assets"
             title="Assets"
         >
 
             <div className="assets-page">
+
 
                 {/* =================================================
                     PAGE HEADER
@@ -802,6 +1166,7 @@ function Assets() {
                         </div>
 
                         <div>
+
                             <h2>
                                 Asset Management
                             </h2>
@@ -810,16 +1175,23 @@ function Assets() {
                                 Manage company assets and
                                 asset categories in one place.
                             </p>
+
                         </div>
 
                     </div>
 
+
                     <button
                         className="primary-btn"
-                        onClick={handleAddAsset}
+                        onClick={
+                            handleAddAsset
+                        }
                     >
+
                         <Plus size={18} />
+
                         Add Asset
+
                     </button>
 
                 </div>
@@ -838,6 +1210,7 @@ function Assets() {
                         </div>
 
                         <div>
+
                             <span>
                                 Total Assets
                             </span>
@@ -845,6 +1218,7 @@ function Assets() {
                             <strong>
                                 {totalAssets}
                             </strong>
+
                         </div>
 
                     </div>
@@ -857,6 +1231,7 @@ function Assets() {
                         </div>
 
                         <div>
+
                             <span>
                                 Active Assets
                             </span>
@@ -864,6 +1239,7 @@ function Assets() {
                             <strong>
                                 {activeAssets}
                             </strong>
+
                         </div>
 
                     </div>
@@ -876,6 +1252,7 @@ function Assets() {
                         </div>
 
                         <div>
+
                             <span>
                                 Maintenance
                             </span>
@@ -883,6 +1260,7 @@ function Assets() {
                             <strong>
                                 {maintenanceAssets}
                             </strong>
+
                         </div>
 
                     </div>
@@ -895,6 +1273,7 @@ function Assets() {
                         </div>
 
                         <div>
+
                             <span>
                                 Inactive
                             </span>
@@ -902,6 +1281,7 @@ function Assets() {
                             <strong>
                                 {inactiveAssets}
                             </strong>
+
                         </div>
 
                     </div>
@@ -910,14 +1290,14 @@ function Assets() {
 
 
                 {/* =================================================
-                    MAIN MANAGEMENT GRID
+                    MANAGEMENT GRID
                 ================================================= */}
 
                 <div className="management-grid">
 
 
                     {/* =================================================
-                        ASSETS PANEL
+                        ASSETS
                     ================================================= */}
 
                     <section className="management-card assets-card">
@@ -951,16 +1331,17 @@ function Assets() {
                                     handleAddAsset
                                 }
                             >
+
                                 <Plus size={16} />
+
                                 Add Asset
+
                             </button>
 
                         </div>
 
 
-                        {/* =================================================
-                            ASSET FILTER BAR
-                        ================================================= */}
+                        {/* SEARCH */}
 
                         <div className="asset-toolbar">
 
@@ -1045,9 +1426,7 @@ function Assets() {
                         </div>
 
 
-                        {/* =================================================
-                            ASSET TABLE
-                        ================================================= */}
+                        {/* TABLE */}
 
                         <div className="asset-table-wrapper">
 
@@ -1056,6 +1435,7 @@ function Assets() {
                                 <thead>
 
                                     <tr>
+
                                         <th>
                                             Asset
                                         </th>
@@ -1079,6 +1459,7 @@ function Assets() {
                                         <th>
                                             Action
                                         </th>
+
                                     </tr>
 
                                 </thead>
@@ -1086,8 +1467,20 @@ function Assets() {
 
                                 <tbody>
 
-                                    {filteredAssets.length ===
-                                    0 ? (
+                                    {loadingAssets ? (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="6"
+                                                className="empty-cell"
+                                            >
+                                                Loading assets...
+                                            </td>
+
+                                        </tr>
+
+                                    ) : filteredAssets.length === 0 ? (
 
                                         <tr>
 
@@ -1099,11 +1492,7 @@ function Assets() {
                                                 <div className="empty-content">
 
                                                     <div>
-                                                        <Package
-                                                            size={
-                                                                25
-                                                            }
-                                                        />
+                                                        <Package size={25} />
                                                     </div>
 
                                                     <strong>
@@ -1111,9 +1500,7 @@ function Assets() {
                                                     </strong>
 
                                                     <span>
-                                                        Try another
-                                                        search or
-                                                        category.
+                                                        Try another search or category.
                                                     </span>
 
                                                 </div>
@@ -1125,190 +1512,174 @@ function Assets() {
                                     ) : (
 
                                         filteredAssets.map(
-                                            (asset) => (
+                                            (asset) => {
 
-                                                <tr
-                                                    key={
-                                                        asset.id
-                                                    }
-                                                >
+                                                const categoryName =
+                                                    getAssetCategoryName(
+                                                        asset
+                                                    );
 
-                                                    {/* ASSET */}
+                                                return (
 
-                                                    <td>
+                                                    <tr
+                                                        key={
+                                                            asset.id
+                                                        }
+                                                    >
 
-                                                        <div className="asset-cell">
+                                                        <td>
 
-                                                            <div className="asset-image-icon">
-                                                                <Package
-                                                                    size={
-                                                                        18
-                                                                    }
-                                                                />
+                                                            <div className="asset-cell">
+
+                                                                <div>
+
+                                                                    <strong>
+                                                                        {
+                                                                            asset.name
+                                                                        }
+                                                                    </strong>
+
+                                                                    <span>
+                                                                        {
+                                                                            asset.assetCode
+                                                                        }
+                                                                    </span>
+
+                                                                </div>
+
                                                             </div>
 
-                                                            <div>
+                                                        </td>
 
-                                                                <strong>
+
+                                                        <td>
+
+                                                            <div className="table-category">
+
+                                                                <div
+                                                                    className={`category-icon ${getCategoryClass(
+                                                                        categoryName
+                                                                    )}`}
+                                                                >
                                                                     {
-                                                                        asset.name
+                                                                        getCategoryIcon(
+                                                                            categoryName
+                                                                        )
                                                                     }
-                                                                </strong>
+                                                                </div>
 
                                                                 <span>
                                                                     {
-                                                                        asset.code
+                                                                        categoryName
                                                                     }
                                                                 </span>
 
                                                             </div>
 
-                                                        </div>
-
-                                                    </td>
+                                                        </td>
 
 
-                                                    {/* CATEGORY */}
+                                                        <td>
 
-                                                    <td>
+                                                            <span className="location">
 
-                                                        <div className="table-category">
-
-                                                            <div
-                                                                className={`category-icon ${getCategoryClass(
-                                                                    asset.category
-                                                                )}`}
-                                                            >
                                                                 {
-                                                                    getCategoryIcon(
-                                                                        asset.category
-                                                                    )
+                                                                    asset.location ||
+                                                                    "-"
                                                                 }
-                                                            </div>
 
-                                                            <span>
-                                                                {
-                                                                    asset.category
-                                                                }
                                                             </span>
 
-                                                        </div>
-
-                                                    </td>
+                                                        </td>
 
 
-                                                    {/* LOCATION */}
+                                                        <td>
 
-                                                    <td>
+                                                            <span
+                                                                className={`status ${(asset.status || "Inactive")
+                                                                    .toLowerCase()
+                                                                    .replace(
+                                                                        " ",
+                                                                        "-"
+                                                                    )}`}
+                                                            >
 
-                                                        <span className="location">
-                                                            {
-                                                                asset.location
-                                                            }
-                                                        </span>
+                                                                <i />
 
-                                                    </td>
-
-
-                                                    {/* STATUS */}
-
-                                                    <td>
-
-                                                        <span
-                                                            className={`status ${asset.status
-                                                                .toLowerCase()
-                                                                .replace(
-                                                                    " ",
+                                                                {
+                                                                    asset.status ||
                                                                     "-"
-                                                                )}`}
-                                                        >
-
-                                                            <i />
-
-                                                            {
-                                                                asset.status
-                                                            }
-
-                                                        </span>
-
-                                                    </td>
-
-
-                                                    {/* VALUE */}
-
-                                                    <td>
-
-                                                        <strong className="value">
-                                                            $
-                                                            {Number(
-                                                                asset.value
-                                                            ).toLocaleString()}
-                                                        </strong>
-
-                                                    </td>
-
-
-                                                    {/* ACTION */}
-
-                                                    <td>
-
-                                                        <div className="table-actions">
-
-                                                            <button
-                                                                className="table-btn view"
-                                                                title="View"
-                                                                onClick={() =>
-                                                                    handleViewAsset(
-                                                                        asset
-                                                                    )
                                                                 }
-                                                            >
-                                                                <Eye
-                                                                    size={
-                                                                        15
+
+                                                            </span>
+
+                                                        </td>
+
+
+                                                        <td>
+
+                                                            <strong className="value">
+
+                                                                $
+                                                                {Number(
+                                                                    asset.purchasePrice || 0
+                                                                ).toLocaleString()}
+
+                                                            </strong>
+
+                                                        </td>
+
+
+                                                        <td>
+
+                                                            <div className="table-actions">
+
+                                                                <button
+                                                                    className="table-btn view"
+                                                                    title="View"
+                                                                    onClick={() =>
+                                                                        handleViewAsset(
+                                                                            asset
+                                                                        )
                                                                     }
-                                                                />
-                                                            </button>
+                                                                >
+                                                                    <Eye size={15} />
+                                                                </button>
 
-                                                            <button
-                                                                className="table-btn edit"
-                                                                title="Edit"
-                                                                onClick={() =>
-                                                                    handleEditAsset(
-                                                                        asset
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Pencil
-                                                                    size={
-                                                                        15
+
+                                                                <button
+                                                                    className="table-btn edit"
+                                                                    title="Edit"
+                                                                    onClick={() =>
+                                                                        handleEditAsset(
+                                                                            asset
+                                                                        )
                                                                     }
-                                                                />
-                                                            </button>
+                                                                >
+                                                                    <Pencil size={15} />
+                                                                </button>
 
-                                                            <button
-                                                                className="table-btn delete"
-                                                                title="Delete"
-                                                                onClick={() =>
-                                                                    handleDeleteAsset(
-                                                                        asset.id
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2
-                                                                    size={
-                                                                        15
+
+                                                                <button
+                                                                    className="table-btn delete"
+                                                                    title="Delete"
+                                                                    onClick={() =>
+                                                                        handleDeleteAsset(
+                                                                            asset.id
+                                                                        )
                                                                     }
-                                                                />
-                                                            </button>
+                                                                >
+                                                                    <Trash2 size={15} />
+                                                                </button>
 
-                                                        </div>
+                                                            </div>
 
-                                                    </td>
+                                                        </td>
 
-                                                </tr>
+                                                    </tr>
 
-                                            )
+                                                );
+                                            }
                                         )
 
                                     )}
@@ -1323,16 +1694,20 @@ function Assets() {
                         <div className="card-footer">
 
                             Showing{" "}
+
                             <strong>
                                 {
                                     filteredAssets.length
                                 }
-                            </strong>{" "}
-                            of{" "}
+                            </strong>
+
+                            {" "}of{" "}
+
                             <strong>
                                 {assets.length}
-                            </strong>{" "}
-                            assets
+                            </strong>
+
+                            {" "}assets
 
                         </div>
 
@@ -1374,16 +1749,15 @@ function Assets() {
                                     handleAddCategory
                                 }
                             >
+
                                 <Plus size={16} />
+
                                 Add Category
+
                             </button>
 
                         </div>
 
-
-                        {/* =================================================
-                            CATEGORY SEARCH
-                        ================================================= */}
 
                         <div className="category-search">
 
@@ -1409,14 +1783,21 @@ function Assets() {
                         </div>
 
 
-                        {/* =================================================
-                            CATEGORY LIST
-                        ================================================= */}
-
                         <div className="category-list">
 
-                            {filteredCategories.length ===
-                            0 ? (
+                            {loadingCategories ? (
+
+                                <div className="category-empty">
+
+                                    <div className="loading-spinner" />
+
+                                    <strong>
+                                        Loading categories...
+                                    </strong>
+
+                                </div>
+
+                            ) : filteredCategories.length === 0 ? (
 
                                 <div className="category-empty">
 
@@ -1427,8 +1808,7 @@ function Assets() {
                                     </strong>
 
                                     <span>
-                                        Create your first
-                                        category.
+                                        Create your first category.
                                     </span>
 
                                 </div>
@@ -1510,12 +1890,9 @@ function Assets() {
                                                             )
                                                         }
                                                     >
-                                                        <Eye
-                                                            size={
-                                                                15
-                                                            }
-                                                        />
+                                                        <Eye size={15} />
                                                     </button>
+
 
                                                     <button
                                                         className="category-action edit"
@@ -1526,12 +1903,9 @@ function Assets() {
                                                             )
                                                         }
                                                     >
-                                                        <Pencil
-                                                            size={
-                                                                15
-                                                            }
-                                                        />
+                                                        <Pencil size={15} />
                                                     </button>
+
 
                                                     <button
                                                         className="category-action delete"
@@ -1542,11 +1916,7 @@ function Assets() {
                                                             )
                                                         }
                                                     >
-                                                        <Trash2
-                                                            size={
-                                                                15
-                                                            }
-                                                        />
+                                                        <Trash2 size={15} />
                                                     </button>
 
                                                 </div>
@@ -1566,19 +1936,26 @@ function Assets() {
                         <div className="category-footer">
 
                             <span>
+
                                 <strong>
                                     {
                                         categories.length
                                     }
-                                </strong>{" "}
-                                categories
+                                </strong>
+
+                                {" "}categories
+
                             </span>
 
+
                             <span>
+
                                 {
                                     assets.length
-                                }{" "}
-                                total assets
+                                }
+
+                                {" "}total assets
+
                             </span>
 
                         </div>
@@ -1589,16 +1966,14 @@ function Assets() {
 
 
                 {/* =================================================
-                    ASSET CREATE / UPDATE MODAL
+                    ASSET MODAL
                 ================================================= */}
 
                 {showAssetModal && (
 
                     <div
                         className="modal-overlay"
-                        onClick={() =>
-                            setShowAssetModal(false)
-                        }
+                        onClick={closeAssetModal}
                     >
 
                         <div
@@ -1613,9 +1988,7 @@ function Assets() {
                                 <div className="modal-title">
 
                                     <div className="modal-icon blue">
-                                        <Package
-                                            size={20}
-                                        />
+                                        <Package size={20} />
                                     </div>
 
                                     <div>
@@ -1642,12 +2015,9 @@ function Assets() {
 
 
                                 <button
+                                    type="button"
                                     className="close-modal"
-                                    onClick={() =>
-                                        setShowAssetModal(
-                                            false
-                                        )
-                                    }
+                                    onClick={closeAssetModal}
                                 >
                                     <X size={19} />
                                 </button>
@@ -1664,30 +2034,36 @@ function Assets() {
 
                                 <div className="form-grid">
 
+
+                                    {/* ASSET CODE */}
+
                                     <div className="form-group">
 
                                         <label>
-                                            Asset Code *
+                                            Asset Code <span className="required">*</span>
                                         </label>
 
                                         <input
-                                            name="code"
+                                            name="assetCode"
                                             value={
-                                                assetForm.code
+                                                assetForm.assetCode
                                             }
                                             onChange={
                                                 handleAssetChange
                                             }
                                             placeholder="AST-006"
+                                            required
                                         />
 
                                     </div>
 
 
+                                    {/* ASSET NAME */}
+
                                     <div className="form-group">
 
                                         <label>
-                                            Asset Name *
+                                            Asset Name <span className="required">*</span>
                                         </label>
 
                                         <input
@@ -1699,15 +2075,18 @@ function Assets() {
                                                 handleAssetChange
                                             }
                                             placeholder="Dell Latitude 5520"
+                                            required
                                         />
 
                                     </div>
 
 
+                                    {/* CATEGORY */}
+
                                     <div className="form-group">
 
                                         <label>
-                                            Category *
+                                            Category <span className="required">*</span>
                                         </label>
 
                                         <div className="select-container">
@@ -1720,6 +2099,7 @@ function Assets() {
                                                 onChange={
                                                     handleAssetChange
                                                 }
+                                                required
                                             >
 
                                                 <option value="">
@@ -1727,16 +2107,14 @@ function Assets() {
                                                 </option>
 
                                                 {categories.map(
-                                                    (
-                                                        category
-                                                    ) => (
+                                                    (category) => (
 
                                                         <option
                                                             key={
                                                                 category.id
                                                             }
                                                             value={
-                                                                category.name
+                                                                category.id
                                                             }
                                                         >
                                                             {
@@ -1749,21 +2127,85 @@ function Assets() {
 
                                             </select>
 
-                                            <ChevronDown
-                                                size={
-                                                    16
-                                                }
-                                            />
+                                            <ChevronDown size={16} />
 
                                         </div>
 
                                     </div>
 
 
+                                    {/* BRAND */}
+
                                     <div className="form-group">
 
                                         <label>
-                                            Location *
+                                            Brand
+                                        </label>
+
+                                        <input
+                                            name="brand"
+                                            value={
+                                                assetForm.brand
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                            placeholder="Dell"
+                                        />
+
+                                    </div>
+
+
+                                    {/* MODEL */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Model
+                                        </label>
+
+                                        <input
+                                            name="model"
+                                            value={
+                                                assetForm.model
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                            placeholder="Latitude 5420"
+                                        />
+
+                                    </div>
+
+
+                                    {/* SERIAL NUMBER */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Serial Number
+                                        </label>
+
+                                        <input
+                                            name="serialNumber"
+                                            value={
+                                                assetForm.serialNumber
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                            placeholder="SN123456"
+                                        />
+
+                                    </div>
+
+
+                                    {/* LOCATION */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Location
                                         </label>
 
                                         <input
@@ -1780,10 +2222,131 @@ function Assets() {
                                     </div>
 
 
+                                    {/* VALUE */}
+
                                     <div className="form-group">
 
                                         <label>
-                                            Status *
+                                            Value ($)
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            name="purchasePrice"
+                                            value={
+                                                assetForm.purchasePrice
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                            placeholder="1200"
+                                        />
+
+                                    </div>
+
+
+                                    {/* PURCHASE DATE */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Purchase Date
+                                        </label>
+
+                                        <input
+                                            type="date"
+                                            name="purchaseDate"
+                                            value={
+                                                assetForm.purchaseDate
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                        />
+
+                                    </div>
+
+
+                                    {/* WARRANTY END DATE */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Warranty End Date
+                                        </label>
+
+                                        <input
+                                            type="date"
+                                            name="warrantyEndDate"
+                                            value={
+                                                assetForm.warrantyEndDate
+                                            }
+                                            onChange={
+                                                handleAssetChange
+                                            }
+                                        />
+
+                                    </div>
+
+
+                                    {/* CONDITION */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Condition <span className="required">*</span>
+                                        </label>
+
+                                        <div className="select-container">
+
+                                            <select
+                                                name="condition"
+                                                value={
+                                                    assetForm.condition
+                                                }
+                                                onChange={
+                                                    handleAssetChange
+                                                }
+                                                required
+                                            >
+
+                                                <option value="">
+                                                    Select Condition
+                                                </option>
+
+                                                <option value="GOOD">
+                                                    Good
+                                                </option>
+
+                                                <option value="FAIR">
+                                                    Fair
+                                                </option>
+
+                                                <option value="POOR">
+                                                    Poor
+                                                </option>
+
+                                                <option value="DAMAGED">
+                                                    Damaged
+                                                </option>
+
+                                            </select>
+
+                                            <ChevronDown size={16} />
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* STATUS */}
+
+                                    <div className="form-group">
+
+                                        <label>
+                                            Status <span className="required">*</span>
                                         </label>
 
                                         <div className="select-container">
@@ -1796,6 +2359,7 @@ function Assets() {
                                                 onChange={
                                                     handleAssetChange
                                                 }
+                                                required
                                             >
 
                                                 <option value="Active">
@@ -1812,34 +2376,31 @@ function Assets() {
 
                                             </select>
 
-                                            <ChevronDown
-                                                size={
-                                                    16
-                                                }
-                                            />
+                                            <ChevronDown size={16} />
 
                                         </div>
 
                                     </div>
 
 
-                                    <div className="form-group">
+                                    {/* DESCRIPTION */}
+
+                                    <div className="form-group form-full">
 
                                         <label>
-                                            Value ($) *
+                                            Description
                                         </label>
 
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            name="value"
+                                        <textarea
+                                            name="description"
                                             value={
-                                                assetForm.value
+                                                assetForm.description
                                             }
                                             onChange={
                                                 handleAssetChange
                                             }
-                                            placeholder="1200"
+                                            placeholder="Asset description..."
+                                            rows="3"
                                         />
 
                                     </div>
@@ -1852,24 +2413,23 @@ function Assets() {
                                     <button
                                         type="button"
                                         className="secondary-btn"
-                                        onClick={() =>
-                                            setShowAssetModal(
-                                                false
-                                            )
-                                        }
+                                        onClick={closeAssetModal}
                                     >
                                         Cancel
                                     </button>
+
 
                                     <button
                                         type="submit"
                                         className="primary-modal-btn"
                                     >
+
                                         {
                                             editingAsset
                                                 ? "Update Asset"
                                                 : "Create Asset"
                                         }
+
                                     </button>
 
                                 </div>
@@ -1884,18 +2444,14 @@ function Assets() {
 
 
                 {/* =================================================
-                    CATEGORY CREATE / UPDATE MODAL
+                    CATEGORY MODAL
                 ================================================= */}
 
                 {showCategoryModal && (
 
                     <div
                         className="modal-overlay"
-                        onClick={() =>
-                            setShowCategoryModal(
-                                false
-                            )
-                        }
+                        onClick={closeCategoryModal}
                     >
 
                         <div
@@ -1910,9 +2466,7 @@ function Assets() {
                                 <div className="modal-title">
 
                                     <div className="modal-icon purple">
-                                        <Tag
-                                            size={20}
-                                        />
+                                        <Tag size={20} />
                                     </div>
 
                                     <div>
@@ -1939,12 +2493,9 @@ function Assets() {
 
 
                                 <button
+                                    type="button"
                                     className="close-modal"
-                                    onClick={() =>
-                                        setShowCategoryModal(
-                                            false
-                                        )
-                                    }
+                                    onClick={closeCategoryModal}
                                 >
                                     <X size={19} />
                                 </button>
@@ -1966,16 +2517,17 @@ function Assets() {
                                             categoryForm.name
                                         )}`}
                                     >
-                                        {getCategoryIcon(
-                                            categoryForm.name
-                                        )}
+                                        {
+                                            getCategoryIcon(
+                                                categoryForm.name
+                                            )
+                                        }
                                     </div>
 
                                     <div>
 
                                         <strong>
-                                            Category
-                                            Preview
+                                            Category Preview
                                         </strong>
 
                                         <span>
@@ -1993,7 +2545,7 @@ function Assets() {
                                 <div className="form-group">
 
                                     <label>
-                                        Category Name *
+                                        Category Name <span className="required">*</span>
                                     </label>
 
                                     <input
@@ -2005,6 +2557,7 @@ function Assets() {
                                             handleCategoryChange
                                         }
                                         placeholder="e.g. Mobile Devices"
+                                        required
                                     />
 
                                 </div>
@@ -2031,29 +2584,63 @@ function Assets() {
                                 </div>
 
 
+                                <div className="form-group">
+
+                                    <label>
+                                        Status
+                                    </label>
+
+                                    <div className="select-container">
+
+                                        <select
+                                            name="status"
+                                            value={
+                                                categoryForm.status
+                                            }
+                                            onChange={
+                                                handleCategoryChange
+                                            }
+                                        >
+
+                                            <option value="Active">
+                                                Active
+                                            </option>
+
+                                            <option value="Inactive">
+                                                Inactive
+                                            </option>
+
+                                        </select>
+
+                                        <ChevronDown size={16} />
+
+                                    </div>
+
+                                </div>
+
+
                                 <div className="modal-footer">
 
                                     <button
                                         type="button"
                                         className="secondary-btn"
-                                        onClick={() =>
-                                            setShowCategoryModal(
-                                                false
-                                            )
-                                        }
+                                        onClick={closeCategoryModal}
                                     >
                                         Cancel
                                     </button>
+
 
                                     <button
                                         type="submit"
                                         className="primary-modal-btn purple-btn"
                                     >
+
                                         {
                                             editingCategory
                                                 ? "Update Category"
                                                 : "Create Category"
                                         }
+
                                     </button>
 
                                 </div>
@@ -2068,7 +2655,7 @@ function Assets() {
 
 
                 {/* =================================================
-                    ASSET VIEW MODAL
+                    ASSET VIEW
                 ================================================= */}
 
                 {showAssetView &&
@@ -2077,9 +2664,7 @@ function Assets() {
                         <div
                             className="modal-overlay"
                             onClick={() =>
-                                setShowAssetView(
-                                    false
-                                )
+                                setShowAssetView(false)
                             }
                         >
 
@@ -2095,11 +2680,7 @@ function Assets() {
                                     <div className="modal-title">
 
                                         <div className="modal-icon blue">
-                                            <Eye
-                                                size={
-                                                    20
-                                                }
-                                            />
+                                            <Eye size={20} />
                                         </div>
 
                                         <div>
@@ -2109,8 +2690,7 @@ function Assets() {
                                             </h3>
 
                                             <p>
-                                                View complete
-                                                asset information.
+                                                View complete asset information.
                                             </p>
 
                                         </div>
@@ -2119,6 +2699,7 @@ function Assets() {
 
 
                                     <button
+                                        type="button"
                                         className="close-modal"
                                         onClick={() =>
                                             setShowAssetView(
@@ -2136,12 +2717,16 @@ function Assets() {
 
                                     <div
                                         className={`view-large-icon ${getCategoryClass(
-                                            selectedAsset.category
+                                            getAssetCategoryName(
+                                                selectedAsset
+                                            )
                                         )}`}
                                     >
                                         {
                                             getCategoryIcon(
-                                                selectedAsset.category
+                                                getAssetCategoryName(
+                                                    selectedAsset
+                                                )
                                             )
                                         }
                                     </div>
@@ -2149,13 +2734,15 @@ function Assets() {
 
                                     <h2>
                                         {
-                                            selectedAsset.name
+                                            selectedAsset.name ||
+                                            "-"
                                         }
                                     </h2>
 
                                     <span className="view-code">
                                         {
-                                            selectedAsset.code
+                                            selectedAsset.assetCode ||
+                                            "-"
                                         }
                                     </span>
 
@@ -2163,17 +2750,21 @@ function Assets() {
                                     <div className="view-status">
 
                                         <span
-                                            className={`status ${selectedAsset.status
+                                            className={`status ${(selectedAsset.status || "")
                                                 .toLowerCase()
                                                 .replace(
                                                     " ",
                                                     "-"
                                                 )}`}
                                         >
+
                                             <i />
+
                                             {
-                                                selectedAsset.status
+                                                selectedAsset.status ||
+                                                "-"
                                             }
+
                                         </span>
 
                                     </div>
@@ -2182,55 +2773,173 @@ function Assets() {
                                     <div className="details-grid">
 
                                         <div>
+
                                             <span>
                                                 Category
                                             </span>
 
                                             <strong>
                                                 {
-                                                    selectedAsset.category
+                                                    getAssetCategoryName(
+                                                        selectedAsset
+                                                    )
                                                 }
                                             </strong>
+
                                         </div>
 
+
                                         <div>
+
                                             <span>
                                                 Location
                                             </span>
 
                                             <strong>
                                                 {
-                                                    selectedAsset.location
+                                                    selectedAsset.location ||
+                                                    "-"
                                                 }
                                             </strong>
+
                                         </div>
 
+
                                         <div>
+
                                             <span>
-                                                Asset Code
+                                                Brand
                                             </span>
 
                                             <strong>
                                                 {
-                                                    selectedAsset.code
+                                                    selectedAsset.brand ||
+                                                    "-"
                                                 }
                                             </strong>
+
                                         </div>
 
+
                                         <div>
+
+                                            <span>
+                                                Model
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedAsset.model ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span>
+                                                Serial Number
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedAsset.serialNumber ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span>
+                                                Condition
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedAsset.condition ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span>
+                                                Purchase Date
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedAsset.purchaseDate ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span>
+                                                Warranty End
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedAsset.warrantyEndDate ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
                                             <span>
                                                 Value
                                             </span>
 
                                             <strong>
-                                                $
-                                                {Number(
-                                                    selectedAsset.value
-                                                ).toLocaleString()}
+                                                {selectedAsset.purchasePrice !== null &&
+                                                    selectedAsset.purchasePrice !== undefined &&
+                                                    selectedAsset.purchasePrice !== ""
+                                                    ? `$${Number(
+                                                        selectedAsset.purchasePrice
+                                                    ).toLocaleString()}`
+                                                    : "-"
+                                                }
                                             </strong>
+
                                         </div>
 
                                     </div>
+
+
+                                    {selectedAsset.description && (
+
+                                        <div className="category-view-description">
+
+                                            <strong>
+                                                Description
+                                            </strong>
+
+                                            <p>
+                                                {
+                                                    selectedAsset.description
+                                                }
+                                            </p>
+
+                                        </div>
+
+                                    )}
 
                                 </div>
 
@@ -2238,6 +2947,7 @@ function Assets() {
                                 <div className="modal-footer">
 
                                     <button
+                                        type="button"
                                         className="secondary-btn"
                                         onClick={() =>
                                             setShowAssetView(
@@ -2248,9 +2958,12 @@ function Assets() {
                                         Close
                                     </button>
 
+
                                     <button
+                                        type="button"
                                         className="primary-modal-btn"
                                         onClick={() => {
+
                                             setShowAssetView(
                                                 false
                                             );
@@ -2258,14 +2971,14 @@ function Assets() {
                                             handleEditAsset(
                                                 selectedAsset
                                             );
+
                                         }}
                                     >
-                                        <Pencil
-                                            size={
-                                                15
-                                            }
-                                        />
+
+                                        <Pencil size={15} />
+
                                         Edit Asset
+
                                     </button>
 
                                 </div>
@@ -2278,7 +2991,7 @@ function Assets() {
 
 
                 {/* =================================================
-                    CATEGORY VIEW MODAL
+                    CATEGORY VIEW
                 ================================================= */}
 
                 {showCategoryView &&
@@ -2305,11 +3018,7 @@ function Assets() {
                                     <div className="modal-title">
 
                                         <div className="modal-icon purple">
-                                            <Tag
-                                                size={
-                                                    20
-                                                }
-                                            />
+                                            <Tag size={20} />
                                         </div>
 
                                         <div>
@@ -2319,8 +3028,7 @@ function Assets() {
                                             </h3>
 
                                             <p>
-                                                View category
-                                                information.
+                                                View category information.
                                             </p>
 
                                         </div>
@@ -2329,6 +3037,7 @@ function Assets() {
 
 
                                     <button
+                                        type="button"
                                         className="close-modal"
                                         onClick={() =>
                                             setShowCategoryView(
@@ -2359,9 +3068,11 @@ function Assets() {
 
                                     <h2>
                                         {
-                                            selectedCategory.name
+                                            selectedCategory.name ||
+                                            "-"
                                         }
                                     </h2>
+
 
                                     <span className="view-code">
                                         Category
@@ -2389,9 +3100,44 @@ function Assets() {
                                         </strong>
 
                                         <span>
-                                            Assets in this
-                                            category
+                                            Assets in this category
                                         </span>
+
+                                    </div>
+
+
+                                    <div className="details-grid">
+
+                                        <div>
+
+                                            <span>
+                                                Status
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedCategory.status ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span>
+                                                Category ID
+                                            </span>
+
+                                            <strong>
+                                                {
+                                                    selectedCategory.id ||
+                                                    "-"
+                                                }
+                                            </strong>
+
+                                        </div>
 
                                     </div>
 
@@ -2401,6 +3147,7 @@ function Assets() {
                                 <div className="modal-footer">
 
                                     <button
+                                        type="button"
                                         className="secondary-btn"
                                         onClick={() =>
                                             setShowCategoryView(
@@ -2411,9 +3158,12 @@ function Assets() {
                                         Close
                                     </button>
 
+
                                     <button
+                                        type="button"
                                         className="primary-modal-btn purple-btn"
                                         onClick={() => {
+
                                             setShowCategoryView(
                                                 false
                                             );
@@ -2421,14 +3171,14 @@ function Assets() {
                                             handleEditCategory(
                                                 selectedCategory
                                             );
+
                                         }}
                                     >
-                                        <Pencil
-                                            size={
-                                                15
-                                            }
-                                        />
+
+                                        <Pencil size={15} />
+
                                         Edit Category
+
                                     </button>
 
                                 </div>
