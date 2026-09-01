@@ -1,0 +1,1075 @@
+/* =========================================================
+   HISTORY PAGE
+========================================================= */
+
+.history-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 34px 38px 45px;
+  box-sizing: border-box;
+
+  background: #f5f7fa;
+  color: #172033;
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.history-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.history-page-header h1 {
+  margin: 0;
+
+  color: #111827;
+  font-size: 42px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+}
+
+.history-page-header p {
+  max-width: 690px;
+  margin: 12px 0 0;
+
+  color: #718096;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   TOP ACTIONS
+========================================================= */
+
+.history-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.history-outline-btn {
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 0 16px;
+
+  border: 1px solid #d5dee9;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #253449;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.history-outline-btn:hover {
+  background: #f8fbfd;
+  border-color: #b8c7d8;
+
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.history-outline-btn svg {
+  color: #4d6077;
+}
+
+
+/* =========================================================
+   FILTER PANEL
+========================================================= */
+
+.history-filter-panel {
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 10px 15px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe6ee;
+  border-radius: 9px;
+}
+
+.history-filter-panel > div {
+  flex: 1;
+}
+
+.history-filter-panel strong {
+  display: block;
+
+  color: #1d2939;
+  font-size: 13px;
+}
+
+.history-filter-panel span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #8794a5;
+  font-size: 11px;
+}
+
+.history-reset-btn {
+  height: 32px;
+
+  padding: 0 13px;
+
+  border: 1px solid #d7e0ea;
+  border-radius: 6px;
+
+  background: #f8fafc;
+  color: #4c5c70;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.history-close-btn {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  border: none;
+  border-radius: 6px;
+
+  background: #f1f4f8;
+  color: #718096;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.history-card {
+  width: 100%;
+
+  overflow: visible;
+
+  background: #ffffff;
+
+  border: 1px solid #dce4ed;
+  border-radius: 10px;
+
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+
+/* =========================================================
+   TOOLBAR
+   Search LEFT
+   Filters RIGHT
+========================================================= */
+
+.history-toolbar {
+  width: 100%;
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 15px 16px;
+
+  box-sizing: border-box;
+
+  border-bottom: 1px solid #e5eaf0;
+
+  /* IMPORTANT */
+  flex-wrap: nowrap;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.history-search-box {
+  height: 40px;
+
+  flex: 1 1 auto;
+
+  min-width: 0;
+  max-width: none;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 13px;
+
+  box-sizing: border-box;
+
+  background: #f8fafc;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  color: #8795a7;
+}
+
+.history-search-box:focus-within {
+  background: #ffffff;
+
+  border-color: #6dcff2;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 168, 232, 0.08);
+}
+
+.history-search-box input {
+  width: 100%;
+  height: 38px;
+
+  padding: 0;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #1f2d40;
+
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.history-search-box input::placeholder {
+  color: #97a4b4;
+}
+
+
+/* =========================================================
+   MENU WRAPPER
+========================================================= */
+
+.history-menu-wrapper {
+  position: relative;
+
+  flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   FILTER SELECT
+========================================================= */
+
+.history-filter-select {
+  width: 165px;
+  min-width: 165px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 0 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  background: #f8fafc;
+  color: #526274;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.history-filter-select.time {
+  width: 170px;
+  min-width: 170px;
+}
+
+.history-filter-select:hover {
+  background: #ffffff;
+  border-color: #cbd6e2;
+}
+
+.history-time-label {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+
+/* =========================================================
+   DROPDOWN
+========================================================= */
+
+.history-dropdown {
+  position: absolute;
+
+  z-index: 100;
+
+  top: calc(100% + 6px);
+  left: 0;
+
+  width: 220px;
+
+  padding: 5px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.history-dropdown button {
+  width: 100%;
+
+  display: block;
+
+  padding: 9px 10px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #536477;
+
+  text-align: left;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.history-dropdown button:hover {
+  background: #f2f7fa;
+  color: #1d2939;
+}
+
+.history-dropdown button.selected {
+  background: #e9f8fd;
+  color: #009bd5;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   EXPORT MENU
+========================================================= */
+
+.history-export-menu {
+  position: absolute;
+
+  z-index: 100;
+
+  top: calc(100% + 7px);
+  right: 0;
+
+  width: 245px;
+
+  padding: 15px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 9px;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.13);
+}
+
+.history-menu-title {
+  color: #1d2939;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-menu-text {
+  margin: 6px 0 13px;
+
+  color: #8794a5;
+
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.history-export-btn {
+  width: 100%;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: #079bd5;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.history-export-btn:hover {
+  background: #078fc5;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.history-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+
+  min-width: 1000px;
+
+  table-layout: fixed;
+
+  border-collapse: collapse;
+}
+
+
+/* =========================================================
+   COLUMNS
+========================================================= */
+
+.history-table .date-column {
+  width: 7.2%;
+}
+
+.history-table .code-column {
+  width: 10.4%;
+}
+
+.history-table .name-column {
+  width: 15.7%;
+}
+
+.history-table .action-column {
+  width: 16%;
+}
+
+.history-table .status-column {
+  width: 25.2%;
+}
+
+.history-table .description-column {
+  width: 25.5%;
+}
+
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.history-table thead th {
+  height: 66px;
+
+  padding: 12px 22px;
+
+  box-sizing: border-box;
+
+  background: #f8fafc;
+
+  border-bottom: 1px solid #e0e7ef;
+
+  color: #607286;
+
+  text-align: left;
+  vertical-align: middle;
+
+  font-size: 11px;
+  line-height: 1.35;
+
+  font-weight: 800;
+
+  letter-spacing: 1.15px;
+}
+
+
+/* =========================================================
+   TABLE BODY
+========================================================= */
+
+.history-table tbody tr {
+  height: 88px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #e3e9f0;
+
+  transition: background 0.15s ease;
+}
+
+.history-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.history-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.history-table td {
+  height: 88px;
+
+  padding: 14px 22px;
+
+  box-sizing: border-box;
+
+  vertical-align: middle;
+
+  color: #526274;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+.history-date {
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1;
+}
+
+.history-day {
+  color: #2d4057;
+
+  font-size: 19px;
+  line-height: 20px;
+
+  font-weight: 700;
+}
+
+.history-month {
+  margin-top: 2px;
+
+  color: #7b8999;
+
+  font-size: 10px;
+  line-height: 12px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+}
+
+.history-year {
+  margin-top: 2px;
+
+  color: #99a6b5;
+
+  font-size: 10px;
+  line-height: 12px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   ASSET CODE
+========================================================= */
+
+.history-code {
+  color: #00ae89;
+
+  font-family:
+    "SFMono-Regular",
+    Consolas,
+    "Liberation Mono",
+    monospace;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.15px;
+}
+
+
+/* =========================================================
+   ASSET NAME
+========================================================= */
+
+.history-asset-name {
+  max-width: 170px;
+
+  color: #334155;
+
+  font-size: 14px;
+  line-height: 1.4;
+
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.action-maintenance {
+  color: #526274;
+
+  font-size: 11.5px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 25px;
+
+  padding: 4px 9px;
+
+  box-sizing: border-box;
+
+  border-radius: 4px;
+
+  font-size: 10.5px;
+  line-height: 1.25;
+
+  font-weight: 800;
+
+  letter-spacing: 0.45px;
+}
+
+.action-updated {
+  color: #2671d9;
+  background: #e7f0ff;
+}
+
+.action-completed {
+  color: #009d7b;
+  background: #dff5ed;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-change {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  white-space: nowrap;
+}
+
+.status-arrow {
+  color: #8391a2;
+
+  font-size: 18px;
+  line-height: 1;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 24px;
+
+  padding: 4px 9px;
+
+  box-sizing: border-box;
+
+  border-radius: 4px;
+
+  font-size: 10.5px;
+  line-height: 1;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.status-available {
+  color: #009f7c;
+  background: #dff5ed;
+}
+
+.status-maintenance {
+  color: #dc9212;
+  background: #fff0d7;
+}
+
+.status-condition {
+  padding-left: 0;
+  padding-right: 0;
+
+  color: #8391a2;
+
+  background: transparent;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.history-description {
+  max-width: 205px;
+
+  color: #718096;
+
+  font-size: 13px;
+  line-height: 1.45;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.history-empty {
+  height: 180px !important;
+
+  text-align: center;
+
+  color: #9aa7b6 !important;
+
+  font-size: 13px !important;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.history-table-footer {
+  min-height: 66px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border-top: 1px solid #e0e7ef;
+
+  border-radius: 0 0 10px 10px;
+}
+
+.history-record-count {
+  color: #7b8999;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.history-pagination {
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+}
+
+.pagination-page,
+.pagination-arrow {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #536477;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.pagination-page:hover,
+.pagination-arrow:hover {
+  background: #f0f5f8;
+  color: #1f334b;
+}
+
+.pagination-page.active {
+  border: 1px solid #9ddff5;
+
+  background: #eaf8fd;
+
+  color: #009bd5;
+
+  font-weight: 700;
+}
+
+.pagination-arrow.disabled {
+  color: #c2cad3;
+
+  cursor: default;
+}
+
+.pagination-arrow.disabled:hover {
+  background: transparent;
+}
+
+.pagination-dots {
+  width: 28px;
+
+  text-align: center;
+
+  color: #8794a5;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.history-table-wrapper::-webkit-scrollbar {
+  height: 7px;
+}
+
+.history-table-wrapper::-webkit-scrollbar-track {
+  background: #f2f5f8;
+}
+
+.history-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5df;
+
+  border-radius: 10px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .history-page {
+    padding: 26px 24px 35px;
+  }
+
+  .history-page-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .history-top-actions {
+    width: 100%;
+  }
+
+  /*
+    IMPORTANT:
+    DO NOT wrap the history toolbar.
+    Search + filters stay in one row.
+  */
+
+  .history-toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .history-search-box {
+    flex: 1 1 auto;
+
+    width: auto;
+
+    max-width: none;
+
+    min-width: 0;
+
+    flex-basis: auto;
+  }
+
+  .history-toolbar .history-menu-wrapper {
+    flex: 0 0 auto;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .history-page {
+    padding: 20px 15px 30px;
+  }
+
+  .history-page-header h1 {
+    font-size: 30px;
+  }
+
+  .history-page-header p {
+    font-size: 13px;
+  }
+
+  .history-top-actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .history-outline-btn {
+    width: 100%;
+  }
+
+  /*
+    Keep toolbar horizontal.
+    Table can scroll horizontally instead.
+  */
+
+  .history-toolbar {
+    flex-direction: row;
+
+    flex-wrap: nowrap;
+
+    align-items: center;
+  }
+
+  .history-search-box {
+    flex: 1 1 auto;
+
+    min-width: 180px;
+
+    width: auto;
+
+    flex-basis: auto;
+  }
+
+  .history-filter-select {
+    width: 150px;
+
+    min-width: 150px;
+  }
+
+  .history-filter-select.time {
+    width: 155px;
+
+    min-width: 155px;
+  }
+
+  .history-menu-wrapper {
+    width: auto;
+
+    flex: 0 0 auto;
+  }
+
+  .history-table-footer {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding: 14px 16px;
+  }
+
+}
