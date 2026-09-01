@@ -26,7 +26,7 @@ const INITIAL_CATEGORIES = [
 ];
 
 const DEFAULT_PROFILE = {
-  name: "Sarah Jenkins",
+  name: " 67 Team Ter",
   email: "s.jenkins@bams.corp",
   phone: "+855 12 345 678",
   department: "Systems Control",
@@ -355,7 +355,7 @@ export default function Settings() {
         <section className="profile-card">
           <div className="profile-card-person">
             <div className="profile-photo">
-              <span>SJ</span>
+              <span>6 7</span>
               <i />
             </div>
 
