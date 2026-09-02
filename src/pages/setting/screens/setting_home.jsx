@@ -355,7 +355,7 @@ export default function Settings() {
         <section className="profile-card">
           <div className="profile-card-person">
             <div className="profile-photo">
-              <span></span>
+              <span> 6 7 </span>
               <i />
             </div>
 
