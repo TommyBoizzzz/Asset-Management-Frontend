@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
     Wrench,
@@ -17,94 +17,8 @@ import {
     X,
     ArrowRight,
 } from "lucide-react";
+import MaintenanceService from "../services/MaintenanceService";
 import "../css/Maintenace.css";
-
-const initialMaintenanceData = [
-    {
-        id: 1,
-        asset: { id: 101, name: "MacBook Pro 16\"", assetTag: "AST-00812" },
-        assignedTo: { id: 12, name: "Sophea Chan", department: "IT Support" },
-        maintenanceType: "REPAIR",
-        scheduledDate: "2026-08-18",
-        completedDate: null,
-        problemDescription: "Screen flickering and overheating under heavy rendering loads.",
-        actionTaken: "Replaced thermal paste and ordered replacement display module.",
-        cost: 150.0,
-        status: "IN_PROGRESS",
-        nextMaintenanceDate: "2027-02-18",
-        notes: "Priority service request for design team lead.",
-        createdAt: "2026-08-17 09:30 AM",
-        updatedAt: "2026-08-18 02:15 PM",
-        tracking: [
-            {
-                label: "Request received",
-                date: "2026-08-17",
-                note: "Service request logged for design team lead.",
-            },
-            {
-                label: "Assigned to technician",
-                date: "2026-08-18",
-                note: "Assigned to Sophea Chan for inspection.",
-            },
-            {
-                label: "Under repair",
-                date: "2026-08-18",
-                note: "Thermal paste replaced and screen diagnostics running.",
-            },
-        ],
-    },
-    {
-        id: 2,
-        asset: { id: 102, name: "Dell XPS 15", assetTag: "AST-00098" },
-        assignedTo: { id: 14, name: "Vireak Bun", department: "IT Support" },
-        maintenanceType: "PREVENTIVE",
-        scheduledDate: "2026-08-25",
-        completedDate: null,
-        problemDescription: "Routine quarterly hardware check and dust cleanup.",
-        actionTaken: null,
-        cost: 0.0,
-        status: "SCHEDULED",
-        nextMaintenanceDate: "2027-02-25",
-        notes: "Regularly scheduled preventive task.",
-        createdAt: "2026-08-01 10:00 AM",
-        updatedAt: "2026-08-01 10:00 AM",
-        tracking: [
-            {
-                label: "Planned maintenance",
-                date: "2026-08-01",
-                note: "Quarterly maintenance scheduled for the device.",
-            },
-        ],
-    },
-    {
-        id: 3,
-        asset: { id: 103, name: "HP LaserJet Enterprise", assetTag: "AST-00045" },
-        assignedTo: { id: 15, name: "Bora Kim", department: "Operations" },
-        maintenanceType: "REPAIR",
-        scheduledDate: "2026-08-10",
-        completedDate: "2026-08-12",
-        problemDescription: "Paper jam issue and roller degradation.",
-        actionTaken: "Replaced feed rollers and thoroughly cleaned internal paper tray.",
-        cost: 85.5,
-        status: "COMPLETED",
-        nextMaintenanceDate: "2027-08-10",
-        notes: "Tested successfully after maintenance.",
-        createdAt: "2026-08-10 08:00 AM",
-        updatedAt: "2026-08-12 04:30 PM",
-        tracking: [
-            {
-                label: "Request logged",
-                date: "2026-08-10",
-                note: "Issue reported in the office printer queue.",
-            },
-            {
-                label: "Repair completed",
-                date: "2026-08-12",
-                note: "Parts replaced and printer tested successfully.",
-            },
-        ],
-    },
-];
 
 const FILTER_TABS = [
     { key: "ALL", label: "All" },
@@ -150,13 +64,100 @@ const emptyTaskForm = {
     notes: "",
 };
 
+const normalizeMaintenanceRecord = (record) => {
+    const asset = record.asset || {};
+    const assignedTo = record.assignedTo || {};
+
+    const normalizeDate = (value) => {
+        if (!value) return "";
+        const stringValue = String(value).trim();
+        if (!stringValue) return "";
+
+        return stringValue.includes("T")
+            ? stringValue.slice(0, 10)
+            : stringValue.slice(0, 10);
+    };
+
+    return {
+        id: record.id,
+        asset: {
+            id: asset.id ?? null,
+            name: asset.name || "Unknown Asset",
+            assetTag: asset.assetCode || asset.assetTag || `AST-${asset.id || record.id}`,
+        },
+        assignedTo: {
+            id: assignedTo.id ?? null,
+            name: assignedTo.fullName || assignedTo.name || "Unassigned",
+            department: assignedTo.position || assignedTo.department || "IT Support",
+        },
+        maintenanceType: record.maintenanceType || "REPAIR",
+        scheduledDate: normalizeDate(record.scheduledDate),
+        completedDate: normalizeDate(record.completedDate),
+        problemDescription: record.problemDescription || "No issue description provided.",
+        actionTaken: record.actionTaken || null,
+        cost: Number(record.cost || 0),
+        status: record.status || "SCHEDULED",
+        nextMaintenanceDate: normalizeDate(record.nextMaintenanceDate),
+        notes: record.notes || "",
+        createdAt: record.createdAt
+            ? new Date(record.createdAt).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+            : "",
+        updatedAt: record.updatedAt
+            ? new Date(record.updatedAt).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+            : "",
+        tracking: [],
+    };
+};
+
 function MaintenanceHome() {
-    const [maintenanceList, setMaintenanceList] = useState(initialMaintenanceData);
+    const [maintenanceList, setMaintenanceList] = useState([]);
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [taskModal, setTaskModal] = useState(null);
     const [taskForm, setTaskForm] = useState(emptyTaskForm);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchMaintenance = async () => {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await MaintenanceService.getAll();
+                const normalized = (response.data || []).map(normalizeMaintenanceRecord);
+
+                setMaintenanceList(normalized);
+                if (normalized.length > 0) {
+                    setSelectedRecord(normalized[0]);
+                } else {
+                    setSelectedRecord(null);
+                }
+            } catch (err) {
+                console.error("Failed to load maintenance records:", err);
+                setError("Unable to load maintenance records from the backend.");
+                setMaintenanceList([]);
+                setSelectedRecord(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMaintenance();
+    }, []);
 
     const filteredList = useMemo(() => {
         const query = searchTerm.toLowerCase();
@@ -388,6 +389,9 @@ function MaintenanceHome() {
                         theme="green"
                     />
                 </section>
+
+                {loading && <div className="maintenance-loading">Loading maintenance records...</div>}
+                {error && <div className="maintenance-error">{error}</div>}
 
                 <section className="maintenance-card">
                     <div className="card-header">
