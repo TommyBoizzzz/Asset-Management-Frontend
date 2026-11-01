@@ -18,6 +18,8 @@ import {
     ArrowRight,
 } from "lucide-react";
 import MaintenanceService from "../services/MaintenanceService";
+import AssetService from "../../asset/services/AssetService";
+import StaffService from "../../staff/services/staff_home";
 import "../css/Maintenace.css";
 
 const FILTER_TABS = [
@@ -49,8 +51,10 @@ function getNextStatus(currentStatus) {
 }
 
 const emptyTaskForm = {
+    assetId: "",
     assetName: "",
     assetTag: "",
+    staffId: "",
     technicianName: "",
     department: "IT Support",
     maintenanceType: "REPAIR",
@@ -128,35 +132,44 @@ function MaintenanceHome() {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [taskModal, setTaskModal] = useState(null);
     const [taskForm, setTaskForm] = useState(emptyTaskForm);
+    const [assetOptions, setAssetOptions] = useState([]);
+    const [staffOptions, setStaffOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const fetchMaintenance = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError("");
 
-                const response = await MaintenanceService.getAll();
-                const normalized = (response.data || []).map(normalizeMaintenanceRecord);
+                const [maintenanceResponse, assetResponse, staffResponse] = await Promise.all([
+                    MaintenanceService.getAll(),
+                    AssetService.getAll(),
+                    StaffService.getAll(),
+                ]);
+
+                const normalized = (maintenanceResponse.data || []).map(normalizeMaintenanceRecord);
+                const assets = assetResponse.data || [];
+                const staff = staffResponse.data || [];
 
                 setMaintenanceList(normalized);
-                if (normalized.length > 0) {
-                    setSelectedRecord(normalized[0]);
-                } else {
-                    setSelectedRecord(null);
-                }
+                setAssetOptions(assets);
+                setStaffOptions(staff);
+                setSelectedRecord(normalized[0] || null);
             } catch (err) {
                 console.error("Failed to load maintenance records:", err);
                 setError("Unable to load maintenance records from the backend.");
                 setMaintenanceList([]);
+                setAssetOptions([]);
+                setStaffOptions([]);
                 setSelectedRecord(null);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchMaintenance();
+        fetchData();
     }, []);
 
     const filteredList = useMemo(() => {
@@ -247,14 +260,20 @@ function MaintenanceHome() {
     };
 
     const openAddTaskModal = () => {
-        setTaskForm(emptyTaskForm);
+        setTaskForm({
+            ...emptyTaskForm,
+            assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
+            staffId: staffOptions[0]?.id ? String(staffOptions[0].id) : "",
+        });
         setTaskModal({ mode: "add" });
     };
 
     const openEditTaskModal = (task) => {
         setTaskForm({
-            assetName: task.asset.name,
-            assetTag: task.asset.assetTag,
+            assetId: task.asset?.id ? String(task.asset.id) : "",
+            assetName: task.asset?.name || "",
+            assetTag: task.asset?.assetTag || "",
+            staffId: task.assignedTo?.id ? String(task.assignedTo.id) : "",
             technicianName: task.assignedTo?.name || "",
             department: task.assignedTo?.department || "IT Support",
             maintenanceType: task.maintenanceType,
@@ -277,71 +296,68 @@ function MaintenanceHome() {
         }));
     };
 
-    const handleSaveTask = (event) => {
+    const handleSaveTask = async (event) => {
         event.preventDefault();
 
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 10);
+        if (!taskForm.assetId || !taskForm.staffId) {
+            setError("Please select both an asset and a staff member.");
+            return;
+        }
 
-        const nextTask = {
-            id: taskModal?.mode === "edit" ? taskModal.id : Date.now(),
-            asset: {
-                id: taskModal?.mode === "edit" ? maintenanceList.find((item) => item.id === taskModal.id)?.asset?.id || Date.now() : Date.now(),
-                name: taskForm.assetName || "New Asset",
-                assetTag: taskForm.assetTag || `AST-${Math.floor(Math.random() * 9000 + 1000)}`,
-            },
-            assignedTo: {
-                id: taskModal?.mode === "edit" ? maintenanceList.find((item) => item.id === taskModal.id)?.assignedTo?.id || 1 : 1,
-                name: taskForm.technicianName || "Unassigned",
-                department: taskForm.department || "IT Support",
-            },
+        const payload = {
+            asset: { id: Number(taskForm.assetId) },
+            assignedTo: { id: Number(taskForm.staffId) },
             maintenanceType: taskForm.maintenanceType,
-            scheduledDate: taskForm.scheduledDate || formattedDate,
+            scheduledDate: taskForm.scheduledDate || new Date().toISOString().slice(0, 10),
             completedDate: taskForm.completedDate || null,
             problemDescription: taskForm.problemDescription || "No issue description provided.",
             actionTaken: taskForm.actionTaken || null,
             cost: Number(taskForm.cost || 0),
             status: taskForm.status,
-            nextMaintenanceDate: taskForm.nextMaintenanceDate || "",
+            nextMaintenanceDate: taskForm.nextMaintenanceDate || null,
             notes: taskForm.notes || "",
-            createdAt:
-                taskModal?.mode === "edit"
-                    ? maintenanceList.find((item) => item.id === taskModal.id)?.createdAt || now.toLocaleString()
-                    : now.toLocaleString(),
-            updatedAt: now.toLocaleString(),
-            tracking:
-                taskModal?.mode === "edit"
-                    ? maintenanceList.find((item) => item.id === taskModal.id)?.tracking || []
-                    : [
-                        {
-                            label: "Task created",
-                            date: formattedDate,
-                            note: "Maintenance task was created in the system.",
-                        },
-                    ],
         };
 
-        if (taskModal?.mode === "edit") {
-            setMaintenanceList((prev) =>
-                prev.map((item) => (item.id === taskModal.id ? nextTask : item))
-            );
-            setSelectedRecord(nextTask);
-        } else {
-            setMaintenanceList((prev) => [nextTask, ...prev]);
-            setSelectedRecord(nextTask);
-        }
+        try {
+            if (taskModal?.mode === "edit") {
+                const response = await MaintenanceService.update(taskModal.id, payload);
+                const updatedRecord = normalizeMaintenanceRecord(response.data);
 
-        setTaskModal(null);
-        setTaskForm(emptyTaskForm);
+                setMaintenanceList((prev) =>
+                    prev.map((item) => (item.id === updatedRecord.id ? updatedRecord : item))
+                );
+                setSelectedRecord(updatedRecord);
+            } else {
+                const response = await MaintenanceService.create(payload);
+                const createdRecord = normalizeMaintenanceRecord(response.data);
+
+                setMaintenanceList((prev) => [createdRecord, ...prev]);
+                setSelectedRecord(createdRecord);
+            }
+
+            setTaskModal(null);
+            setTaskForm(emptyTaskForm);
+            setError("");
+        } catch (err) {
+            console.error("Failed to save maintenance record:", err);
+            setError("Failed to save maintenance record to the backend.");
+        }
     };
 
-    const handleDeleteTask = (taskId) => {
+    const handleDeleteTask = async (taskId) => {
         const confirmed = window.confirm("Delete this maintenance task?");
 
         if (!confirmed) return;
 
-        setMaintenanceList((prev) => prev.filter((item) => item.id !== taskId));
-        setSelectedRecord((prev) => (prev && prev.id === taskId ? null : prev));
+        try {
+            await MaintenanceService.delete(taskId);
+            setMaintenanceList((prev) => prev.filter((item) => item.id !== taskId));
+            setSelectedRecord((prev) => (prev && prev.id === taskId ? null : prev));
+            setError("");
+        } catch (err) {
+            console.error("Failed to delete maintenance record:", err);
+            setError("Failed to delete maintenance record from the backend.");
+        }
     };
 
     return (
@@ -523,6 +539,8 @@ function MaintenanceHome() {
                     <TaskModal
                         mode={taskModal.mode}
                         form={taskForm}
+                        assetOptions={assetOptions}
+                        staffOptions={staffOptions}
                         onClose={() => {
                             setTaskModal(null);
                             setTaskForm(emptyTaskForm);
@@ -647,7 +665,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
     );
 }
 
-function TaskModal({ mode, form, onClose, onChange, onSubmit }) {
+function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, onSubmit }) {
     const title = mode === "edit" ? "Edit Maintenance Task" : "Add Maintenance Task";
 
     return (
@@ -666,39 +684,33 @@ function TaskModal({ mode, form, onClose, onChange, onSubmit }) {
                 <form className="task-form" onSubmit={onSubmit}>
                     <div className="task-form-grid">
                         <label className="form-field">
-                            <span>Asset name</span>
-                            <input
-                                type="text"
-                                value={form.assetName}
-                                onChange={(event) => onChange("assetName", event.target.value)}
-                            />
+                            <span>Asset</span>
+                            <select
+                                value={form.assetId || ""}
+                                onChange={(event) => onChange("assetId", event.target.value)}
+                            >
+                                <option value="">Select asset</option>
+                                {assetOptions.map((asset) => (
+                                    <option key={asset.id} value={asset.id}>
+                                        {asset.name} ({asset.assetCode || asset.assetTag || `#${asset.id}`})
+                                    </option>
+                                ))}
+                            </select>
                         </label>
 
                         <label className="form-field">
-                            <span>Asset tag</span>
-                            <input
-                                type="text"
-                                value={form.assetTag}
-                                onChange={(event) => onChange("assetTag", event.target.value)}
-                            />
-                        </label>
-
-                        <label className="form-field">
-                            <span>Technician</span>
-                            <input
-                                type="text"
-                                value={form.technicianName}
-                                onChange={(event) => onChange("technicianName", event.target.value)}
-                            />
-                        </label>
-
-                        <label className="form-field">
-                            <span>Department</span>
-                            <input
-                                type="text"
-                                value={form.department}
-                                onChange={(event) => onChange("department", event.target.value)}
-                            />
+                            <span>Assigned staff</span>
+                            <select
+                                value={form.staffId || ""}
+                                onChange={(event) => onChange("staffId", event.target.value)}
+                            >
+                                <option value="">Select staff</option>
+                                {staffOptions.map((staff) => (
+                                    <option key={staff.id} value={staff.id}>
+                                        {staff.fullName || staff.name} ({staff.position || staff.department || "Staff"})
+                                    </option>
+                                ))}
+                            </select>
                         </label>
 
                         <label className="form-field">
