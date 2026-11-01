@@ -156,7 +156,7 @@ function MaintenanceHome() {
                 setMaintenanceList(normalized);
                 setAssetOptions(assets);
                 setStaffOptions(staff);
-                setSelectedRecord(normalized[0] || null);
+                setSelectedRecord(null);
             } catch (err) {
                 console.error("Failed to load maintenance records:", err);
                 setError("Unable to load maintenance records from the backend.");
@@ -196,67 +196,47 @@ function MaintenanceHome() {
         completed: maintenanceList.filter((item) => item.status === "COMPLETED").length,
     }), [maintenanceList]);
 
-    const updateStatus = (id, nextStatus) => {
+    const updateStatus = async (id, nextStatus) => {
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
+        const record = maintenanceList.find((item) => item.id === id);
 
-        setMaintenanceList((prev) =>
-            prev.map((item) => {
-                if (item.id !== id) return item;
+        if (!record) return;
 
-                const completedDate =
-                    nextStatus === "COMPLETED" ? formattedDate : item.completedDate;
+        const payload = {
+            asset: { id: record.asset?.id || null },
+            assignedTo: { id: record.assignedTo?.id || null },
+            maintenanceType: record.maintenanceType,
+            scheduledDate: record.scheduledDate,
+            completedDate: nextStatus === "COMPLETED" ? formattedDate : record.completedDate || null,
+            problemDescription: record.problemDescription,
+            actionTaken: record.actionTaken,
+            cost: Number(record.cost || 0),
+            status: nextStatus,
+            nextMaintenanceDate: record.nextMaintenanceDate || null,
+            notes: record.notes,
+        };
 
-                return {
-                    ...item,
-                    status: nextStatus,
-                    completedDate,
-                    updatedAt: timestamp.toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    }),
-                    tracking: [
-                        ...(item.tracking || []),
-                        {
-                            label: getStatusLabel(nextStatus),
-                            date: formattedDate,
-                            note: `Maintenance status updated to ${getStatusLabel(nextStatus)}.`,
-                        },
-                    ],
-                };
-            })
-        );
+        try {
+            let response;
 
-        setSelectedRecord((prev) => {
-            if (!prev || prev.id !== id) return prev;
+            if (nextStatus === "COMPLETED") {
+                response = await MaintenanceService.complete(id, payload);
+            } else {
+                response = await MaintenanceService.update(id, payload);
+            }
 
-            const updatedItem = maintenanceList.find((item) => item.id === id);
+            const updatedItem = normalizeMaintenanceRecord(response.data);
 
-            return {
-                ...updatedItem,
-                status: nextStatus,
-                completedDate:
-                    nextStatus === "COMPLETED" ? formattedDate : updatedItem.completedDate,
-                updatedAt: timestamp.toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-                tracking: [
-                    ...(updatedItem.tracking || []),
-                    {
-                        label: getStatusLabel(nextStatus),
-                        date: formattedDate,
-                        note: `Maintenance status updated to ${getStatusLabel(nextStatus)}.`,
-                    },
-                ],
-            };
-        });
+            setMaintenanceList((prev) =>
+                prev.map((item) => (item.id === id ? updatedItem : item))
+            );
+            setSelectedRecord(updatedItem);
+            setError("");
+        } catch (err) {
+            console.error("Failed to update maintenance status:", err);
+            setError("Failed to update maintenance status in the backend.");
+        }
     };
 
     const openAddTaskModal = () => {
@@ -296,11 +276,28 @@ function MaintenanceHome() {
         }));
     };
 
+    const hasActiveMaintenanceForAsset = (assetId, currentTaskId = null) => {
+        const numericAssetId = Number(assetId);
+
+        return maintenanceList.some((item) => {
+            const sameAsset = Number(item.asset?.id) === numericAssetId;
+            const notCompleted = item.status !== "COMPLETED";
+            const notCurrent = !currentTaskId || item.id !== currentTaskId;
+
+            return sameAsset && notCompleted && notCurrent;
+        });
+    };
+
     const handleSaveTask = async (event) => {
         event.preventDefault();
 
         if (!taskForm.assetId || !taskForm.staffId) {
             setError("Please select both an asset and a staff member.");
+            return;
+        }
+
+        if (taskModal?.mode !== "edit" && hasActiveMaintenanceForAsset(taskForm.assetId)) {
+            setError("This asset already has an active maintenance task. Complete it before creating a new one.");
             return;
         }
 
