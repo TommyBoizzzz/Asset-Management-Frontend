@@ -1,1603 +1,2105 @@
+import { useEffect, useMemo, useState } from "react";
+import MainLayout from "../../../layouts/MainLayout";
+
+import {
+    UserPlus,
+    ShieldPlus,
+    Search,
+    Edit3,
+    Trash2,
+    X,
+    Shield,
+    Users,
+    MoreHorizontal,
+    RefreshCw,
+    Mail,
+    Phone,
+    User,
+} from "lucide-react";
+
+import UserService from "../services/UserService";
+import RoleService from "../services/RoleService";
+
+import "../css/UserHome.css";
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const getResponseData = (response) => {
+    const data = response?.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+
+    return [];
+};
+
+
+const getErrorMessage = (error, fallback) => {
+    const responseData = error?.response?.data;
+
+    if (typeof responseData === "string") {
+        return responseData;
+    }
+
+    return (
+        responseData?.message ||
+        responseData?.error ||
+        error?.message ||
+        fallback
+    );
+};
+
+
+const getFullName = (user) => {
+    return `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+};
+
+
+const getInitials = (user) => {
+    const first = user?.firstName?.charAt(0) || "";
+    const last = user?.lastName?.charAt(0) || "";
+
+    return `${first}${last}`.toUpperCase() || "U";
+};
+
 
 /* =========================================================
    USER MANAGEMENT PAGE
 ========================================================= */
 
-.user-management-page {
-    width: 100%;
-    min-height: 100%;
-    padding: 4px 0 40px;
-    color: #172033;
-    box-sizing: border-box;
+function UserHome() {
+
+    /* =====================================================
+       TABS
+    ===================================================== */
+
+    const [activeTab, setActiveTab] = useState("users");
+
+
+    /* =====================================================
+       USERS
+    ===================================================== */
+
+    const [users, setUsers] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [userError, setUserError] = useState("");
+    const [searchUser, setSearchUser] = useState("");
+
+
+    /* =====================================================
+       ROLES
+    ===================================================== */
+
+    const [roles, setRoles] = useState([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+    const [roleError, setRoleError] = useState("");
+
+
+    /* =====================================================
+       DIALOGS
+    ===================================================== */
+
+    const [userDialog, setUserDialog] = useState(null);
+    const [roleDialog, setRoleDialog] = useState(null);
+    const [deleteDialog, setDeleteDialog] = useState(null);
+
+
+    /* =====================================================
+       LOADING ACTIONS
+    ===================================================== */
+
+    const [savingUser, setSavingUser] = useState(false);
+    const [savingRole, setSavingRole] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+
+    /* =====================================================
+       FETCH USERS
+    ===================================================== */
+
+    const fetchUsers = async () => {
+
+        try {
+            setLoadingUsers(true);
+            setUserError("");
+
+            const response = await UserService.getAll();
+
+            const data = getResponseData(response);
+
+            console.log("Users from API:", data);
+
+            setUsers(data);
+
+        } catch (error) {
+
+            console.error("Failed to fetch users:", error);
+
+            setUserError(
+                getErrorMessage(error, "Failed to load users.")
+            );
+
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
+
+    /* =====================================================
+       FETCH ROLES
+    ===================================================== */
+
+    const fetchRoles = async () => {
+
+        try {
+            setLoadingRoles(true);
+            setRoleError("");
+
+            const response = await RoleService.getAll();
+
+            const data = getResponseData(response);
+
+            console.log("Roles from API:", data);
+
+            setRoles(data);
+
+        } catch (error) {
+
+            console.error("Failed to fetch roles:", error);
+
+            setRoleError(
+                getErrorMessage(error, "Failed to load roles.")
+            );
+
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
+
+
+    /* =====================================================
+       INITIAL LOAD
+    ===================================================== */
+
+    useEffect(() => {
+        fetchUsers();
+        fetchRoles();
+    }, []);
+
+
+    /* =====================================================
+       FILTER USERS
+    ===================================================== */
+
+    const filteredUsers = useMemo(() => {
+
+        const search = searchUser.toLowerCase().trim();
+
+        if (!search) return users;
+
+        return users.filter((user) => {
+
+            const fullName = getFullName(user).toLowerCase();
+
+            const email = (user.email || "").toLowerCase();
+
+            const username = (user.username || "").toLowerCase();
+
+            const role = (user.role?.name || "").toLowerCase();
+
+            const phone = (user.phone || "").toLowerCase();
+
+            return (
+                fullName.includes(search) ||
+                email.includes(search) ||
+                username.includes(search) ||
+                role.includes(search) ||
+                phone.includes(search)
+            );
+        });
+
+    }, [users, searchUser]);
+
+
+    /* =====================================================
+       SAVE USER
+    ===================================================== */
+
+    const handleSaveUser = async (formData) => {
+
+        try {
+
+            setSavingUser(true);
+            setUserError("");
+
+            const data = {
+
+                username: formData.username.trim(),
+
+                email: formData.email.trim(),
+
+                firstName: formData.firstName.trim(),
+
+                lastName: formData.lastName.trim(),
+
+                phone: formData.phone.trim(),
+
+                status: formData.status,
+
+                role: {
+                    id: Number(formData.roleId),
+                },
+
+            };
+
+
+            // Password is only sent when provided.
+
+            if (formData.password) {
+                data.password = formData.password;
+            }
+
+
+            console.log("Sending user data:", data);
+
+
+            /* =============================================
+               UPDATE USER
+            ============================================= */
+
+            if (formData.id) {
+
+                const response = await UserService.update(
+                    formData.id,
+                    data
+                );
+
+                const updatedUser =
+                    response.data?.data || response.data;
+
+                setUsers((current) =>
+                    current.map((user) =>
+                        user.id === formData.id
+                            ? updatedUser
+                            : user
+                    )
+                );
+
+            }
+
+
+            /* =============================================
+               CREATE USER
+            ============================================= */
+
+            else {
+
+                const response = await UserService.create(data);
+
+                const newUser =
+                    response.data?.data || response.data;
+
+                setUsers((current) => [
+                    ...current,
+                    newUser,
+                ]);
+
+            }
+
+
+            setUserDialog(null);
+
+        } catch (error) {
+
+            console.error("========== SAVE USER ERROR ==========");
+            console.error(error);
+            console.error("Status:", error.response?.status);
+            console.error("Response:", error.response?.data);
+            console.error("====================================");
+
+            alert(
+                `${getErrorMessage(error, "Failed to save user.")}\nStatus: ${
+                    error.response?.status || "Unknown"
+                }`
+            );
+
+        } finally {
+            setSavingUser(false);
+        }
+    };
+
+
+    /* =====================================================
+       SAVE ROLE
+    ===================================================== */
+
+    const handleSaveRole = async (formData) => {
+
+        try {
+
+            setSavingRole(true);
+            setRoleError("");
+
+            const data = {
+
+                name: formData.name.trim(),
+
+                description: formData.description.trim(),
+
+            };
+
+
+            /* =============================================
+               UPDATE ROLE
+            ============================================= */
+
+            if (formData.id) {
+
+                const response = await RoleService.update(
+                    formData.id,
+                    data
+                );
+
+                const updatedRole =
+                    response.data?.data || response.data;
+
+                setRoles((current) =>
+                    current.map((role) =>
+                        role.id === formData.id
+                            ? updatedRole
+                            : role
+                    )
+                );
+
+            }
+
+
+            /* =============================================
+               CREATE ROLE
+            ============================================= */
+
+            else {
+
+                const response = await RoleService.create(data);
+
+                const newRole =
+                    response.data?.data || response.data;
+
+                setRoles((current) => [
+                    ...current,
+                    newRole,
+                ]);
+
+            }
+
+
+            setRoleDialog(null);
+
+        } catch (error) {
+
+            console.error("Failed to save role:", error);
+
+            alert(
+                getErrorMessage(error, "Failed to save role.")
+            );
+
+        } finally {
+            setSavingRole(false);
+        }
+    };
+
+
+    /* =====================================================
+       DELETE USER / ROLE
+    ===================================================== */
+
+    const handleDelete = async () => {
+
+        if (!deleteDialog || deleting) return;
+
+        try {
+
+            setDeleting(true);
+
+            const itemId = deleteDialog.item.id;
+
+
+            /* =============================================
+               DELETE USER
+            ============================================= */
+
+            if (deleteDialog.type === "user") {
+
+                await UserService.delete(itemId);
+
+                setUsers((current) =>
+                    current.filter(
+                        (user) => user.id !== itemId
+                    )
+                );
+
+            }
+
+
+            /* =============================================
+               DELETE ROLE
+            ============================================= */
+
+            else if (deleteDialog.type === "role") {
+
+                await RoleService.delete(itemId);
+
+                setRoles((current) =>
+                    current.filter(
+                        (role) => role.id !== itemId
+                    )
+                );
+
+                // Refresh users after deleting a role.
+                await fetchUsers();
+
+            }
+
+
+            setDeleteDialog(null);
+
+        } catch (error) {
+
+            console.error("Failed to delete:", error);
+
+            alert(
+                getErrorMessage(error, "Failed to delete.")
+            );
+
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+
+    /* =====================================================
+       OPEN USER DIALOG
+    ===================================================== */
+
+    const openCreateUser = () => {
+        setUserDialog({
+            mode: "create",
+            user: null,
+        });
+    };
+
+
+    const openEditUser = (user) => {
+        setUserDialog({
+            mode: "edit",
+            user,
+        });
+    };
+
+
+    /* =====================================================
+       OPEN ROLE DIALOG
+    ===================================================== */
+
+    const openCreateRole = () => {
+        setRoleDialog({
+            mode: "create",
+            role: null,
+        });
+    };
+
+
+    const openEditRole = (role) => {
+        setRoleDialog({
+            mode: "edit",
+            role,
+        });
+    };
+
+
+    /* =====================================================
+       OPEN DELETE DIALOG
+    ===================================================== */
+
+    const openDeleteDialog = (type, item) => {
+
+        setDeleteDialog({
+            type,
+            item,
+        });
+
+    };
+
+
+    /* =====================================================
+       RETURN
+    ===================================================== */
+
+    return (
+
+        <MainLayout
+            activePage="User Home"
+            title="User Management"
+        >
+
+            <div className="user-management-page">
+
+                {/* =========================================
+                   PAGE HEADER
+                ========================================= */}
+
+                <div className="user-management-header">
+
+                    <div className="page-title-row">
+
+                        <div className="page-title-icon">
+                            <Users size={22} />
+                        </div>
+
+                        <div>
+
+                            <h2>User Management</h2>
+
+                            <p>
+                                Manage users, roles and permissions
+                                from one place.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    {activeTab === "users" ? (
+
+                        <button
+                            type="button"
+                            className="primary-button"
+                            onClick={openCreateUser}
+                        >
+                            <UserPlus size={18} />
+                            Add User
+                        </button>
+
+                    ) : (
+
+                        <button
+                            type="button"
+                            className="primary-button"
+                            onClick={openCreateRole}
+                        >
+                            <ShieldPlus size={18} />
+                            Create Role
+                        </button>
+
+                    )}
+
+                </div>
+
+
+                {/* =========================================
+                   TABS
+                ========================================= */}
+
+                <div className="user-tabs">
+
+                    <button
+                        type="button"
+                        className={`user-tab ${
+                            activeTab === "users" ? "active" : ""
+                        }`}
+                        onClick={() => setActiveTab("users")}
+                    >
+
+                        <div className="tab-icon">
+                            <Users size={20} />
+                        </div>
+
+                        <div className="tab-content">
+
+                            <strong>Users</strong>
+
+                            <small>
+                                {users.length} registered users
+                            </small>
+
+                        </div>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        className={`user-tab ${
+                            activeTab === "roles" ? "active" : ""
+                        }`}
+                        onClick={() => setActiveTab("roles")}
+                    >
+
+                        <div className="tab-icon">
+                            <Shield size={20} />
+                        </div>
+
+                        <div className="tab-content">
+
+                            <strong>Roles & Permissions</strong>
+
+                            <small>
+                                {roles.length} available roles
+                            </small>
+
+                        </div>
+
+                    </button>
+
+                </div>
+
+
+                {/* =========================================
+                   CONTENT
+                ========================================= */}
+
+                <div className="user-tab-panel">
+
+                    {activeTab === "users" && (
+
+                        <UserList
+
+                            users={filteredUsers}
+
+                            searchUser={searchUser}
+
+                            setSearchUser={setSearchUser}
+
+                            loading={loadingUsers}
+
+                            error={userError}
+
+                            onRetry={fetchUsers}
+
+                            onAdd={openCreateUser}
+
+                            onEdit={openEditUser}
+
+                            onDelete={(user) =>
+                                openDeleteDialog("user", user)
+                            }
+
+                        />
+
+                    )}
+
+
+                    {activeTab === "roles" && (
+
+                        <RoleList
+
+                            roles={roles}
+
+                            loading={loadingRoles}
+
+                            error={roleError}
+
+                            onRetry={fetchRoles}
+
+                            onAdd={openCreateRole}
+
+                            onEdit={openEditRole}
+
+                            onDelete={(role) =>
+                                openDeleteDialog("role", role)
+                            }
+
+                        />
+
+                    )}
+
+                </div>
+
+            </div>
+
+
+            {/* =============================================
+               USER DIALOG
+            ============================================= */}
+
+            {userDialog && (
+
+                <UserDialog
+
+                    key={
+                        userDialog.user?.id || "new-user"
+                    }
+
+                    user={userDialog.user}
+
+                    roles={roles}
+
+                    saving={savingUser}
+
+                    onClose={() => setUserDialog(null)}
+
+                    onSave={handleSaveUser}
+
+                />
+
+            )}
+
+
+            {/* =============================================
+               ROLE DIALOG
+            ============================================= */}
+
+            {roleDialog && (
+
+                <RoleDialog
+
+                    key={
+                        roleDialog.role?.id || "new-role"
+                    }
+
+                    role={roleDialog.role}
+
+                    saving={savingRole}
+
+                    onClose={() => setRoleDialog(null)}
+
+                    onSave={handleSaveRole}
+
+                />
+
+            )}
+
+
+            {/* =============================================
+               DELETE DIALOG
+            ============================================= */}
+
+            {deleteDialog && (
+
+                <DeleteDialog
+
+                    type={deleteDialog.type}
+
+                    item={deleteDialog.item}
+
+                    deleting={deleting}
+
+                    onClose={() => setDeleteDialog(null)}
+
+                    onDelete={handleDelete}
+
+                />
+
+            )}
+
+        </MainLayout>
+
+    );
 }
+
 
 /* =========================================================
-   PAGE HEADER
+   USER LIST
 ========================================================= */
 
-.user-management-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    margin-bottom: 26px;
+function UserList({
+    users,
+    searchUser,
+    setSearchUser,
+    loading,
+    error,
+    onRetry,
+    onAdd,
+    onEdit,
+    onDelete,
+}) {
+
+    return (
+
+        <div className="management-card">
+
+            {/* HEADER */}
+
+            <div className="list-header">
+
+                <div>
+
+                    <h3>Registered Users</h3>
+
+                    <p>
+                        Add, update and remove users from your system.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={onAdd}
+                >
+                    <UserPlus size={17} />
+                    New User
+                </button>
+
+            </div>
+
+
+            {/* TOOLBAR */}
+
+            <div className="list-toolbar">
+
+                <div className="search-box">
+
+                    <Search size={18} />
+
+                    <input
+                        type="text"
+                        value={searchUser}
+                        onChange={(e) =>
+                            setSearchUser(e.target.value)
+                        }
+                        placeholder="Search users..."
+                    />
+
+                    {searchUser && (
+
+                        <button
+                            type="button"
+                            className="search-clear"
+                            onClick={() => setSearchUser("")}
+                            title="Clear search"
+                        >
+                            <X size={15} />
+                        </button>
+
+                    )}
+
+                </div>
+
+
+                <div className="result-count">
+
+                    {loading
+                        ? "Loading..."
+                        : `${users.length} users`
+                    }
+
+                </div>
+
+            </div>
+
+
+            {/* ERROR */}
+
+            {error && (
+
+                <div className="user-error-message">
+
+                    <p>{error}</p>
+
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onRetry}
+                    >
+                        <RefreshCw size={15} />
+                        Try Again
+                    </button>
+
+                </div>
+
+            )}
+
+
+            {/* TABLE */}
+
+            <div className="users-table-wrapper">
+
+                {loading ? (
+
+                    <div className="empty-state">
+
+                        <Users size={40} />
+
+                        <h4>Loading users...</h4>
+
+                        <p>
+                            Please wait while we load your users.
+                        </p>
+
+                    </div>
+
+                ) : users.length === 0 ? (
+
+                    <div className="empty-state">
+
+                        <Users size={40} />
+
+                        <h4>No users found</h4>
+
+                        <p>
+                            Try another search or create a new user.
+                        </p>
+
+                        {!searchUser && (
+
+                            <button
+                                type="button"
+                                className="primary-button"
+                                onClick={onAdd}
+                            >
+                                <UserPlus size={17} />
+                                Add User
+                            </button>
+
+                        )}
+
+                    </div>
+
+                ) : (
+
+                    <table className="users-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>User</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Contact</th>
+                                <th className="action-column">
+                                    Actions
+                                </th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {users.map((user) => (
+
+                                <tr key={user.id}>
+
+                                    {/* USER */}
+
+                                    <td>
+
+                                        <div className="user-cell">
+
+                                            <div className="user-avatar">
+                                                {getInitials(user)}
+                                            </div>
+
+                                            <div>
+
+                                                <strong>
+                                                    {getFullName(user) || "Unnamed User"}
+                                                </strong>
+
+                                                <span>
+                                                    {user.email || "-"}
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    {/* USERNAME */}
+
+                                    <td>
+
+                                        <span className="username-text">
+                                            @{user.username || "-"}
+                                        </span>
+
+                                    </td>
+
+
+                                    {/* ROLE */}
+
+                                    <td>
+
+                                        <span className="role-badge">
+
+                                            <Shield size={14} />
+
+                                            {user.role?.name || "No Role"}
+
+                                        </span>
+
+                                    </td>
+
+
+                                    {/* STATUS */}
+
+                                    <td>
+
+                                        <span
+                                            className={`status-badge ${
+                                                (user.status || "ACTIVE").toLowerCase()
+                                            }`}
+                                        >
+
+                                            <span className="status-dot" />
+
+                                            {user.status || "ACTIVE"}
+
+                                        </span>
+
+                                    </td>
+
+
+                                    {/* CONTACT */}
+
+                                    <td>
+
+                                        <div className="contact-cell">
+
+                                            <span>
+                                                <Phone size={12} />
+                                                {user.phone || "-"}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    {/* ACTIONS */}
+
+                                    <td>
+
+                                        <div className="row-actions">
+
+                                            <button
+                                                type="button"
+                                                className="icon-action edit"
+                                                title="Edit user"
+                                                onClick={() => onEdit(user)}
+                                            >
+                                                <Edit3 size={16} />
+                                            </button>
+
+
+                                            <button
+                                                type="button"
+                                                className="icon-action delete"
+                                                title="Delete user"
+                                                onClick={() => onDelete(user)}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className="icon-action more"
+                                                title="More actions"
+                                                onClick={() => onEdit(user)}
+                                            >
+                                                <MoreHorizontal size={17} />
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                )}
+
+            </div>
+
+        </div>
+
+    );
 }
 
-.page-title-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-}
-
-.page-title-icon {
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
-    border-radius: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #eef4ff;
-    color: #356ae6;
-}
-
-.user-management-header h2 {
-    margin: 0;
-    color: #151a24;
-    font-size: 25px;
-    font-weight: 750;
-    letter-spacing: -0.4px;
-}
-
-.user-management-header p {
-    margin: 5px 0 0;
-    color: #7a8497;
-    font-size: 14px;
-}
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.primary-button,
-.secondary-button {
-    min-height: 42px;
-    padding: 0 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: 9px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 650;
-    cursor: pointer;
-    transition: all 0.18s ease;
-}
-
-.primary-button {
-    border: 0;
-    color: #fff;
-    background: #356ae6;
-    box-shadow: 0 5px 14px rgba(53, 106, 230, 0.18);
-}
-
-.primary-button:hover {
-    background: #285bd3;
-    transform: translateY(-1px);
-    box-shadow: 0 7px 18px rgba(53, 106, 230, 0.25);
-}
-
-.secondary-button {
-    color: #344054;
-    background: #fff;
-    border: 1px solid #e1e6ef;
-}
-
-.secondary-button:hover {
-    background: #f8faff;
-    border-color: #ccd5e5;
-}
-
-/* =========================================================
-   TABS
-========================================================= */
-
-.user-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.user-tab {
-    min-width: 0;
-    min-height: 76px;
-    padding: 14px 17px;
-    display: flex;
-    align-items: center;
-    gap: 13px;
-    text-align: left;
-    border: 1px solid #e3e8f0;
-    border-radius: 12px;
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.18s ease;
-}
-
-.user-tab:hover {
-    border-color: #cbd6ea;
-    transform: translateY(-1px);
-}
-
-.user-tab.active {
-    border-color: #356ae6;
-    background: #f8faff;
-    box-shadow: 0 5px 16px rgba(40, 75, 140, 0.07);
-}
-
-.tab-icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f4f9;
-    color: #6e788a;
-}
-
-.user-tab.active .tab-icon {
-    background: #e7efff;
-    color: #356ae6;
-}
-
-.tab-content {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.tab-content strong {
-    color: #1a2230;
-    font-size: 14px;
-}
-
-.tab-content small {
-    color: #8992a3;
-    font-size: 12px;
-}
-
-/* =========================================================
-   MAIN MANAGEMENT CARD
-========================================================= */
-
-.management-card {
-    width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid #e4e8ef;
-    border-radius: 14px;
-    box-shadow: 0 4px 16px rgba(31, 45, 68, 0.035);
-}
-
-/* =========================================================
-   LIST HEADER
-========================================================= */
-
-.list-header {
-    min-height: 80px;
-    padding: 19px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-bottom: 1px solid #edf0f5;
-}
-
-.list-header h3 {
-    margin: 0;
-    color: #18202d;
-    font-size: 17px;
-}
-
-.list-header p {
-    margin: 5px 0 0;
-    color: #8992a2;
-    font-size: 13px;
-}
-
-/* =========================================================
-   SEARCH TOOLBAR
-========================================================= */
-
-.list-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 15px 22px;
-    background: #fafbfd;
-    border-bottom: 1px solid #edf0f5;
-}
-
-.search-box {
-    width: min(360px, 100%);
-    min-width: 0;
-    height: 40px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    box-sizing: border-box;
-    border: 1px solid #dfe4ec;
-    border-radius: 8px;
-    background: #fff;
-    color: #98a1b1;
-    transition: all 0.15s ease;
-}
-
-.search-box:focus-within {
-    border-color: #356ae6;
-    box-shadow: 0 0 0 3px rgba(53, 106, 230, 0.08);
-}
-
-.search-box input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: #242b38;
-    font-family: inherit;
-    font-size: 13px;
-}
-
-.search-box input::placeholder {
-    color: #a1a9b7;
-}
-
-.result-count {
-    flex-shrink: 0;
-    color: #7d8798;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* =========================================================
-   USERS TABLE
-========================================================= */
-
-.users-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-}
-
-.users-table {
-    width: 100%;
-    min-width: 900px;
-    border-collapse: collapse;
-}
-
-.users-table th {
-    height: 45px;
-    padding: 0 20px;
-    background: #fafbfd;
-    color: #8a94a5;
-    font-size: 11px;
-    font-weight: 700;
-    text-align: left;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    border-bottom: 1px solid #edf0f5;
-}
-
-.users-table td {
-    padding: 14px 20px;
-    color: #424b5b;
-    font-size: 13px;
-    border-bottom: 1px solid #f0f2f6;
-    white-space: nowrap;
-}
-
-.users-table tbody tr {
-    transition: background 0.15s ease;
-}
-
-.users-table tbody tr:hover {
-    background: #fafcff;
-}
-
-.users-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-/* =========================================================
-   USER CELL - FIXED HORIZONTAL LAYOUT
-========================================================= */
-
-/* Avatar and user information ALWAYS stay in one row */
-
-.user-cell {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 11px;
-
-    width: 100%;
-    min-width: 180px;
-    white-space: nowrap;
-}
-
-/* Avatar never shrinks or moves */
-
-.user-avatar {
-    width: 39px;
-    height: 39px;
-    min-width: 39px;
-    max-width: 39px;
-
-    flex: 0 0 39px;
-
-    border-radius: 50%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #e9efff;
-    color: #356ae6;
-
-    font-size: 12px;
-    font-weight: 750;
-}
-
-/* User name and email stay beside avatar */
-
-.user-cell > div:last-child {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
-    gap: 3px;
-
-    min-width: 0;
-    width: 100%;
-    flex: 1 1 auto;
-
-    overflow: hidden;
-}
-
-/* Prevent long names from breaking the row */
-
-.user-cell strong,
-.user-cell span {
-    display: block;
-
-    width: 100%;
-    max-width: 100%;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.user-cell strong {
-    color: #202735;
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.user-cell span {
-    color: #929baa;
-    font-size: 11px;
-    line-height: 1.4;
-}
-
-.username-text {
-    color: #687386;
-    font-family: monospace;
-    font-size: 12px;
-}
-
-.phone-text {
-    color: #737d8e;
-    font-size: 12px;
-}
-
-/* =========================================================
-   ROLE BADGE
-========================================================= */
-
-.role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 6px 9px;
-    border-radius: 7px;
-    background: #f3f5f9;
-    color: #536075;
-    font-size: 11px;
-    font-weight: 650;
-    white-space: nowrap;
-}
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 9px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 650;
-    white-space: nowrap;
-}
-
-.status-badge.active {
-    background: #ecf9f1;
-    color: #23834d;
-}
-
-.status-badge.inactive {
-    background: #f2f3f5;
-    color: #7c8491;
-}
-
-.status-dot {
-    width: 6px;
-    height: 6px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-/* =========================================================
-   TABLE ACTIONS
-========================================================= */
-
-.action-column {
-    text-align: right !important;
-}
-
-.row-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-}
-
-.icon-action {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e4e8ef;
-    border-radius: 7px;
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.icon-action.edit {
-    color: #356ae6;
-}
-
-.icon-action.edit:hover {
-    background: #edf3ff;
-    border-color: #cddcff;
-}
-
-.icon-action.delete {
-    color: #e04c4c;
-}
-
-.icon-action.delete:hover {
-    background: #fff1f1;
-    border-color: #ffd2d2;
-}
-
-.icon-action.more {
-    color: #7d8797;
-}
-
-.icon-action.more:hover {
-    background: #f4f6f9;
-}
 
 /* =========================================================
    ROLE LIST
 ========================================================= */
 
-.role-list {
-    display: flex;
-    flex-direction: column;
+function RoleList({
+    roles,
+    loading,
+    error,
+    onRetry,
+    onAdd,
+    onEdit,
+    onDelete,
+}) {
+
+    return (
+
+        <div className="management-card">
+
+            {/* HEADER */}
+
+            <div className="list-header">
+
+                <div>
+
+                    <h3>Roles & Permissions</h3>
+
+                    <p>
+                        Create roles and control what each role can access.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={onAdd}
+                >
+                    <ShieldPlus size={17} />
+                    New Role
+                </button>
+
+            </div>
+
+
+            {/* ERROR */}
+
+            {error && (
+
+                <div className="user-error-message">
+
+                    <p>{error}</p>
+
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onRetry}
+                    >
+                        <RefreshCw size={15} />
+                        Try Again
+                    </button>
+
+                </div>
+
+            )}
+
+
+            {/* LOADING */}
+
+            {loading ? (
+
+                <div className="empty-state">
+
+                    <Shield size={40} />
+
+                    <h4>Loading roles...</h4>
+
+                    <p>
+                        Please wait while we load your roles.
+                    </p>
+
+                </div>
+
+            ) : (
+
+                <div className="role-list">
+
+                    {roles.map((role) => (
+
+                        <div
+                            className="role-card"
+                            key={role.id}
+                        >
+
+                            <div className="role-card-main">
+
+                                <div className="role-card-icon">
+                                    <Shield size={21} />
+                                </div>
+
+                                <div className="role-card-info">
+
+                                    <div className="role-name-row">
+
+                                        <h4>{role.name}</h4>
+
+                                    </div>
+
+                                    <p>
+                                        {role.description || "No description."}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            {/* ACTIONS */}
+
+                            <div className="role-actions">
+
+                                <button
+                                    type="button"
+                                    className="secondary-icon-button"
+                                    onClick={() => onEdit(role)}
+                                >
+                                    <Edit3 size={16} />
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="danger-icon-button"
+                                    onClick={() => onDelete(role)}
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                </div>
+
+            )}
+
+
+            {/* EMPTY */}
+
+            {!loading && roles.length === 0 && (
+
+                <div className="empty-state">
+
+                    <Shield size={40} />
+
+                    <h4>No roles created</h4>
+
+                    <p>Create your first role.</p>
+
+                    <button
+                        type="button"
+                        className="primary-button"
+                        onClick={onAdd}
+                    >
+                        <ShieldPlus size={17} />
+                        Create Role
+                    </button>
+
+                </div>
+
+            )}
+
+        </div>
+
+    );
 }
 
-.role-card {
-    padding: 20px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-bottom: 1px solid #edf0f5;
-    transition: background 0.15s ease;
-}
-
-.role-card:hover {
-    background: #fcfdff;
-}
-
-.role-card:last-child {
-    border-bottom: 0;
-}
-
-.role-card-main {
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-}
-
-.role-card-icon {
-    width: 43px;
-    height: 43px;
-    flex-shrink: 0;
-    border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #eef3ff;
-    color: #356ae6;
-}
-
-.role-card-info {
-    min-width: 0;
-}
-
-.role-name-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 9px;
-}
-
-.role-name-row h4 {
-    margin: 0;
-    color: #202735;
-    font-size: 15px;
-}
-
-.permission-count {
-    padding: 4px 7px;
-    border-radius: 6px;
-    background: #f1f3f7;
-    color: #7b8596;
-    font-size: 10px;
-    font-weight: 650;
-}
-
-.role-card-info > p {
-    margin: 5px 0 11px;
-    color: #8992a2;
-    font-size: 12px;
-}
-
-.permission-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.permission-preview span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 7px;
-    border-radius: 6px;
-    background: #f7f8fa;
-    color: #667084;
-    font-size: 10px;
-}
-
-.permission-preview span svg {
-    color: #39a86a;
-}
-
-.permission-preview .more-permissions {
-    background: #edf3ff;
-    color: #356ae6;
-    font-weight: 650;
-}
 
 /* =========================================================
-   ROLE ACTIONS
+   USER DIALOG
 ========================================================= */
 
-.role-actions {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    flex-shrink: 0;
+function UserDialog({
+    user,
+    roles,
+    saving,
+    onClose,
+    onSave,
+}) {
+
+    const [form, setForm] = useState({
+
+        id: user?.id || null,
+
+        firstName: user?.firstName || "",
+
+        lastName: user?.lastName || "",
+
+        email: user?.email || "",
+
+        phone: user?.phone || "",
+
+        username: user?.username || "",
+
+        roleId: user?.role?.id?.toString() || "",
+
+        status: user?.status || "ACTIVE",
+
+        password: "",
+
+    });
+
+
+    const [error, setError] = useState("");
+
+
+    const isEdit = Boolean(user);
+
+
+    /* =====================================================
+       UPDATE FIELD
+    ===================================================== */
+
+    const updateField = (field, value) => {
+
+        setForm((current) => ({
+            ...current,
+            [field]: value,
+        }));
+
+    };
+
+
+    /* =====================================================
+       SUBMIT
+    ===================================================== */
+
+    const handleSubmit = (e) => {
+
+        e.preventDefault();
+
+        setError("");
+
+
+        if (
+            !form.firstName.trim() ||
+            !form.lastName.trim() ||
+            !form.email.trim()
+        ) {
+
+            setError(
+                "First name, last name and email are required."
+            );
+
+            return;
+        }
+
+
+        if (!form.username.trim()) {
+
+            setError("Username is required.");
+
+            return;
+        }
+
+
+        if (!form.roleId) {
+
+            setError("Please select a role.");
+
+            return;
+        }
+
+
+        if (!isEdit && !form.password) {
+
+            setError("Password is required.");
+
+            return;
+        }
+
+
+        if (!isEdit && form.password.length < 6) {
+
+            setError("Password must be at least 6 characters.");
+
+            return;
+        }
+
+
+        const data = {
+
+            id: form.id,
+
+            firstName: form.firstName.trim(),
+
+            lastName: form.lastName.trim(),
+
+            email: form.email.trim(),
+
+            phone: form.phone.trim(),
+
+            username: form.username.trim(),
+
+            roleId: Number(form.roleId),
+
+            status: form.status,
+
+            password: form.password,
+
+        };
+
+
+        onSave(data);
+
+    };
+
+
+    return (
+
+        <div
+            className="dialog-overlay"
+            onMouseDown={onClose}
+        >
+
+            <div
+                className="dialog user-dialog"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+
+                {/* HEADER */}
+
+                <div className="dialog-header">
+
+                    <div className="dialog-title">
+
+                        <div className="dialog-icon">
+                            <UserPlus size={20} />
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                {isEdit ? "Update User" : "Add New User"}
+                            </h3>
+
+                            <p>
+                                {isEdit
+                                    ? "Update this user's account information."
+                                    : "Create a new user account and assign a role."
+                                }
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        className="dialog-close"
+                        onClick={onClose}
+                        disabled={saving}
+                    >
+                        <X size={19} />
+                    </button>
+
+                </div>
+
+
+                {/* FORM */}
+
+                <form onSubmit={handleSubmit}>
+
+                    <div className="dialog-body">
+
+                        {error && (
+
+                            <div className="user-error-message">
+                                {error}
+                            </div>
+
+                        )}
+
+
+                        {/* PERSONAL INFORMATION */}
+
+                        <div className="dialog-section-title">
+                            Personal Information
+                        </div>
+
+                        <div className="form-grid">
+
+                            <div className="form-group">
+
+                                <label>
+                                    First Name <span className="required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={form.firstName}
+                                    onChange={(e) =>
+                                        updateField("firstName", e.target.value)
+                                    }
+                                    placeholder="Enter first name"
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>
+                                    Last Name <span className="required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={form.lastName}
+                                    onChange={(e) =>
+                                        updateField("lastName", e.target.value)
+                                    }
+                                    placeholder="Enter last name"
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>
+                                    Email Address <span className="required">*</span>
+                                </label>
+
+                                <input
+                                    type="email"
+                                    value={form.email}
+                                    onChange={(e) =>
+                                        updateField("email", e.target.value)
+                                    }
+                                    placeholder="Enter email address"
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>Phone Number</label>
+
+                                <input
+                                    type="tel"
+                                    value={form.phone}
+                                    onChange={(e) =>
+                                        updateField("phone", e.target.value)
+                                    }
+                                    placeholder="Enter phone number"
+                                />
+
+                            </div>
+
+                        </div>
+
+
+                        {/* ACCOUNT INFORMATION */}
+
+                        <div className="dialog-section-title">
+                            Account Information
+                        </div>
+
+                        <div className="form-grid">
+
+                            <div className="form-group">
+
+                                <label>
+                                    Username <span className="required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={form.username}
+                                    onChange={(e) =>
+                                        updateField("username", e.target.value)
+                                    }
+                                    placeholder="Enter username"
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>
+                                    Role <span className="required">*</span>
+                                </label>
+
+                                <select
+                                    value={form.roleId}
+                                    onChange={(e) =>
+                                        updateField("roleId", e.target.value)
+                                    }
+                                    required
+                                >
+
+                                    <option value="">
+                                        Select role
+                                    </option>
+
+                                    {roles.map((role) => (
+
+                                        <option
+                                            key={role.id}
+                                            value={role.id}
+                                        >
+                                            {role.name}
+                                        </option>
+
+                                    ))}
+
+                                </select>
+
+                                {roles.length === 0 && (
+
+                                    <small>
+                                        No roles available. Please create a role first.
+                                    </small>
+
+                                )}
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>
+                                    Password
+
+                                    {!isEdit && (
+                                        <span className="required">*</span>
+                                    )}
+
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value={form.password}
+                                    onChange={(e) =>
+                                        updateField("password", e.target.value)
+                                    }
+                                    placeholder={
+                                        isEdit
+                                            ? "Leave blank to keep current"
+                                            : "Enter password"
+                                    }
+                                    required={!isEdit}
+                                    minLength={6}
+                                />
+
+                            </div>
+
+
+                            {/* STATUS */}
+
+                            {isEdit && (
+
+                                <div className="form-group status-field">
+
+                                    <label>Status</label>
+
+                                    <select
+                                        value={form.status}
+                                        onChange={(e) =>
+                                            updateField("status", e.target.value)
+                                        }
+                                    >
+
+                                        <option value="ACTIVE">
+                                            Active
+                                        </option>
+
+                                        <option value="INACTIVE">
+                                            Inactive
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* FOOTER */}
+
+                    <div className="dialog-footer">
+
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={onClose}
+                            disabled={saving}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="primary-button"
+                            disabled={saving || roles.length === 0}
+                        >
+
+                            {saving ? (
+                                <>
+                                    <RefreshCw size={16} />
+                                    Saving...
+                                </>
+                            ) : isEdit ? (
+                                <>
+                                    <Edit3 size={17} />
+                                    Update User
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus size={17} />
+                                    Create User
+                                </>
+                            )}
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    );
+
 }
 
-.secondary-icon-button,
-.danger-icon-button {
-    min-height: 35px;
-    padding: 0 11px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 650;
-    transition: all 0.15s ease;
-}
-
-.secondary-icon-button {
-    color: #356ae6;
-    background: #fff;
-    border: 1px solid #dce3ef;
-}
-
-.secondary-icon-button:hover {
-    background: #edf3ff;
-    border-color: #cddcff;
-}
-
-.danger-icon-button {
-    color: #df4e4e;
-    background: #fff;
-    border: 1px solid #f0d8d8;
-}
-
-.danger-icon-button:hover {
-    background: #fff3f3;
-    border-color: #efc5c5;
-}
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
-.empty-state {
-    min-height: 300px;
-    padding: 40px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #a0a8b5;
-    text-align: center;
-}
-
-.empty-state svg {
-    margin-bottom: 12px;
-}
-
-.empty-state h4 {
-    margin: 0 0 5px;
-    color: #4a5363;
-    font-size: 15px;
-}
-
-.empty-state p {
-    margin: 0 0 17px;
-    color: #929baa;
-    font-size: 12px;
-}
-
-/* =========================================================
-   DIALOG OVERLAY
-========================================================= */
-
-.dialog-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(18, 24, 35, 0.48);
-    backdrop-filter: blur(3px);
-    animation: dialogOverlayIn 0.18s ease;
-    overflow-y: auto;
-}
-
-@keyframes dialogOverlayIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* =========================================================
-   BASE DIALOG
-========================================================= */
-
-.dialog {
-    width: 100%;
-    max-width: 700px;
-    max-height: calc(100dvh - 40px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 15px;
-    background: #fff;
-    box-shadow: 0 25px 70px rgba(17, 25, 39, 0.22),
-                0 5px 20px rgba(17, 25, 39, 0.08);
-    animation: dialogIn 0.2s ease;
-}
-
-@keyframes dialogIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px) scale(0.985);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* =========================================================
-   DIALOG HEADER
-========================================================= */
-
-.dialog-header {
-    min-height: 72px;
-    flex-shrink: 0;
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #edf0f5;
-    background: #fff;
-}
-
-.dialog-title {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-width: 0;
-}
-
-.dialog-icon {
-    width: 39px;
-    height: 39px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #edf3ff;
-    color: #356ae6;
-}
-
-.dialog-icon.role {
-    background: #f1efff;
-    color: #6b55cf;
-}
-
-.dialog-title h3 {
-    margin: 0;
-    color: #1d2532;
-    font-size: 16px;
-}
-
-.dialog-title p {
-    margin: 4px 0 0;
-    color: #8b94a3;
-    font-size: 11px;
-}
-
-.dialog-close {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    border: 0;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    color: #8992a1;
-    cursor: pointer;
-}
-
-.dialog-close:hover {
-    background: #f3f5f8;
-    color: #3e4756;
-}
-
-/* =========================================================
-   DIALOG FORM
-========================================================= */
-
-.dialog > form,
-.role-dialog-form {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-/* =========================================================
-   DIALOG BODY
-========================================================= */
-
-.dialog-body {
-    min-height: 0;
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd4e1 transparent;
-    overscroll-behavior: contain;
-}
-
-.dialog-body::-webkit-scrollbar,
-.role-dialog-body::-webkit-scrollbar {
-    width: 6px;
-}
-
-.dialog-body::-webkit-scrollbar-thumb,
-.role-dialog-body::-webkit-scrollbar-thumb {
-    background: #cbd4e1;
-    border-radius: 20px;
-}
-
-/* =========================================================
-   DIALOG SECTION
-========================================================= */
-
-.dialog-section-title {
-    margin-bottom: 13px;
-    color: #333d4d;
-    font-size: 12px;
-    font-weight: 750;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* =========================================================
-   FORM
-========================================================= */
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 15px;
-}
-
-.form-group {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    color: #4e5868;
-    font-size: 11px;
-    font-weight: 650;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid #dfe4ec;
-    border-radius: 8px;
-    outline: none;
-    background: #fff;
-    color: #252d3b;
-    font-family: inherit;
-    font-size: 12px;
-    transition: all 0.15s ease;
-}
-
-.form-group input,
-.form-group select {
-    height: 40px;
-    padding: 0 11px;
-}
-
-.form-group textarea {
-    min-height: 80px;
-    padding: 10px 11px;
-    resize: vertical;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: #a1a9b6;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #356ae6;
-    box-shadow: 0 0 0 3px rgba(53, 106, 230, 0.08);
-}
-
-.required {
-    margin-left: 3px;
-    color: #e04c4c;
-}
-
-.status-field {
-    max-width: 50%;
-    margin-top: 15px;
-}
 
 /* =========================================================
    ROLE DIALOG
 ========================================================= */
 
-.role-dialog {
-    width: min(800px, calc(100vw - 32px));
-    max-width: 800px;
-    max-height: calc(100dvh - 40px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 24px 70px rgba(23, 32, 51, 0.18),
-                0 8px 25px rgba(23, 32, 51, 0.08);
+function RoleDialog({
+    role,
+    saving,
+    onClose,
+    onSave,
+}) {
+
+    const [name, setName] = useState(role?.name || "");
+
+    const [description, setDescription] = useState(
+        role?.description || ""
+    );
+
+    const [error, setError] = useState("");
+
+    const isEdit = Boolean(role);
+
+
+    /* =====================================================
+       SUBMIT
+    ===================================================== */
+
+    const handleSubmit = (e) => {
+
+        e.preventDefault();
+
+        setError("");
+
+        if (!name.trim()) {
+
+            setError("Role name is required.");
+
+            return;
+        }
+
+
+        onSave({
+
+            id: role?.id || null,
+
+            name: name.trim(),
+
+            description: description.trim(),
+
+        });
+
+    };
+
+
+    return (
+
+        <div
+            className="dialog-overlay"
+            onMouseDown={onClose}
+        >
+
+            <div
+                className="dialog role-dialog"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+
+                {/* HEADER */}
+
+                <div className="dialog-header">
+
+                    <div className="dialog-title">
+
+                        <div className="dialog-icon role">
+                            <ShieldPlus size={20} />
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                {isEdit ? "Update Role" : "Create New Role"}
+                            </h3>
+
+                            <p>
+                                Create a role for your users.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        className="dialog-close"
+                        onClick={onClose}
+                        disabled={saving}
+                    >
+                        <X size={19} />
+                    </button>
+
+                </div>
+
+
+                {/* FORM */}
+
+                <form onSubmit={handleSubmit}>
+
+                    <div className="dialog-body">
+
+                        {error && (
+
+                            <div className="user-error-message">
+                                {error}
+                            </div>
+
+                        )}
+
+                        <div className="dialog-section-title">
+                            Role Information
+                        </div>
+
+                        <div className="form-grid">
+
+                            <div className="form-group">
+
+                                <label>
+                                    Role Name <span className="required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) =>
+                                        setName(e.target.value)
+                                    }
+                                    placeholder="e.g. Manager"
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group">
+
+                                <label>Description</label>
+
+                                <textarea
+                                    value={description}
+                                    onChange={(e) =>
+                                        setDescription(e.target.value)
+                                    }
+                                    rows={3}
+                                    placeholder="Describe this role..."
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* FOOTER */}
+
+                    <div className="dialog-footer">
+
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={onClose}
+                            disabled={saving}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="primary-button"
+                            disabled={saving}
+                        >
+
+                            {saving ? (
+                                <>
+                                    <RefreshCw size={16} />
+                                    Saving...
+                                </>
+                            ) : isEdit ? (
+                                <>
+                                    <Edit3 size={17} />
+                                    Update Role
+                                </>
+                            ) : (
+                                <>
+                                    <ShieldPlus size={17} />
+                                    Create Role
+                                </>
+                            )}
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    );
+
 }
 
-.role-dialog-body {
-    min-height: 0;
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 22px 24px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd4e1 transparent;
-    overscroll-behavior: contain;
-}
-
-/* =========================================================
-   ROLE INFORMATION
-========================================================= */
-
-.role-form-top {
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
-    gap: 15px;
-    margin-bottom: 4px;
-}
-
-/* =========================================================
-   PERMISSIONS HEADER
-========================================================= */
-
-.permissions-dialog-header {
-    margin-top: 24px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.permissions-dialog-header h4 {
-    margin: 0;
-    color: #27303e;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.permissions-dialog-header p {
-    margin: 4px 0 0;
-    color: #9098a6;
-    font-size: 11px;
-    line-height: 1.4;
-}
-
-/* =========================================================
-   PERMISSION ACTIONS
-========================================================= */
-
-.permission-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.permission-actions button {
-    min-height: 30px;
-    padding: 0 10px;
-    border: 1px solid #dce3ed;
-    border-radius: 6px;
-    background: #fff;
-    color: #506078;
-    font-family: inherit;
-    font-size: 10px;
-    font-weight: 650;
-    cursor: pointer;
-}
-
-.permission-actions button:hover {
-    background: #f5f8fc;
-    border-color: #cbd6e5;
-    color: #2f5fca;
-}
-
-/* =========================================================
-   PERMISSION LIST
-========================================================= */
-
-.permissions-dialog-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    padding-bottom: 4px;
-}
-
-.permission-dialog-group {
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid #e6eaf0;
-    border-radius: 9px;
-    background: #fff;
-    transition: all 0.18s ease;
-}
-
-.permission-dialog-group:hover {
-    border-color: #d9e0ea;
-    box-shadow: 0 3px 10px rgba(30, 41, 59, 0.04);
-}
-
-.permission-dialog-category {
-    padding: 9px 11px;
-    background: #f8f9fb;
-    border-bottom: 1px solid #e8ebf0;
-    color: #586476;
-    font-size: 10px;
-    font-weight: 750;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.permission-dialog-items {
-    padding: 6px;
-}
-
-.permission-checkbox {
-    min-height: 34px;
-    padding: 0 7px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #657084;
-    font-size: 11px;
-    line-height: 1.3;
-    transition: all 0.16s ease;
-}
-
-.permission-checkbox:hover {
-    background: #f7f9fc;
-    color: #475569;
-}
-
-.permission-checkbox.checked {
-    background: #f1f5ff;
-    color: #2f5fca;
-}
-
-.permission-checkbox input {
-    display: none;
-}
-
-.checkbox-ui {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #cfd6e1;
-    border-radius: 4px;
-    background: #fff;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 800;
-    transition: all 0.16s ease;
-}
-
-.permission-checkbox:hover .checkbox-ui {
-    border-color: #aebbd0;
-}
-
-.permission-checkbox.checked .checkbox-ui {
-    border-color: #356ae6;
-    background: #356ae6;
-    box-shadow: 0 2px 5px rgba(53, 106, 230, 0.18);
-}
-
-/* =========================================================
-   DIALOG FOOTER
-========================================================= */
-
-.dialog-footer {
-    min-height: 68px;
-    flex-shrink: 0;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 9px;
-    border-top: 1px solid #edf0f5;
-    background: #fcfdff;
-}
-
-.role-dialog .dialog-footer {
-    padding: 14px 24px;
-    background: #fff;
-    border-top: 1px solid #e7ebf0;
-}
-
-.dialog-footer-actions {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.selected-permissions {
-    margin-right: auto;
-    color: #7f8998;
-    font-size: 11px;
-}
 
 /* =========================================================
    DELETE DIALOG
 ========================================================= */
 
-.delete-dialog {
-    width: 100%;
-    max-width: 390px;
-    padding: 28px;
-    align-items: center;
-    text-align: center;
+function DeleteDialog({
+    type,
+    item,
+    deleting,
+    onClose,
+    onDelete,
+}) {
+
+    const isUser = type === "user";
+
+    const title = isUser
+        ? "Delete User?"
+        : "Delete Role?";
+
+
+    const name = isUser
+        ? getFullName(item)
+        : item?.name;
+
+
+    return (
+
+        <div
+            className="dialog-overlay"
+            onMouseDown={onClose}
+        >
+
+            <div
+                className="dialog delete-dialog"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+
+                <div className="delete-icon">
+                    <Trash2 size={23} />
+                </div>
+
+
+                <h3>{title}</h3>
+
+
+                <p>
+
+                    Are you sure you want to delete{" "}
+
+                    <strong>
+                        {name || "this item"}
+                    </strong>
+
+                    ?
+
+                    <br />
+
+                    This action cannot be undone.
+
+                </p>
+
+
+                <div className="delete-actions">
+
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onClose}
+                        disabled={deleting}
+                    >
+                        Cancel
+                    </button>
+
+
+                    <button
+                        type="button"
+                        className="delete-confirm-button"
+                        onClick={onDelete}
+                        disabled={deleting}
+                    >
+
+                        {deleting ? (
+                            <>
+                                <RefreshCw size={16} />
+                                Deleting...
+                            </>
+                        ) : (
+                            <>
+                                <Trash2 size={17} />
+                                Delete
+                            </>
+                        )}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    );
+
 }
 
-.delete-icon {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 13px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff0f0;
-    color: #df4d4d;
-}
-
-.delete-dialog h3 {
-    margin: 0;
-    color: #252d3a;
-    font-size: 17px;
-}
-
-.delete-dialog p {
-    margin: 9px 0 22px;
-    color: #858e9d;
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.delete-dialog p strong {
-    color: #4c5565;
-}
-
-.delete-actions {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-}
-
-.delete-actions .secondary-button,
-.delete-actions .delete-confirm-button {
-    min-width: 105px;
-}
-
-.delete-confirm-button {
-    min-height: 42px;
-    padding: 0 15px;
-    border: 0;
-    border-radius: 9px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    background: #df4d4d;
-    color: #fff;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 650;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.delete-confirm-button:hover {
-    background: #cc3f3f;
-    transform: translateY(-1px);
-}
 
 /* =========================================================
-   TABLET - 900px
+   EXPORT
 ========================================================= */
 
-@media (max-width: 900px) {
-
-    .user-management-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .user-management-header > .primary-button {
-        width: 100%;
-    }
-
-    .role-card {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .role-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        padding-top: 2px;
-    }
-
-    .role-actions button {
-        width: 100%;
-        min-height: 40px;
-        justify-content: center;
-        border-radius: 9px;
-        font-size: 12px;
-    }
-}
-
-/* =========================================================
-   MOBILE - 700px
-========================================================= */
-
-@media (max-width: 700px) {
-
-    .user-management-page {
-        padding: 0 0 30px;
-    }
-
-    .user-tabs {
-        grid-template-columns: 1fr;
-    }
-
-    .list-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .list-header .secondary-button {
-        width: 100%;
-    }
-
-    .list-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-        padding: 14px 16px;
-    }
-
-    .search-box {
-        width: 100%;
-    }
-
-    .form-grid,
-    .role-form-top,
-    .permissions-dialog-list {
-        grid-template-columns: 1fr;
-    }
-
-    .status-field {
-        max-width: 100%;
-    }
-
-    .dialog-overlay {
-        padding: 10px;
-        align-items: center;
-    }
-
-    .dialog {
-        max-height: calc(100dvh - 20px);
-    }
-
-    .dialog-header {
-        padding: 14px 16px;
-    }
-
-    .dialog-body {
-        padding: 18px 16px;
-    }
-
-    .dialog-footer {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .selected-permissions {
-        margin-right: 0;
-        text-align: center;
-    }
-
-    .dialog-footer-actions {
-        width: 100%;
-    }
-
-    .dialog-footer-actions button {
-        flex: 1;
-    }
-
-    .role-dialog {
-        width: calc(100vw - 20px);
-        max-height: calc(100dvh - 20px);
-    }
-
-    .role-dialog-body {
-        padding: 18px 16px;
-    }
-
-    .permissions-dialog-header {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .permission-actions {
-        width: 100%;
-    }
-
-    .permission-actions button {
-        flex: 1;
-    }
-
-    .role-dialog .dialog-footer {
-        padding: 12px 16px;
-    }
-}
-
-/* =========================================================
-   SMALL MOBILE - 420px
-========================================================= */
-
-@media (max-width: 420px) {
-
-    .user-management-header h2 {
-        font-size: 21px;
-    }
-
-    .page-title-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 11px;
-    }
-
-    .user-management-header p {
-        font-size: 12px;
-    }
-
-    .user-tab {
-        min-height: 68px;
-        padding: 12px;
-    }
-
-    .list-header {
-        padding: 16px;
-    }
-
-    .users-table {
-        min-width: 900px;
-    }
-
-    .users-table th,
-    .users-table td {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    /* Keep avatar and name horizontal even on small phones */
-
-    .user-cell {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 8px;
-        min-width: 180px;
-    }
-
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        max-width: 32px;
-        flex: 0 0 32px;
-        font-size: 10px;
-    }
-
-    .user-cell > div:last-child {
-        min-width: 0;
-        flex: 1 1 auto;
-    }
-
-    .user-cell strong {
-        font-size: 12px;
-    }
-
-    .user-cell span {
-        font-size: 10px;
-    }
-
-    .role-card {
-        padding: 16px;
-    }
-
-    .role-card-main {
-        gap: 10px;
-    }
-
-    .role-card-icon {
-        width: 39px;
-        height: 39px;
-    }
-
-    .role-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .role-actions button {
-        min-height: 38px;
-        border-radius: 8px;
-        font-size: 11px;
-    }
-
-    .dialog-overlay {
-        padding: 8px;
-    }
-
-    .dialog {
-        max-height: calc(100dvh - 16px);
-        border-radius: 13px;
-    }
-
-    .dialog-title h3 {
-        font-size: 15px;
-    }
-
-    .dialog-title p {
-        font-size: 10px;
-    }
-
-    .dialog-body {
-        padding: 16px 13px;
-    }
-
-    .role-dialog {
-        width: calc(100vw - 16px);
-        max-height: calc(100dvh - 16px);
-    }
-
-    .role-dialog-body {
-        padding: 16px 13px;
-    }
-
-    .permissions-dialog-list {
-        gap: 8px;
-    }
-
-    .permission-dialog-category {
-        padding: 8px 10px;
-    }
-
-    .permission-checkbox {
-        min-height: 32px;
-        font-size: 10.5px;
-    }
-
-    .delete-dialog {
-        padding: 22px 18px;
-    }
-
-    .delete-actions {
-        flex-direction: column;
-    }
-
-    .delete-actions .secondary-button,
-    .delete-actions .delete-confirm-button {
-        width: 100%;
-    }
-}
-
-/* =========================================================
-   EXTRA SMALL MOBILE - 360px
-========================================================= */
-
-@media (max-width: 360px) {
-
-    .page-title-row {
-        gap: 10px;
-    }
-
-    .user-management-header h2 {
-        font-size: 19px;
-    }
-
-    .user-tabs {
-        gap: 8px;
-    }
-
-    .user-tab {
-        gap: 10px;
-    }
-
-    .user-cell {
-        gap: 7px;
-    }
-
-    .user-avatar {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        max-width: 30px;
-        flex-basis: 30px;
-    }
-}
-
-/* =========================================================
-   ACCESSIBILITY
-========================================================= */
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: 2px solid #356ae6;
-    outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
+export default UserHome;
