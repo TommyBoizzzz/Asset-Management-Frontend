@@ -22,7 +22,7 @@ import AssetAssignmentService from "../services/AssetAssignmentService";
 import AssetService from "../../asset/services/AssetService";
 import StaffService from "../../staff/services/staff_home";
 
-const REQUIRED_ROLE = "Asset Management Officer";
+const REQUIRED_ROLE = "SUPER_ADMIN";
 
 /* =============================================================
    GET CURRENT USER
