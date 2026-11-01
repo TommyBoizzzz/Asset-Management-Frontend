@@ -1750,7 +1750,7 @@ function Assets() {
                                 }
                             >
 
-                                <Plus size={16} />
+                                <Plus size={9} />
 
                                 Add Category
 
