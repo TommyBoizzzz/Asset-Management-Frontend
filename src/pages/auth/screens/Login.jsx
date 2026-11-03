@@ -1,8 +1,22 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+    Boxes,
+    User,
+    LockKeyhole,
+    Eye,
+    EyeOff,
+    ArrowRight,
+    ShieldCheck,
+    Package,
+    TrendingUp,
+    Activity,
+    CheckCircle2,
+    Building2,
+} from "lucide-react";
 
 import UserService from "../services/LoginService";
-import loginIllustration from "../../../assets/login-illustration.png";
 import "../css/Login.css";
 
 export default function Login() {
@@ -85,7 +99,7 @@ export default function Login() {
             } else {
                 setError(
                     err.response?.data?.message ||
-                        "Login failed. Please try again."
+                    "Login failed. Please try again."
                 );
             }
         } finally {
@@ -95,263 +109,410 @@ export default function Login() {
 
     return (
         <main className="login-page">
-            <section className="login-left">
-                <div className="left-content">
-                    <div className="brand">
-                        <div className="brand-logo">
-                            <span aria-hidden="true">◆</span>
+
+            {/* LEFT SIDE */}
+            <section className="login-visual">
+
+                <div className="visual-content">
+
+                    {/* BRAND */}
+                    <div className="login-brand">
+                        <div className="brand-icon">
+                            <Boxes size={25} />
                         </div>
 
-                        <div>
+                        <div className="brand-info">
                             <h2>BAMS</h2>
-
-                            <p>
-                                Business Asset Management System
-                            </p>
+                            <p>Business Asset Management System</p>
                         </div>
                     </div>
 
+                    {/* HERO */}
                     <div className="hero-text">
+                        <span className="hero-label">
+                            <span className="hero-label-dot" />
+                            SMART BUSINESS MANAGEMENT
+                        </span>
+
                         <h1>
-                            Manage <span>Assets</span>
+                            Manage Your
                             <br />
-                            Smarter
+                            <span>Assets Smarter.</span>
                         </h1>
 
                         <p>
-                            Track, manage, and optimize your
-                            company&apos;s assets
-                            <br />
-                            from one secure platform.
+                            Take control of your business assets with
+                            a smarter, simpler, and more secure
+                            management experience.
                         </p>
                     </div>
 
-                    <div className="illustration-container">
-                        <img
-                            src={loginIllustration}
-                            alt="Business asset management"
-                        />
+                    {/* DASHBOARD PREVIEW */}
+                    <div className="dashboard-preview">
+
+                        <div className="preview-heading">
+                            <div>
+                                <span className="preview-caption">
+                                    SYSTEM OVERVIEW
+                                </span>
+                                <h3>Asset Dashboard</h3>
+                            </div>
+
+                            <div className="preview-status">
+                                <span />
+                                Live
+                            </div>
+                        </div>
+
+                        <div className="preview-cards">
+
+                            <div className="preview-card">
+                                <div className="preview-card-top">
+                                    <span className="preview-icon blue">
+                                        <Package size={17} />
+                                    </span>
+                                    <TrendingUp size={15} className="trend-icon" />
+                                </div>
+
+                                <span className="preview-card-label">
+                                    Active Assets
+                                </span>
+
+                                <strong>4,268</strong>
+
+                                <small>
+                                    <span>+12.4%</span> this month
+                                </small>
+                            </div>
+
+                            <div className="preview-card">
+                                <div className="preview-card-top">
+                                    <span className="preview-icon green">
+                                        <Activity size={17} />
+                                    </span>
+                                    <CheckCircle2
+                                        size={15}
+                                        className="trend-icon"
+                                    />
+                                </div>
+
+                                <span className="preview-card-label">
+                                    Operational Health
+                                </span>
+
+                                <strong>96.8%</strong>
+
+                                <small>
+                                    Across all locations
+                                </small>
+                            </div>
+                        </div>
+
+                        <div className="preview-chart">
+                            <div className="chart-heading">
+                                <div>
+                                    <span>ASSET PERFORMANCE</span>
+                                    <strong>Monthly Overview</strong>
+                                </div>
+
+                                <span className="chart-period">
+                                    This year
+                                </span>
+                            </div>
+
+                            <div className="chart-bars">
+                                {[38, 55, 45, 72, 58, 86, 68, 95, 75, 88, 65, 100].map(
+                                    (height, index) => (
+                                        <div
+                                            className="chart-bar-wrapper"
+                                            key={index}
+                                        >
+                                            <div
+                                                className={`chart-bar ${
+                                                    index === 11
+                                                        ? "active"
+                                                        : ""
+                                                }`}
+                                                style={{
+                                                    height: `${height}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    )
+                                )}
+                            </div>
+
+                            <div className="chart-months">
+                                <span>JAN</span>
+                                <span>MAR</span>
+                                <span>MAY</span>
+                                <span>JUL</span>
+                                <span>SEP</span>
+                                <span>DEC</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="features">
-                        <div className="feature-item">
-                            <div
-                                className="feature-icon"
-                                aria-hidden="true"
-                            >
-                                ✓
-                            </div>
-
-                            <div>
-                                <h3>Real-time Tracking</h3>
-                                <p>
-                                    Monitor all assets in real-time
-                                </p>
-                            </div>
+                    {/* FEATURES */}
+                    <div className="visual-features">
+                        <div>
+                            <ShieldCheck size={16} />
+                            <span>Secure Management</span>
                         </div>
 
-                        <div className="feature-item">
-                            <div
-                                className="feature-icon"
-                                aria-hidden="true"
-                            >
-                                ◉
-                            </div>
-
-                            <div>
-                                <h3>Secure Management</h3>
-                                <p>
-                                    Your data is protected and safe
-                                </p>
-                            </div>
+                        <div>
+                            <Activity size={16} />
+                            <span>Real-time Tracking</span>
                         </div>
 
-                        <div className="feature-item">
-                            <div
-                                className="feature-icon"
-                                aria-hidden="true"
-                            >
-                                ⚒
-                            </div>
-
-                            <div>
-                                <h3>Maintenance Monitoring</h3>
-                                <p>
-                                    Automate service schedules
-                                </p>
-                            </div>
+                        <div>
+                            <Building2 size={16} />
+                            <span>Centralized Control</span>
                         </div>
                     </div>
+
+                    <div className="visual-copyright">
+                        © {new Date().getFullYear()} BAMS. All rights reserved.
+                    </div>
+
                 </div>
             </section>
 
-            <section className="login-right">
-                <div className="login-card">
-                    <div
-                        className="login-icon"
-                        aria-hidden="true"
-                    >
-                        <span>▣</span>
+            {/* RIGHT SIDE */}
+            <section className="login-main">
+
+                <div className="login-topbar">
+                    <div className="mobile-brand">
+                        <div className="brand-icon">
+                            <Boxes size={21} />
+                        </div>
+                        <span>BAMS</span>
                     </div>
 
-                    <div className="login-header">
-                        <h1>ASSET MANAGEMENT SYSTEM</h1>
-                        <p>Sign in to your account</p>
-
-                        <span>
-                            Manage your assets in one secure place
-                        </span>
+                    <div className="topbar-security">
+                        <ShieldCheck size={16} />
+                        <span>Secure Access</span>
                     </div>
+                </div>
 
-                    <form onSubmit={handleLogin} noValidate>
-                        <div className="form-group">
-                            <label htmlFor="username">
-                                Username
-                            </label>
+                <div className="login-container">
 
-                            <div className="input-wrapper">
-                                <span
-                                    className="input-icon"
-                                    aria-hidden="true"
-                                >
-                                    👤
-                                </span>
+                    <div className="login-card">
 
-                                <input
-                                    id="username"
-                                    type="text"
-                                    name="username"
-                                    placeholder="Enter your username"
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    autoComplete="username"
-                                    disabled={loading}
-                                    autoFocus
-                                />
+                        {/* LOGIN HEADER */}
+                        <div className="login-heading">
+
+                            <div className="login-heading-icon">
+                                <LockKeyhole size={24} />
                             </div>
+
+                            <span className="welcome-label">
+                                WELCOME BACK
+                            </span>
+
+                            <h1>
+                                Sign in to your
+                                <span> account</span>
+                            </h1>
+
+                            <p>
+                                Enter your credentials to access your
+                                asset management dashboard.
+                            </p>
+
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">
-                                Password
-                            </label>
+                        {/* LOGIN FORM */}
+                        <form onSubmit={handleLogin} noValidate>
 
-                            <div className="input-wrapper">
-                                <span
-                                    className="input-icon"
-                                    aria-hidden="true"
-                                >
-                                    🔒
-                                </span>
+                            {/* USERNAME */}
+                            <div className="login-form-group">
 
-                                <input
-                                    id="password"
-                                    type={
-                                        showPassword
-                                            ? "text"
-                                            : "password"
-                                    }
-                                    name="password"
-                                    placeholder="Enter your password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    autoComplete="current-password"
-                                    disabled={loading}
-                                />
+                                <label htmlFor="username">
+                                    Username
+                                </label>
+
+                                <div className="login-input-wrapper">
+
+                                    <User
+                                        className="login-input-icon"
+                                        size={19}
+                                    />
+
+                                    <input
+                                        id="username"
+                                        type="text"
+                                        name="username"
+                                        placeholder="Enter your username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        autoComplete="username"
+                                        disabled={loading}
+                                        autoFocus
+                                    />
+
+                                </div>
+                            </div>
+
+                            {/* PASSWORD */}
+                            <div className="login-form-group">
+
+                                <label htmlFor="password">
+                                    Password
+                                </label>
+
+                                <div className="login-input-wrapper">
+
+                                    <LockKeyhole
+                                        className="login-input-icon"
+                                        size={18}
+                                    />
+
+                                    <input
+                                        id="password"
+                                        type={
+                                            showPassword
+                                                ? "text"
+                                                : "password"
+                                        }
+                                        name="password"
+                                        placeholder="Enter your password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        autoComplete="current-password"
+                                        disabled={loading}
+                                    />
+
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() =>
+                                            setShowPassword(
+                                                (previous) => !previous
+                                            )
+                                        }
+                                        aria-label={
+                                            showPassword
+                                                ? "Hide password"
+                                                : "Show password"
+                                        }
+                                        disabled={loading}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff size={19} />
+                                        ) : (
+                                            <Eye size={19} />
+                                        )}
+                                    </button>
+
+                                </div>
+                            </div>
+
+                            {/* OPTIONS */}
+                            <div className="login-options">
+
+                                <label className="remember-option">
+                                    <input
+                                        type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(event) =>
+                                            setRememberMe(
+                                                event.target.checked
+                                            )
+                                        }
+                                        disabled={loading}
+                                    />
+
+                                    <span className="custom-checkbox">
+                                        <CheckCircle2 size={13} />
+                                    </span>
+
+                                    <span>Remember me</span>
+                                </label>
 
                                 <button
                                     type="button"
-                                    className="password-toggle"
+                                    className="forgot-password"
                                     onClick={() =>
-                                        setShowPassword(
-                                            (previous) => !previous
+                                        window.alert(
+                                            "Please contact the administrator to reset your password."
                                         )
                                     }
-                                    aria-label={
-                                        showPassword
-                                            ? "Hide password"
-                                            : "Show password"
-                                    }
-                                    aria-pressed={showPassword}
-                                    disabled={loading}
                                 >
-                                    {showPassword ? "◉" : "◌"}
+                                    Forgot password?
                                 </button>
+
                             </div>
+
+                            {/* ERROR */}
+                            {error && (
+                                <div
+                                    className="login-error"
+                                    role="alert"
+                                >
+                                    <span className="error-icon">!</span>
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* SUBMIT */}
+                            <button
+                                type="submit"
+                                className="login-submit"
+                                disabled={loading}
+                            >
+                                <span>
+                                    {loading
+                                        ? "Signing in..."
+                                        : "Sign In"}
+                                </span>
+
+                                {!loading && (
+                                    <ArrowRight size={19} />
+                                )}
+                            </button>
+
+                        </form>
+
+                        {/* DIVIDER */}
+                        <div className="login-divider">
+                            <span />
+                            <p>SECURE BUSINESS ACCESS</p>
+                            <span />
                         </div>
 
-                        <div className="login-options">
-                            <label className="remember">
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(event) =>
-                                        setRememberMe(
-                                            event.target.checked
-                                        )
-                                    }
-                                    disabled={loading}
-                                />
-
-                                <span>Remember me</span>
-                            </label>
+                        {/* ADMIN CONTACT */}
+                        <div className="admin-contact">
+                            <p>Don't have an account?</p>
 
                             <button
                                 type="button"
-                                className="forgot-password"
                                 onClick={() =>
                                     window.alert(
-                                        "Please contact the administrator to reset your password."
+                                        "Please contact the administrator."
                                     )
                                 }
                             >
-                                Forgot Password?
+                                Contact Administrator
                             </button>
                         </div>
 
-                        {error && (
-                            <div
-                                className="login-error"
-                                role="alert"
-                            >
-                                {error}
-                            </div>
-                        )}
+                        <div className="login-security-note">
+                            <ShieldCheck size={15} />
+                            <span>
+                                Your account is protected with secure access.
+                            </span>
+                        </div>
 
-                        <button
-                            type="submit"
-                            className="login-button"
-                            disabled={loading}
-                        >
-                            {loading
-                                ? "Signing In..."
-                                : "Sign In"}
-                        </button>
-                    </form>
-
-                    <div className="divider">
-                        <span />
-                        <p>or continue with</p>
-                        <span />
-                    </div>
-
-                    <div className="register-text">
-                        <span>
-                            Don&apos;t have an account?
-                        </span>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                window.alert(
-                                    "Please contact the administrator."
-                                )
-                            }
-                        >
-                            Contact Administrator
-                        </button>
                     </div>
                 </div>
+
+                <footer className="login-footer">
+                    <span>Powered by BAMS</span>
+                    <span className="footer-dot">•</span>
+                    <span>Business Asset Management System</span>
+                </footer>
+
             </section>
         </main>
     );
