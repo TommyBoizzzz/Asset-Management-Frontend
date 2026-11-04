@@ -1,519 +1,241 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-    Boxes,
-    User,
-    LockKeyhole,
-    Eye,
-    EyeOff,
-    ArrowRight,
-    ShieldCheck,
-    Package,
-    TrendingUp,
-    Activity,
-    CheckCircle2,
-    Building2,
+  Eye,
+  EyeOff,
+  Mail,
+  LockKeyhole,
+  ArrowRight,
+  ShieldCheck,
+  Boxes,
 } from "lucide-react";
-
-import UserService from "../services/LoginService";
 import "../css/Login.css";
 
 export default function Login() {
-    const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const [formData, setFormData] = useState({
-        username: "",
-        password: "",
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
+  };
 
-    const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const handleChange = (event) => {
-        const { name, value } = event.target;
+    if (loading) return;
 
-        setFormData((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
+    setLoading(true);
 
-        setError("");
-    };
+    try {
+      // Connect your authentication API here.
+      console.log({
+        ...formData,
+        rememberMe,
+      });
 
-    const handleLogin = async (event) => {
-        event.preventDefault();
+      // Example:
+      // await AuthService.login(formData);
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const username = formData.username.trim();
+  return (
+    <main className="login-page">
+      {/* Background */}
+      <div className="login-background">
+        <div className="login-orb orb-one" />
+        <div className="login-orb orb-two" />
+        <div className="login-grid" />
+      </div>
 
-        if (!username) {
-            setError("Please enter your username.");
-            return;
-        }
+      <section className="login-container">
+        {/* Left Panel */}
+        <div className="login-showcase">
+          <div className="showcase-content">
+            <div className="brand-logo">
+              <Boxes size={27} strokeWidth={2.2} />
+            </div>
 
-        if (!formData.password) {
-            setError("Please enter your password.");
-            return;
-        }
+            <span className="showcase-label">
+              ASSET MANAGEMENT SYSTEM
+            </span>
 
-        try {
-            setLoading(true);
-            setError("");
+            <h1>
+              Manage Your
+              <br />
+              Assets <span>Smarter.</span>
+            </h1>
 
-            const response = await UserService.login({
-                username,
-                password: formData.password,
-            });
+            <p>
+              A smarter way to manage, track, and control
+              your organization's assets from one powerful
+              platform.
+            </p>
 
-            const user = response.data;
+            <div className="showcase-features">
+              <div>
+                <ShieldCheck size={19} />
+                <span>Secure Management</span>
+              </div>
 
-            localStorage.removeItem("user");
-            localStorage.removeItem("isLoggedIn");
+              <div>
+                <Boxes size={19} />
+                <span>Centralized Asset Control</span>
+              </div>
+            </div>
+          </div>
 
-            sessionStorage.removeItem("user");
-            sessionStorage.removeItem("isLoggedIn");
+          <div className="showcase-footer">
+            <span>POWERED BY TECHNOLOGY</span>
+            <span>VERSION 1.0.0</span>
+          </div>
+        </div>
 
-            const storage = rememberMe
-                ? localStorage
-                : sessionStorage;
+        {/* Right Panel */}
+        <div className="login-form-panel">
+          <div className="login-form-wrapper">
+            <div className="mobile-brand">
+              <div className="brand-logo">
+                <Boxes size={24} />
+              </div>
+              <span>ASSET MANAGEMENT</span>
+            </div>
 
-            storage.setItem("user", JSON.stringify(user));
-            storage.setItem("isLoggedIn", "true");
+            <div className="form-heading">
+              <span className="welcome-label">
+                WELCOME BACK
+              </span>
 
-            navigate("/dashboard", {
-                replace: true,
-            });
-        } catch (err) {
-            console.error("Login error:", err);
+              <h2>Sign in</h2>
 
-            const status = err.response?.status;
+              <p>
+                Enter your credentials to access your account.
+              </p>
+            </div>
 
-            if (status === 401) {
-                setError("Invalid username or password.");
-            } else if (status === 404) {
-                setError("Login service not found.");
-            } else if (err.code === "ERR_NETWORK") {
-                setError("Unable to connect to the server.");
-            } else {
-                setError(
-                    err.response?.data?.message ||
-                    "Login failed. Please try again."
-                );
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+            <form onSubmit={handleSubmit}>
+              {/* Email */}
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
 
-    return (
-        <main className="login-page">
+                <div className="input-wrapper">
+                  <Mail size={19} />
 
-            {/* LEFT SIDE */}
-            <section className="login-visual">
-
-                <div className="visual-content">
-
-                    {/* BRAND */}
-                    <div className="login-brand">
-                        <div className="brand-icon">
-                            <Boxes size={25} />
-                        </div>
-
-                        <div className="brand-info">
-                            <h2>BAMS</h2>
-                            <p>Business Asset Management System</p>
-                        </div>
-                    </div>
-
-                    {/* HERO */}
-                    <div className="hero-text">
-                        <span className="hero-label">
-                            <span className="hero-label-dot" />
-                            SMART BUSINESS MANAGEMENT
-                        </span>
-
-                        <h1>
-                            Manage Your
-                            <br />
-                            <span>Assets Smarter.</span>
-                        </h1>
-
-                        <p>
-                            Take control of your business assets with
-                            a smarter, simpler, and more secure
-                            management experience.
-                        </p>
-                    </div>
-
-                    {/* DASHBOARD PREVIEW */}
-                    <div className="dashboard-preview">
-
-                        <div className="preview-heading">
-                            <div>
-                                <span className="preview-caption">
-                                    SYSTEM OVERVIEW
-                                </span>
-                                <h3>Asset Dashboard</h3>
-                            </div>
-
-                            <div className="preview-status">
-                                <span />
-                                Live
-                            </div>
-                        </div>
-
-                        <div className="preview-cards">
-
-                            <div className="preview-card">
-                                <div className="preview-card-top">
-                                    <span className="preview-icon blue">
-                                        <Package size={17} />
-                                    </span>
-                                    <TrendingUp size={15} className="trend-icon" />
-                                </div>
-
-                                <span className="preview-card-label">
-                                    Active Assets
-                                </span>
-
-                                <strong>4,268</strong>
-
-                                <small>
-                                    <span>+12.4%</span> this month
-                                </small>
-                            </div>
-
-                            <div className="preview-card">
-                                <div className="preview-card-top">
-                                    <span className="preview-icon green">
-                                        <Activity size={17} />
-                                    </span>
-                                    <CheckCircle2
-                                        size={15}
-                                        className="trend-icon"
-                                    />
-                                </div>
-
-                                <span className="preview-card-label">
-                                    Operational Health
-                                </span>
-
-                                <strong>96.8%</strong>
-
-                                <small>
-                                    Across all locations
-                                </small>
-                            </div>
-                        </div>
-
-                        <div className="preview-chart">
-                            <div className="chart-heading">
-                                <div>
-                                    <span>ASSET PERFORMANCE</span>
-                                    <strong>Monthly Overview</strong>
-                                </div>
-
-                                <span className="chart-period">
-                                    This year
-                                </span>
-                            </div>
-
-                            <div className="chart-bars">
-                                {[38, 55, 45, 72, 58, 86, 68, 95, 75, 88, 65, 100].map(
-                                    (height, index) => (
-                                        <div
-                                            className="chart-bar-wrapper"
-                                            key={index}
-                                        >
-                                            <div
-                                                className={`chart-bar ${
-                                                    index === 11
-                                                        ? "active"
-                                                        : ""
-                                                }`}
-                                                style={{
-                                                    height: `${height}%`,
-                                                }}
-                                            />
-                                        </div>
-                                    )
-                                )}
-                            </div>
-
-                            <div className="chart-months">
-                                <span>JAN</span>
-                                <span>MAR</span>
-                                <span>MAY</span>
-                                <span>JUL</span>
-                                <span>SEP</span>
-                                <span>DEC</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* FEATURES */}
-                    <div className="visual-features">
-                        <div>
-                            <ShieldCheck size={16} />
-                            <span>Secure Management</span>
-                        </div>
-
-                        <div>
-                            <Activity size={16} />
-                            <span>Real-time Tracking</span>
-                        </div>
-
-                        <div>
-                            <Building2 size={16} />
-                            <span>Centralized Control</span>
-                        </div>
-                    </div>
-
-                    <div className="visual-copyright">
-                        © {new Date().getFullYear()} BAMS. All rights reserved.
-                    </div>
-
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    autoComplete="username"
+                    required
+                  />
                 </div>
-            </section>
+              </div>
 
-            {/* RIGHT SIDE */}
-            <section className="login-main">
+              {/* Password */}
+              <div className="form-group">
+                <div className="password-label">
+                  <label htmlFor="password">Password</label>
 
-                <div className="login-topbar">
-                    <div className="mobile-brand">
-                        <div className="brand-icon">
-                            <Boxes size={21} />
-                        </div>
-                        <span>BAMS</span>
-                    </div>
-
-                    <div className="topbar-security">
-                        <ShieldCheck size={16} />
-                        <span>Secure Access</span>
-                    </div>
+                  <a href="/forgot-password">
+                    Forgot password?
+                  </a>
                 </div>
 
-                <div className="login-container">
+                <div className="input-wrapper">
+                  <LockKeyhole size={19} />
 
-                    <div className="login-card">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="current-password"
+                    required
+                  />
 
-                        {/* LOGIN HEADER */}
-                        <div className="login-heading">
-
-                            <div className="login-heading-icon">
-                                <LockKeyhole size={24} />
-                            </div>
-
-                            <span className="welcome-label">
-                                WELCOME BACK
-                            </span>
-
-                            <h1>
-                                Sign in to your
-                                <span> account</span>
-                            </h1>
-
-                            <p>
-                                Enter your credentials to access your
-                                asset management dashboard.
-                            </p>
-
-                        </div>
-
-                        {/* LOGIN FORM */}
-                        <form onSubmit={handleLogin} noValidate>
-
-                            {/* USERNAME */}
-                            <div className="login-form-group">
-
-                                <label htmlFor="username">
-                                    Username
-                                </label>
-
-                                <div className="login-input-wrapper">
-
-                                    <User
-                                        className="login-input-icon"
-                                        size={19}
-                                    />
-
-                                    <input
-                                        id="username"
-                                        type="text"
-                                        name="username"
-                                        placeholder="Enter your username"
-                                        value={formData.username}
-                                        onChange={handleChange}
-                                        autoComplete="username"
-                                        disabled={loading}
-                                        autoFocus
-                                    />
-
-                                </div>
-                            </div>
-
-                            {/* PASSWORD */}
-                            <div className="login-form-group">
-
-                                <label htmlFor="password">
-                                    Password
-                                </label>
-
-                                <div className="login-input-wrapper">
-
-                                    <LockKeyhole
-                                        className="login-input-icon"
-                                        size={18}
-                                    />
-
-                                    <input
-                                        id="password"
-                                        type={
-                                            showPassword
-                                                ? "text"
-                                                : "password"
-                                        }
-                                        name="password"
-                                        placeholder="Enter your password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        autoComplete="current-password"
-                                        disabled={loading}
-                                    />
-
-                                    <button
-                                        type="button"
-                                        className="password-toggle"
-                                        onClick={() =>
-                                            setShowPassword(
-                                                (previous) => !previous
-                                            )
-                                        }
-                                        aria-label={
-                                            showPassword
-                                                ? "Hide password"
-                                                : "Show password"
-                                        }
-                                        disabled={loading}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff size={19} />
-                                        ) : (
-                                            <Eye size={19} />
-                                        )}
-                                    </button>
-
-                                </div>
-                            </div>
-
-                            {/* OPTIONS */}
-                            <div className="login-options">
-
-                                <label className="remember-option">
-                                    <input
-                                        type="checkbox"
-                                        checked={rememberMe}
-                                        onChange={(event) =>
-                                            setRememberMe(
-                                                event.target.checked
-                                            )
-                                        }
-                                        disabled={loading}
-                                    />
-
-                                    <span className="custom-checkbox">
-                                        <CheckCircle2 size={13} />
-                                    </span>
-
-                                    <span>Remember me</span>
-                                </label>
-
-                                <button
-                                    type="button"
-                                    className="forgot-password"
-                                    onClick={() =>
-                                        window.alert(
-                                            "Please contact the administrator to reset your password."
-                                        )
-                                    }
-                                >
-                                    Forgot password?
-                                </button>
-
-                            </div>
-
-                            {/* ERROR */}
-                            {error && (
-                                <div
-                                    className="login-error"
-                                    role="alert"
-                                >
-                                    <span className="error-icon">!</span>
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* SUBMIT */}
-                            <button
-                                type="submit"
-                                className="login-submit"
-                                disabled={loading}
-                            >
-                                <span>
-                                    {loading
-                                        ? "Signing in..."
-                                        : "Sign In"}
-                                </span>
-
-                                {!loading && (
-                                    <ArrowRight size={19} />
-                                )}
-                            </button>
-
-                        </form>
-
-                        {/* DIVIDER */}
-                        <div className="login-divider">
-                            <span />
-                            <p>SECURE BUSINESS ACCESS</p>
-                            <span />
-                        </div>
-
-                        {/* ADMIN CONTACT */}
-                        <div className="admin-contact">
-                            <p>Don't have an account?</p>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    window.alert(
-                                        "Please contact the administrator."
-                                    )
-                                }
-                            >
-                                Contact Administrator
-                            </button>
-                        </div>
-
-                        <div className="login-security-note">
-                            <ShieldCheck size={15} />
-                            <span>
-                                Your account is protected with secure access.
-                            </span>
-                        </div>
-
-                    </div>
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() =>
+                      setShowPassword(!showPassword)
+                    }
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff size={19} />
+                    ) : (
+                      <Eye size={19} />
+                    )}
+                  </button>
                 </div>
+              </div>
 
-                <footer className="login-footer">
-                    <span>Powered by BAMS</span>
-                    <span className="footer-dot">•</span>
-                    <span>Business Asset Management System</span>
-                </footer>
+              {/* Remember */}
+              <div className="remember-row">
+                <label className="remember-option">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) =>
+                      setRememberMe(e.target.checked)
+                    }
+                  />
+                  <span>Remember me</span>
+                </label>
+              </div>
 
-            </section>
-        </main>
-    );
+              {/* Submit */}
+              <button
+                type="submit"
+                className="login-submit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="login-spinner" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in to your account
+                    <ArrowRight size={19} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="login-security">
+              <ShieldCheck size={17} />
+              <span>Your account is protected and secure.</span>
+            </div>
+
+            <div className="login-copyright">
+              © 2026 Asset Management System. All rights reserved.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
