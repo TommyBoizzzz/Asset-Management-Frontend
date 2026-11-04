@@ -4,21 +4,37 @@ import MainLayout from "../../../layouts/MainLayout";
 import AssetService from "../../asset/services/AssetService";
 import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
 import MaintenanceService from "../../matainance/services/MaintenanceService";
+import {
+    isActiveAssignment,
+    normalizeAssetStatus,
+} from "../../../utils/assetLifecycle";
 import "../css/Dashboard.css";
 
 const isStatus = (value, status) =>
     String(value ?? "").toLowerCase() === status.toLowerCase();
 
 const getAssetStatus = (asset, activeAssetIds) => {
-    if (isStatus(asset.status, "maintenance")) {
-        return { label: "Maintenance", className: "maintenance" };
+    const assetStatus = normalizeAssetStatus(asset.status);
+
+    if (assetStatus === "Damaged" || assetStatus === "Retired") {
+        return {
+            label: assetStatus,
+            className: assetStatus.toLowerCase(),
+        };
     }
 
-    if (activeAssetIds.has(String(asset.id))) {
+    if (assetStatus === "Under Maintenance") {
+        return { label: "Under Maintenance", className: "maintenance" };
+    }
+
+    if (
+        assetStatus === "Assigned" ||
+        activeAssetIds.has(String(asset.id))
+    ) {
         return { label: "Assigned", className: "assigned" };
     }
 
-    if (isStatus(asset.status, "active") || isStatus(asset.status, "available")) {
+    if (assetStatus === "Available") {
         return { label: "Available", className: "available" };
     }
 
@@ -92,7 +108,7 @@ function Dashboard() {
     }, []);
 
     const activeAssignments = useMemo(
-        () => assignments.filter((assignment) => isStatus(assignment.status, "ACTIVE")),
+        () => assignments.filter(isActiveAssignment),
         [assignments]
     );
 
@@ -124,12 +140,27 @@ function Dashboard() {
 
     const availableCount = assets.filter(
         (asset) =>
-            (isStatus(asset.status, "active") || isStatus(asset.status, "available")) &&
+            normalizeAssetStatus(asset.status) === "Available" &&
             !activeAssetIds.has(String(asset.id))
     ).length;
-    const assignedCount = activeAssetIds.size;
+    const assignedCount = new Set([
+        ...activeAssetIds,
+        ...assets
+            .filter((asset) => normalizeAssetStatus(asset.status) === "Assigned")
+            .map((asset) => String(asset.id)),
+    ]).size;
     const maintenanceCount = assets.filter((asset) =>
-        isStatus(asset.status, "maintenance")
+        normalizeAssetStatus(asset.status) === "Under Maintenance"
+    ).length;
+    const damagedCount = assets.filter(
+        (asset) => normalizeAssetStatus(asset.status) === "Damaged"
+    ).length;
+    const today = new Date().toISOString().slice(0, 10);
+    const upcomingMaintenanceCount = maintenanceRecords.filter(
+        (record) =>
+            isStatus(record.status, "scheduled") &&
+            record.scheduledDate &&
+            record.scheduledDate >= today
     ).length;
     const activeMaintenanceCount = maintenanceRecords.filter(
         (record) =>
@@ -165,11 +196,25 @@ function Dashboard() {
             color: "purple",
         },
         {
-            label: "Maintenance",
+            label: "Under Maintenance",
             value: maintenanceCount,
             description: "Assets requiring attention",
             icon: "🔧",
             color: "orange",
+        },
+        {
+            label: "Damaged",
+            value: damagedCount,
+            description: "Assets marked unusable",
+            icon: "⚠",
+            color: "red",
+        },
+        {
+            label: "Upcoming Maintenance",
+            value: upcomingMaintenanceCount,
+            description: "Scheduled from today onward",
+            icon: "🗓",
+            color: "blue",
         },
     ];
 

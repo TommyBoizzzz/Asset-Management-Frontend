@@ -9,7 +9,6 @@ import {
     Search,
     Eye,
     Pencil,
-    Trash2,
     Calendar,
     DollarSign,
     User,
@@ -19,7 +18,13 @@ import {
 } from "lucide-react";
 import MaintenanceService from "../services/MaintenanceService";
 import AssetService from "../../asset/services/AssetService";
+import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
 import StaffService from "../../staff/services/staff_home";
+import {
+    getStatusAfterInspection,
+    isActiveAssignment,
+    normalizeAssetStatus,
+} from "../../../utils/assetLifecycle";
 import "../css/Maintenace.css";
 
 const FILTER_TABS = [
@@ -27,21 +32,23 @@ const FILTER_TABS = [
     { key: "SCHEDULED", label: "Scheduled" },
     { key: "IN_PROGRESS", label: "In Progress" },
     { key: "COMPLETED", label: "Completed" },
+    { key: "CANCELLED", label: "Cancelled" },
 ];
 
 const statusOrder = ["SCHEDULED", "IN_PROGRESS", "COMPLETED"];
 
-const formatStatus = (status) => status.replace("_", " ");
+const formatStatus = (status) => (status || "").replaceAll("_", " ");
 
 function getStatusProgress(status) {
     if (status === "SCHEDULED") return 35;
     if (status === "IN_PROGRESS") return 68;
-    return 100;
+    return status === "COMPLETED" ? 100 : 0;
 }
 
 function getStatusLabel(status) {
     if (status === "SCHEDULED") return "Scheduled";
     if (status === "IN_PROGRESS") return "In Progress";
+    if (status === "CANCELLED") return "Cancelled";
     return "Completed";
 }
 
@@ -101,6 +108,7 @@ const normalizeMaintenanceRecord = (record) => {
         actionTaken: record.actionTaken || null,
         cost: Number(record.cost || 0),
         status: record.status || "SCHEDULED",
+        completionCondition: record.completionCondition || record.conditionAfter || "",
         nextMaintenanceDate: normalizeDate(record.nextMaintenanceDate),
         notes: record.notes || "",
         createdAt: record.createdAt
@@ -133,6 +141,7 @@ function MaintenanceHome() {
     const [taskModal, setTaskModal] = useState(null);
     const [taskForm, setTaskForm] = useState(emptyTaskForm);
     const [assetOptions, setAssetOptions] = useState([]);
+    const [assignments, setAssignments] = useState([]);
     const [staffOptions, setStaffOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -143,9 +152,10 @@ function MaintenanceHome() {
                 setLoading(true);
                 setError("");
 
-                const [maintenanceResponse, assetResponse, staffResponse] = await Promise.all([
+                const [maintenanceResponse, assetResponse, assignmentResponse, staffResponse] = await Promise.all([
                     MaintenanceService.getAll(),
                     AssetService.getAll(),
+                    AssetAssignmentService.getAll(),
                     StaffService.getAll(),
                 ]);
 
@@ -155,6 +165,7 @@ function MaintenanceHome() {
 
                 setMaintenanceList(normalized);
                 setAssetOptions(assets);
+                setAssignments(assignmentResponse.data || []);
                 setStaffOptions(staff);
                 setSelectedRecord(null);
             } catch (err) {
@@ -162,6 +173,7 @@ function MaintenanceHome() {
                 setError("Unable to load maintenance records from the backend.");
                 setMaintenanceList([]);
                 setAssetOptions([]);
+                setAssignments([]);
                 setStaffOptions([]);
                 setSelectedRecord(null);
             } finally {
@@ -196,12 +208,51 @@ function MaintenanceHome() {
         completed: maintenanceList.filter((item) => item.status === "COMPLETED").length,
     }), [maintenanceList]);
 
-    const updateStatus = async (id, nextStatus) => {
+    const updateStatus = async (id, nextStatus, completionCondition) => {
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
         const record = maintenanceList.find((item) => item.id === id);
 
         if (!record) return;
+
+        const asset = assetOptions.find(
+            (item) => String(item.id) === String(record.asset?.id)
+        );
+
+        if (!asset) {
+            setError("The asset for this maintenance record could not be found.");
+            return;
+        }
+
+        if (
+            normalizeAssetStatus(asset.status) === "Retired" &&
+            nextStatus !== "CANCELLED"
+        ) {
+            setError("Retired assets cannot enter maintenance.");
+            return;
+        }
+
+        if (nextStatus === "IN_PROGRESS") {
+            const hasActiveAssignment = assignments.some(
+                (assignment) =>
+                    isActiveAssignment(assignment) &&
+                    String(assignment.asset?.id) === String(asset.id)
+            );
+
+            if (hasActiveAssignment) {
+                setError("Return or transfer this asset before starting maintenance.");
+                return;
+            }
+        }
+
+        if (
+            (nextStatus === "COMPLETED" ||
+                (nextStatus === "CANCELLED" && record.status === "IN_PROGRESS")) &&
+            !completionCondition
+        ) {
+            setError("Select the asset condition after maintenance before closing this task.");
+            return;
+        }
 
         const payload = {
             asset: { id: record.asset?.id || null },
@@ -217,6 +268,8 @@ function MaintenanceHome() {
             notes: record.notes,
         };
 
+        let maintenanceSaved = false;
+
         try {
             let response;
 
@@ -225,8 +278,35 @@ function MaintenanceHome() {
             } else {
                 response = await MaintenanceService.update(id, payload);
             }
+            maintenanceSaved = true;
 
-            const updatedItem = normalizeMaintenanceRecord(response.data);
+            const updatedItem = {
+                ...normalizeMaintenanceRecord(response.data),
+                completionCondition:
+                    completionCondition || record.completionCondition,
+            };
+
+            if (nextStatus === "IN_PROGRESS") {
+                await AssetService.update(asset.id, {
+                    ...asset,
+                    status: "Under Maintenance",
+                });
+            } else if (nextStatus === "COMPLETED") {
+                await AssetService.update(asset.id, {
+                    ...asset,
+                    condition: completionCondition,
+                    status: getStatusAfterInspection(completionCondition),
+                });
+            } else if (
+                nextStatus === "CANCELLED" &&
+                record.status === "IN_PROGRESS"
+            ) {
+                await AssetService.update(asset.id, {
+                    ...asset,
+                    condition: completionCondition,
+                    status: getStatusAfterInspection(completionCondition),
+                });
+            }
 
             setMaintenanceList((prev) =>
                 prev.map((item) => (item.id === id ? updatedItem : item))
@@ -235,7 +315,11 @@ function MaintenanceHome() {
             setError("");
         } catch (err) {
             console.error("Failed to update maintenance status:", err);
-            setError("Failed to update maintenance status in the backend.");
+            setError(
+                maintenanceSaved
+                    ? "The maintenance record was updated, but the asset status or condition could not be updated. Refresh and reconcile the asset before continuing."
+                    : err.response?.data?.message || "Failed to update maintenance status in the backend."
+            );
         }
     };
 
@@ -281,10 +365,10 @@ function MaintenanceHome() {
 
         return maintenanceList.some((item) => {
             const sameAsset = Number(item.asset?.id) === numericAssetId;
-            const notCompleted = item.status !== "COMPLETED";
+            const isOpen = !["COMPLETED", "CANCELLED"].includes(item.status);
             const notCurrent = !currentTaskId || item.id !== currentTaskId;
 
-            return sameAsset && notCompleted && notCurrent;
+            return sameAsset && isOpen && notCurrent;
         });
     };
 
@@ -293,6 +377,18 @@ function MaintenanceHome() {
 
         if (!taskForm.assetId || !taskForm.staffId) {
             setError("Please select both an asset and a staff member.");
+            return;
+        }
+
+        const chosenAsset = assetOptions.find(
+            (asset) => String(asset.id) === String(taskForm.assetId)
+        );
+
+        if (
+            !chosenAsset ||
+            normalizeAssetStatus(chosenAsset.status) === "Retired"
+        ) {
+            setError("Maintenance cannot be scheduled for a retired or missing asset.");
             return;
         }
 
@@ -338,22 +434,6 @@ function MaintenanceHome() {
         } catch (err) {
             console.error("Failed to save maintenance record:", err);
             setError("Failed to save maintenance record to the backend.");
-        }
-    };
-
-    const handleDeleteTask = async (taskId) => {
-        const confirmed = window.confirm("Delete this maintenance task?");
-
-        if (!confirmed) return;
-
-        try {
-            await MaintenanceService.delete(taskId);
-            setMaintenanceList((prev) => prev.filter((item) => item.id !== taskId));
-            setSelectedRecord((prev) => (prev && prev.id === taskId ? null : prev));
-            setError("");
-        } catch (err) {
-            console.error("Failed to delete maintenance record:", err);
-            setError("Failed to delete maintenance record from the backend.");
         }
     };
 
@@ -500,14 +580,6 @@ function MaintenanceHome() {
                                                 >
                                                     <Pencil size={15} />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="delete-btn"
-                                                    onClick={() => handleDeleteTask(item.id)}
-                                                    title="Delete Task"
-                                                >
-                                                    <Trash2 size={15} />
-                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -568,6 +640,11 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
     const canAdvance = nextStatus !== record.status;
+    const [completionCondition, setCompletionCondition] = useState(
+        record.completionCondition || "GOOD"
+    );
+    const requiresCondition =
+        nextStatus === "COMPLETED" || record.status === "IN_PROGRESS";
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -615,14 +692,49 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
                             </div>
 
                             <div className="status-actions">
+                                {requiresCondition && (
+                                    <label className="form-field">
+                                        <span>Condition after maintenance</span>
+                                        <select
+                                            value={completionCondition}
+                                            onChange={(event) => setCompletionCondition(event.target.value)}
+                                        >
+                                            <option value="GOOD">Good</option>
+                                            <option value="FAIR">Fair</option>
+                                            <option value="POOR">Poor</option>
+                                            <option value="DAMAGED">Damaged</option>
+                                        </select>
+                                    </label>
+                                )}
                                 {canAdvance && (
                                     <button
                                         type="button"
                                         className="status-action-btn"
-                                        onClick={() => onStatusUpdate(record.id, nextStatus)}
+                                        onClick={() =>
+                                            onStatusUpdate(
+                                                record.id,
+                                                nextStatus,
+                                                completionCondition
+                                            )
+                                        }
                                     >
                                         Mark as {getStatusLabel(nextStatus)}
                                         <ArrowRight size={14} />
+                                    </button>
+                                )}
+                                {["SCHEDULED", "IN_PROGRESS"].includes(record.status) && (
+                                    <button
+                                        type="button"
+                                        className="status-action-btn"
+                                        onClick={() =>
+                                            onStatusUpdate(
+                                                record.id,
+                                                "CANCELLED",
+                                                completionCondition
+                                            )
+                                        }
+                                    >
+                                        Cancel Maintenance
                                     </button>
                                 )}
                             </div>
@@ -684,6 +796,7 @@ function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, 
                             <span>Asset</span>
                             <select
                                 value={form.assetId || ""}
+                                disabled={form.status !== "SCHEDULED"}
                                 onChange={(event) => onChange("assetId", event.target.value)}
                             >
                                 <option value="">Select asset</option>
@@ -719,18 +832,6 @@ function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, 
                                 <option value="REPAIR">REPAIR</option>
                                 <option value="PREVENTIVE">PREVENTIVE</option>
                                 <option value="INSPECTION">INSPECTION</option>
-                            </select>
-                        </label>
-
-                        <label className="form-field">
-                            <span>Status</span>
-                            <select
-                                value={form.status}
-                                onChange={(event) => onChange("status", event.target.value)}
-                            >
-                                <option value="SCHEDULED">Scheduled</option>
-                                <option value="IN_PROGRESS">In Progress</option>
-                                <option value="COMPLETED">Completed</option>
                             </select>
                         </label>
 

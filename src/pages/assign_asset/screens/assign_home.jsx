@@ -8,7 +8,6 @@ import {
     Search,
     Eye,
     Undo2,
-    Trash2,
     Plus,
     X,
     ChevronDown,
@@ -21,8 +20,13 @@ import "../css/assign_home.css";
 import AssetAssignmentService from "../services/AssetAssignmentService";
 import AssetService from "../../asset/services/AssetService";
 import StaffService from "../../staff/services/staff_home";
+import {
+    getStatusAfterInspection,
+    isActiveAssignment,
+    isAssetAvailable,
+} from "../../../utils/assetLifecycle";
 
-const REQUIRED_ROLE = "SUPERADMIN";
+const ADMIN_ROLES = ["ADMIN", "SUPERADMIN"];
 
 /* =============================================================
    GET CURRENT USER
@@ -51,7 +55,9 @@ function AssignAssets() {
 
     const currentUser = getCurrentUser();
     const currentRole = currentUser?.role?.name;
-    const isAuthorized = currentRole === REQUIRED_ROLE;
+    const isAuthorized = ADMIN_ROLES.includes(
+        String(currentRole || "").toUpperCase()
+    );
 
 
     /* =========================================================
@@ -169,16 +175,23 @@ function AssignAssets() {
     };
 
     const assignableAssets = useMemo(() => {
-
-        return assets.filter(
-            (asset) => asset.status === "Active"
+        const currentlyAssignedIds = new Set(
+            assignments
+                .filter(isActiveAssignment)
+                .map((assignment) => String(assignment.asset?.id))
         );
 
-    }, [assets]);
+        return assets.filter(
+            (asset) =>
+                isAssetAvailable(asset) &&
+                !currentlyAssignedIds.has(String(asset.id))
+        );
+
+    }, [assets, assignments]);
 
     const isOverdue = (assignment) => {
 
-        if (assignment.status !== "ACTIVE") return false;
+        if (!isActiveAssignment(assignment)) return false;
 
         if (!assignment.expectedReturnDate) return false;
 
@@ -195,11 +208,11 @@ function AssignAssets() {
     const totalAssignments = assignments.length;
 
     const activeAssignments = assignments.filter(
-        (item) => item.status === "ACTIVE"
+        isActiveAssignment
     ).length;
 
     const returnedAssignments = assignments.filter(
-        (item) => item.status === "RETURNED"
+        (item) => String(item.status || "").toUpperCase() === "RETURNED"
     ).length;
 
     const overdueAssignments = assignments.filter(isOverdue).length;
@@ -270,15 +283,35 @@ function AssignAssets() {
             (asset) => String(asset.id) === String(form.assetId)
         );
 
-        if (!chosenAsset || chosenAsset.status !== "Active") {
+        if (
+            !chosenAsset ||
+            !isAssetAvailable(chosenAsset) ||
+            assignments.some(
+                (assignment) =>
+                    isActiveAssignment(assignment) &&
+                    String(assignment.asset?.id) === String(chosenAsset.id)
+            )
+        ) {
             alert(
-                "This asset is not available for assignment (inactive or under maintenance)."
+                "This asset is not available for assignment. It may already be assigned, under maintenance, damaged, or retired."
             );
             return;
         }
 
         if (!form.staffId) {
             alert("Please select a staff member.");
+            return;
+        }
+
+        const chosenStaff = staffList.find(
+            (staff) => String(staff.id) === String(form.staffId)
+        );
+
+        if (
+            !chosenStaff ||
+            String(chosenStaff.status || "ACTIVE").toUpperCase() !== "ACTIVE"
+        ) {
+            alert("Only active staff members can be assigned an asset.");
             return;
         }
 
@@ -307,6 +340,22 @@ function AssignAssets() {
             }
 
             await AssetAssignmentService.create(payload);
+
+            try {
+                await AssetService.update(chosenAsset.id, {
+                    ...chosenAsset,
+                    status: "Assigned",
+                });
+            } catch (statusError) {
+                console.error("Assignment created but asset status update failed:", statusError);
+                setShowAssignModal(false);
+                setForm(emptyForm);
+                await loadAll();
+                alert(
+                    "The assignment was created, but the asset status could not be updated. Refresh the asset record before making another assignment."
+                );
+                return;
+            }
 
             alert("Asset assigned successfully!");
 
@@ -373,6 +422,34 @@ function AssignAssets() {
                 returnForm.notes.trim() || undefined
             );
 
+            const asset = assets.find(
+                (item) =>
+                    String(item.id) === String(selectedAssignment.asset?.id)
+            );
+
+            if (!asset) {
+                throw new Error(
+                    "The assignment was returned, but its asset record could not be found to update the status."
+                );
+            }
+
+            try {
+                await AssetService.update(asset.id, {
+                    ...asset,
+                    condition: returnForm.conditionAfter,
+                    status: getStatusAfterInspection(returnForm.conditionAfter),
+                });
+            } catch (statusError) {
+                console.error("Assignment returned but asset status update failed:", statusError);
+                setShowReturnModal(false);
+                setSelectedAssignment(null);
+                await loadAll();
+                alert(
+                    "The asset return was recorded, but its status and condition could not be updated. Refresh the asset record and correct it before reassignment."
+                );
+                return;
+            }
+
             alert("Asset marked as returned!");
 
             setShowReturnModal(false);
@@ -387,40 +464,6 @@ function AssignAssets() {
             alert(
                 error.response?.data?.message ||
                 "Failed to return asset."
-            );
-        }
-    };
-
-
-    /* =========================================================
-       DELETE
-    ========================================================= */
-
-    const handleDelete = async (assignment) => {
-
-        const confirmed = window.confirm(
-            `Delete assignment of "${getAssetLabel(
-                assignment.asset
-            )}" to "${getStaffLabel(assignment.staff)}"?`
-        );
-
-        if (!confirmed) return;
-
-        try {
-
-            await AssetAssignmentService.delete(assignment.id);
-
-            alert("Assignment deleted successfully!");
-
-            await loadAll();
-
-        } catch (error) {
-
-            console.error("Delete assignment error:", error);
-
-            alert(
-                error.response?.data?.message ||
-                "Failed to delete assignment."
             );
         }
     };
@@ -449,8 +492,7 @@ function AssignAssets() {
                         <h3>Access Restricted</h3>
 
                         <p>
-                            This page is only available to the{" "}
-                            <strong>{REQUIRED_ROLE}</strong> role.
+                            This page is only available to administrators.
                         </p>
 
                         <span>
@@ -729,13 +771,13 @@ function AssignAssets() {
 
                                         const statusLabel = overdue
                                             ? "Overdue"
-                                            : assignment.status === "RETURNED"
+                                            : String(assignment.status || "").toUpperCase() === "RETURNED"
                                                 ? "Returned"
                                                 : "Active";
 
                                         const statusClass = overdue
                                             ? "overdue"
-                                            : assignment.status === "RETURNED"
+                                            : String(assignment.status || "").toUpperCase() === "RETURNED"
                                                 ? "returned"
                                                 : "active";
 
@@ -788,7 +830,7 @@ function AssignAssets() {
                                                             <Eye size={15} />
                                                         </button>
 
-                                                        {assignment.status === "ACTIVE" && (
+                                                        {isActiveAssignment(assignment) && (
                                                             <button
                                                                 className="table-btn return"
                                                                 title="Return Asset"
@@ -799,16 +841,6 @@ function AssignAssets() {
                                                                 <Undo2 size={15} />
                                                             </button>
                                                         )}
-
-                                                        <button
-                                                            className="table-btn delete"
-                                                            title="Delete"
-                                                            onClick={() =>
-                                                                handleDelete(assignment)
-                                                            }
-                                                        >
-                                                            <Trash2 size={15} />
-                                                        </button>
 
                                                     </div>
 
@@ -1104,13 +1136,13 @@ function AssignAssets() {
                                 <div className="view-status">
                                     <span
                                         className={`status ${
-                                            selectedAssignment.status === "RETURNED"
+                                            String(selectedAssignment.status || "").toUpperCase() === "RETURNED"
                                                 ? "returned"
                                                 : "active"
                                         }`}
                                     >
                                         <i />
-                                        {selectedAssignment.status === "RETURNED"
+                                        {String(selectedAssignment.status || "").toUpperCase() === "RETURNED"
                                             ? "Returned"
                                             : "Active"}
                                     </span>
@@ -1190,7 +1222,7 @@ function AssignAssets() {
                                     Close
                                 </button>
 
-                                {selectedAssignment.status === "ACTIVE" && (
+                                {isActiveAssignment(selectedAssignment) && (
                                     <button
                                         type="button"
                                         className="primary-modal-btn"

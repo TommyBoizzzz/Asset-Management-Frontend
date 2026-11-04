@@ -25,6 +25,7 @@ import "../css/asset_home.css";
 
 import AssetService from "../services/AssetService";
 import AssetCategoryService from "../services/AssetCategoryService";
+import { normalizeAssetStatus } from "../../../utils/assetLifecycle";
 
 
 function Assets() {
@@ -83,7 +84,7 @@ function Assets() {
         warrantyEndDate: "",
         condition: "",
         location: "",
-        status: "Active",
+        status: "Available",
         description: "",
     };
 
@@ -281,18 +282,18 @@ function Assets() {
     const totalAssets = assets.length;
 
     const activeAssets = assets.filter(
-        (asset) =>
-            asset.status === "Active"
+        (asset) => normalizeAssetStatus(asset.status) === "Available"
     ).length;
 
     const maintenanceAssets = assets.filter(
-        (asset) =>
-            asset.status === "Maintenance"
+        (asset) => normalizeAssetStatus(asset.status) === "Under Maintenance"
     ).length;
 
     const inactiveAssets = assets.filter(
-        (asset) =>
-            asset.status === "Inactive"
+        (asset) => normalizeAssetStatus(asset.status) === "Retired"
+    ).length;
+    const damagedAssets = assets.filter(
+        (asset) => normalizeAssetStatus(asset.status) === "Damaged"
     ).length;
 
 
@@ -380,7 +381,7 @@ function Assets() {
 
             condition: "GOOD",
 
-            status: "Active",
+            status: "Available",
         });
 
         setShowAssetModal(true);
@@ -439,8 +440,7 @@ function Assets() {
             location:
                 asset.location || "",
 
-            status:
-                asset.status || "Active",
+            status: normalizeAssetStatus(asset.status),
 
             description:
                 asset.description || "",
@@ -528,10 +528,29 @@ function Assets() {
         }
 
 
-        if (!assetForm.status) {
+        const currentStatus = editingAsset
+            ? normalizeAssetStatus(editingAsset.status)
+            : "Available";
+        const nextStatus = assetForm.condition.toUpperCase() === "DAMAGED"
+            ? "Damaged"
+            : assetForm.status;
 
-            alert("Status is required.");
+        if (
+            editingAsset &&
+            ["Assigned", "Under Maintenance", "Retired"].includes(currentStatus) &&
+            nextStatus !== currentStatus
+        ) {
+            alert("Assigned, under-maintenance, and retired asset statuses cannot be changed here.");
+            return;
+        }
 
+        if (nextStatus === "Damaged" && condition.toUpperCase() !== "DAMAGED") {
+            alert("Set the asset condition to Damaged before marking its status as Damaged.");
+            return;
+        }
+
+        if (!editingAsset && !["Available", "Damaged"].includes(nextStatus)) {
+            alert("New assets must start as Available unless their condition is Damaged.");
             return;
         }
 
@@ -554,8 +573,7 @@ function Assets() {
 
                 condition,
 
-                status:
-                    assetForm.status,
+                status: nextStatus,
             };
 
 
@@ -719,7 +737,7 @@ function Assets() {
        DELETE ASSET
     ========================================================= */
 
-    const handleDeleteAsset = async (id) => {
+    const handleRetireAsset = async (id) => {
 
         const asset =
             assets.find(
@@ -730,35 +748,43 @@ function Assets() {
         if (!asset) return;
 
 
-        const confirmed =
-            window.confirm(
-                `Delete "${asset.name}"?`
-            );
+        const currentStatus = normalizeAssetStatus(asset.status);
 
+        if (["Assigned", "Under Maintenance"].includes(currentStatus)) {
+            alert("Return the asset or complete its maintenance before retiring it.");
+            return;
+        }
+
+        if (currentStatus === "Retired") {
+            return;
+        }
+
+        const confirmed = window.confirm(`Retire "${asset.name}"? Its history will be preserved.`);
 
         if (!confirmed) return;
 
 
         try {
 
-            await AssetService.delete(id);
+            await AssetService.update(id, {
+                ...asset,
+                status: "Retired",
+            });
 
-            alert(
-                "Asset deleted successfully!"
-            );
+            alert("Asset retired successfully.");
 
             await loadAssets();
 
         } catch (error) {
 
             console.error(
-                "Delete asset error:",
+                "Retire asset error:",
                 error
             );
 
             alert(
                 error.response?.data?.message ||
-                "Failed to delete asset."
+                "Failed to retire asset."
             );
         }
     };
@@ -790,6 +816,19 @@ function Assets() {
         setAssetForm((prev) => ({
             ...prev,
             [name]: value,
+            ...(name === "condition" &&
+                value.toUpperCase() !== "DAMAGED" &&
+                !editingAsset &&
+                prev.status === "Damaged"
+                ? { status: "Available" }
+                : {}),
+            ...(name === "condition" &&
+                value.toUpperCase() === "DAMAGED" &&
+                !["Assigned", "Under Maintenance", "Retired"].includes(
+                    normalizeAssetStatus(prev.status)
+                )
+                ? { status: "Damaged" }
+                : {}),
         }));
     };
 
@@ -1233,7 +1272,7 @@ function Assets() {
                         <div>
 
                             <span>
-                                Active Assets
+                                Available Assets
                             </span>
 
                             <strong>
@@ -1254,7 +1293,7 @@ function Assets() {
                         <div>
 
                             <span>
-                                Maintenance
+                                Under Maintenance
                             </span>
 
                             <strong>
@@ -1275,13 +1314,26 @@ function Assets() {
                         <div>
 
                             <span>
-                                Inactive
+                                Damaged
                             </span>
 
                             <strong>
-                                {inactiveAssets}
+                                {damagedAssets}
                             </strong>
 
+                        </div>
+
+                    </div>
+
+                    <div className="stat-card">
+
+                        <div className="stat-icon red">
+                            <AlertTriangle size={22} />
+                        </div>
+
+                        <div>
+                            <span>Retired</span>
+                            <strong>{inactiveAssets}</strong>
                         </div>
 
                     </div>
@@ -1596,19 +1648,15 @@ function Assets() {
                                                         <td>
 
                                                             <span
-                                                                className={`status ${(asset.status || "Inactive")
+                                                                className={`status ${normalizeAssetStatus(asset.status)
                                                                     .toLowerCase()
-                                                                    .replace(
-                                                                        " ",
-                                                                        "-"
-                                                                    )}`}
+                                                                    .replaceAll(" ", "-")}`}
                                                             >
 
                                                                 <i />
 
                                                                 {
-                                                                    asset.status ||
-                                                                    "-"
+                                                                    normalizeAssetStatus(asset.status)
                                                                 }
 
                                                             </span>
@@ -1662,9 +1710,9 @@ function Assets() {
 
                                                                 <button
                                                                     className="table-btn delete"
-                                                                    title="Delete"
+                                                                    title="Retire"
                                                                     onClick={() =>
-                                                                        handleDeleteAsset(
+                                                                        handleRetireAsset(
                                                                             asset.id
                                                                         )
                                                                     }
@@ -2353,32 +2401,46 @@ function Assets() {
 
                                             <select
                                                 name="status"
-                                                value={
-                                                    assetForm.status
-                                                }
+                                                value={assetForm.status}
                                                 onChange={
                                                     handleAssetChange
+                                                }
+                                                disabled={
+                                                    !editingAsset ||
+                                                    ["Assigned", "Under Maintenance", "Retired"].includes(
+                                                        normalizeAssetStatus(editingAsset?.status)
+                                                    )
                                                 }
                                                 required
                                             >
 
-                                                <option value="Active">
-                                                    Active
+                                                <option value="Available">
+                                                    Available
                                                 </option>
 
-                                                <option value="Maintenance">
-                                                    Maintenance
+                                                <option value="Damaged">
+                                                    Damaged
                                                 </option>
 
-                                                <option value="Inactive">
-                                                    Inactive
+                                                <option value="Retired">
+                                                    Retired
                                                 </option>
 
+                                                {["Assigned", "Under Maintenance"].includes(
+                                                    normalizeAssetStatus(editingAsset?.status)
+                                                ) && (
+                                                    <option value={normalizeAssetStatus(editingAsset.status)}>
+                                                        {normalizeAssetStatus(editingAsset.status)}
+                                                    </option>
+                                                )}
                                             </select>
 
                                             <ChevronDown size={16} />
 
                                         </div>
+                                        {!editingAsset && (
+                                            <small>New assets start as Available. A damaged condition sets status to Damaged.</small>
+                                        )}
 
                                     </div>
 

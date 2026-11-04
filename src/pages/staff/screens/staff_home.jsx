@@ -12,6 +12,8 @@ import {
     X
 } from "lucide-react";
 import StaffService from "../services/staff_home";
+import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
+import { isActiveAssignment } from "../../../utils/assetLifecycle";
 import "../css/staff_home.css";
 
 const emptyStaffForm = {
@@ -252,6 +254,32 @@ function StaffHome() {
 
         try {
             if (dialogMode === "update") {
+                const currentStaff = staffList.find(
+                    (staff) => String(staff.id) === String(selectedStaffId)
+                );
+
+                if (
+                    currentStaff?.status?.toUpperCase() === "ACTIVE" &&
+                    payload.status !== "ACTIVE"
+                ) {
+                    const assignmentResponse =
+                        await AssetAssignmentService.getByStaff(selectedStaffId);
+                    const assignments = Array.isArray(assignmentResponse.data)
+                        ? assignmentResponse.data
+                        : assignmentResponse.data?.content;
+
+                    if (!Array.isArray(assignments)) {
+                        throw new Error("The server returned invalid staff assignment data.");
+                    }
+
+                    if (assignments.some(isActiveAssignment)) {
+                        setSubmitError(
+                            "Return or transfer this staff member's assigned assets before deactivating them."
+                        );
+                        return;
+                    }
+                }
+
                 await StaffService.update(selectedStaffId, payload);
             } else {
                 await StaffService.create(payload);

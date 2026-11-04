@@ -136,7 +136,7 @@
 
 .asset-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     margin-bottom: 22px;
 }
@@ -586,31 +586,48 @@
     border-radius: 50%;
 }
 
-.status.active {
+.status.active,
+.status.available {
     color: #15803d;
     background: #ecfdf3;
 }
 
-.status.active i {
+.status.active i,
+.status.available i {
     background: #22c55e;
 }
 
-.status.maintenance {
+.status.maintenance,
+.status.under-maintenance {
     color: #c46b00;
     background: #fff7e8;
 }
 
-.status.maintenance i {
+.status.maintenance i,
+.status.under-maintenance i {
     background: #f59e0b;
 }
 
-.status.inactive {
+.status.inactive,
+.status.damaged,
+.status.retired {
     color: #c02626;
     background: #fff1f2;
 }
 
-.status.inactive i {
+.status.inactive i,
+.status.damaged i,
+.status.retired i {
     background: #ef4444;
+}
+
+.status.assigned {
+    color: #6d28d9;
+    background: #f3e8ff;
+}
+
+.status.assigned i {
+    background: #8b5cf6;
 }
 
 

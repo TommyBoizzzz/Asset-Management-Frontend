@@ -19,6 +19,15 @@
     sans-serif;
 }
 
+.history-error {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
 
 /* =========================================================
    PAGE HEADER

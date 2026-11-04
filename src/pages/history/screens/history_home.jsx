@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Download,
@@ -8,173 +8,141 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Bell,
-  CircleHelp,
 } from "lucide-react";
 
 import MainLayout from "../../../layouts/MainLayout";
+import AssetService from "../../asset/services/AssetService";
+import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
+import MaintenanceService from "../../matainance/services/MaintenanceService";
+import { getStatusAfterInspection } from "../../../utils/assetLifecycle";
 
 import "./history.css";
 
 
-/* =========================================================
-   DEMO HISTORY DATA
-========================================================= */
+const parseEventDate = (value) => {
+  if (!value) return null;
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(String(value))
+      ? `${value}T00:00:00`
+      : value
+  );
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
-const historyData = [
-  {
-    date: "05",
-    month: "AUG",
-    year: "2026",
-    code: "AST-005",
-    name: 'MacBook Pro 14" M3',
-    action: "MAINTENANCE",
-    oldStatus: "AVAILABLE",
-    newStatus: "MAINTENANCE",
-    description: "Sent to corrective maintenance.",
-  },
-  {
-    date: "04",
-    month: "AUG",
-    year: "2026",
-    code: "AST-009",
-    name: "Honda EP6500CX Generator",
-    action: "MAINTENANCE",
-    oldStatus: "AVAILABLE",
-    newStatus: "MAINTENANCE",
-    description: "Emergency corrective maintenance.",
-  },
-  {
-    date: "20",
-    month: "JUL",
-    year: "2026",
-    code: "AST-004",
-    name: "Epson EB-E01 Projector",
-    action: "UPDATED",
-    oldStatus: "Condition: Good",
-    newStatus: "Fair",
-    description: "Condition updated after inspection.",
-  },
-  {
-    date: "16",
-    month: "JUL",
-    year: "2026",
-    code: "AST-006",
-    name: "Cisco SG350-28 Switch",
-    action: "MAINTENANCE COMPLETED",
-    oldStatus: "MAINTENANCE",
-    newStatus: "AVAILABLE",
-    description: "Firmware update completed successfully.",
-  },
-];
-
-
-/* =========================================================
-   CREATE MORE RECORDS
-   40 RECORDS = 10 PAGES
-========================================================= */
-
-const extraAssets = [
-  "Dell XPS 15",
-  "HP LaserJet Enterprise",
-  "Epson EB-X06 Projector",
-  "Canon EOS Camera",
-  "TP-Link Network Router",
-  "Lenovo ThinkPad X1",
-  "Samsung Monitor 27",
-  "Cisco Switch 24 Port",
-  "MacBook Air M2",
-  "Dell Latitude 5420",
-  "HP Office Printer",
-  "Ubiquiti Access Point",
-  "Acer Aspire 5",
-  "LG UltraWide Monitor",
-  "Brother Printer",
-  "Netgear Switch",
-  "Microsoft Surface Laptop",
-  "Sony Projector",
-  "Dell Monitor 24",
-  "Cisco Firewall",
-  "HP ProBook 450",
-  "Epson L3250 Printer",
-  "Huawei Router",
-  "Canon Scanner",
-  "Mac Mini M2",
-  "Lenovo Monitor",
-  "Zebra Label Printer",
-  "Aruba Network Switch",
-  "Dell Precision 5570",
-  "BenQ Projector",
-  "HP Desktop Pro",
-  "TP-Link Switch",
-  "MacBook Pro M1",
-  "Dell PowerEdge Server",
-  "Epson Projector",
-  "Cisco SG350 Switch",
-];
-
-
-const extraRecords = extraAssets.map((name, index) => {
-
-  const actions = [
-    "MAINTENANCE",
-    "UPDATED",
-    "MAINTENANCE COMPLETED",
-  ];
-
-  const action =
-    actions[index % actions.length];
-
-  let oldStatus = "AVAILABLE";
-  let newStatus = "MAINTENANCE";
-
-  if (action === "UPDATED") {
-    oldStatus = "Condition: Good";
-    newStatus = "Fair";
-  }
-
-  if (action === "MAINTENANCE COMPLETED") {
-    oldStatus = "MAINTENANCE";
-    newStatus = "AVAILABLE";
-  }
+const createHistoryEvent = (dateValue, asset, action, oldStatus, newStatus, description, id) => {
+  const date = parseEventDate(dateValue);
+  if (!date) return null;
 
   return {
-    date: String(
-      ((index * 2) % 27) + 1
-    ).padStart(2, "0"),
-
-    month:
-      index % 2 === 0
-        ? "JUL"
-        : "JUN",
-
-    year: "2026",
-
-    code:
-      `AST-${String(index + 10).padStart(3, "0")}`,
-
-    name,
-
+    id,
+    timestamp: date.getTime(),
+    date: String(date.getDate()).padStart(2, "0"),
+    month: date.toLocaleString("en", { month: "short" }).toUpperCase(),
+    year: String(date.getFullYear()),
+    code: asset?.assetCode || asset?.assetTag || `AST-${asset?.id || "UNKNOWN"}`,
+    name: asset?.name || "Unknown asset",
     action,
-
     oldStatus,
-
     newStatus,
-
-    description:
-      action === "UPDATED"
-        ? "Asset condition updated after inspection."
-        : action === "MAINTENANCE COMPLETED"
-          ? "Maintenance completed successfully."
-          : "Asset sent to corrective maintenance.",
+    description,
   };
-});
+};
 
+function buildHistoryData(assets, assignments, maintenanceRecords) {
+  const events = [];
 
-const allHistoryData = [
-  ...historyData,
-  ...extraRecords,
-];
+  assets.forEach((asset) => {
+    const event = createHistoryEvent(
+      asset.createdAt,
+      asset,
+      "ASSET REGISTERED",
+      "—",
+      "Registered",
+      "Asset added to the inventory.",
+      `asset-created-${asset.id}`
+    );
+    if (event) events.push(event);
+  });
+
+  assignments.forEach((assignment) => {
+    const asset = assignment.asset || {};
+    const assigned = createHistoryEvent(
+      assignment.assignedAt || assignment.assignmentDate || assignment.assignedDate || assignment.createdAt,
+      asset,
+      "ASSET ASSIGNED",
+      "Available",
+      "Assigned",
+      `Assigned to ${assignment.staff?.fullName || assignment.staff?.name || "staff"}.`,
+      `assignment-${assignment.id}`
+    );
+    if (assigned) events.push(assigned);
+
+    const returned = createHistoryEvent(
+      assignment.returnedAt || assignment.returnDate || assignment.returnedDate,
+      asset,
+      "ASSET RETURNED",
+      "Assigned",
+      getStatusAfterInspection(assignment.conditionAfter),
+      `Returned by ${assignment.staff?.fullName || assignment.staff?.name || "staff"}.`,
+      `return-${assignment.id}`
+    );
+    if (returned) events.push(returned);
+  });
+
+  maintenanceRecords.forEach((record) => {
+    const asset = record.asset || {};
+    const status = String(record.status || "").toUpperCase();
+    const scheduled = createHistoryEvent(
+      record.scheduledDate,
+      asset,
+      "MAINTENANCE SCHEDULED",
+      "—",
+      "Scheduled",
+      record.problemDescription || "Maintenance scheduled.",
+      `maintenance-scheduled-${record.id}`
+    );
+    if (scheduled) events.push(scheduled);
+
+    if (status === "IN_PROGRESS") {
+      const started = createHistoryEvent(
+        record.startedAt || record.updatedAt,
+        asset,
+        "MAINTENANCE STARTED",
+        "—",
+        "Under Maintenance",
+        record.problemDescription || "Maintenance started.",
+        `maintenance-started-${record.id}`
+      );
+      if (started) events.push(started);
+    } else if (status === "COMPLETED") {
+      const completed = createHistoryEvent(
+        record.completedDate,
+        asset,
+        "MAINTENANCE COMPLETED",
+        "Under Maintenance",
+        getStatusAfterInspection(
+          record.completionCondition || record.conditionAfter || asset.condition
+        ),
+        record.actionTaken || "Maintenance completed.",
+        `maintenance-completed-${record.id}`
+      );
+      if (completed) events.push(completed);
+    } else if (status === "CANCELLED") {
+      const cancelled = createHistoryEvent(
+        record.updatedAt,
+        asset,
+        "MAINTENANCE CANCELLED",
+        "—",
+        "Cancelled",
+        "Scheduled maintenance was cancelled.",
+        `maintenance-cancelled-${record.id}`
+      );
+      if (cancelled) events.push(cancelled);
+    }
+  });
+
+  return events.sort((left, right) => right.timestamp - left.timestamp);
+}
 
 
 /* =========================================================
@@ -182,6 +150,59 @@ const allHistoryData = [
 ========================================================= */
 
 function History() {
+  const [allHistoryData, setAllHistoryData] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadHistory = async () => {
+      try {
+        const [assetResponse, assignmentResponse, maintenanceResponse] =
+          await Promise.all([
+            AssetService.getAll(),
+            AssetAssignmentService.getAll(),
+            MaintenanceService.getAll(),
+          ]);
+
+        if (
+          !Array.isArray(assetResponse.data) ||
+          !Array.isArray(assignmentResponse.data) ||
+          !Array.isArray(maintenanceResponse.data)
+        ) {
+          throw new Error("The server returned invalid history data.");
+        }
+
+        if (active) {
+          setAllHistoryData(
+            buildHistoryData(
+              assetResponse.data,
+              assignmentResponse.data,
+              maintenanceResponse.data
+            )
+          );
+          setHistoryError("");
+        }
+      } catch (error) {
+        console.error("Failed to load asset history:", error);
+        if (active) {
+          setHistoryError(
+            error.response?.data?.message ||
+              error.message ||
+              "Unable to load asset history."
+          );
+        }
+      } finally {
+        if (active) setHistoryLoading(false);
+      }
+    };
+
+    loadHistory();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   /* =======================================================
      PAGINATION
@@ -191,9 +212,6 @@ function History() {
     useState(1);
 
   const recordsPerPage = 4;
-
-  const totalPages = 10;
-
 
   /* =======================================================
      SEARCH
@@ -239,6 +257,21 @@ function History() {
         .toLowerCase();
 
 
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startDates = {
+      "All Time": null,
+      Today: today,
+      "This Week": startOfWeek,
+      "This Month": startOfMonth,
+      "This Year": startOfYear,
+    };
+    const fromDate = startDates[timeFilter];
+
     return allHistoryData.filter((item) => {
 
       const matchesSearch =
@@ -261,10 +294,13 @@ function History() {
         actionFilter === "All Actions" ||
         item.action === actionFilter;
 
+      const matchesTime =
+        !fromDate || item.timestamp >= fromDate.getTime();
 
       return (
         matchesSearch &&
-        matchesAction
+        matchesAction &&
+        matchesTime
       );
 
     });
@@ -272,7 +308,15 @@ function History() {
   }, [
     search,
     actionFilter,
+    timeFilter,
+    allHistoryData,
   ]);
+
+  const actionOptions = useMemo(
+    () => ["All Actions", ...new Set(allHistoryData.map((item) => item.action))],
+    [allHistoryData]
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / recordsPerPage));
 
 
   /* =======================================================
@@ -463,17 +507,16 @@ function History() {
 
   const statusClass = (status) => {
 
-    if (
-      status === "AVAILABLE"
-    ) {
+    if (status === "Available" || status === "AVAILABLE" || status === "Registered") {
       return "status-pill status-available";
     }
 
-    if (
-      status === "MAINTENANCE"
-    ) {
+    if (status === "Under Maintenance" || status === "MAINTENANCE") {
       return "status-pill status-maintenance";
     }
+
+    if (status === "Assigned") return "status-pill status-assigned";
+    if (status === "Damaged" || status === "Retired") return "status-pill status-damaged";
 
     return "status-pill status-condition";
 
@@ -507,12 +550,17 @@ function History() {
             </h1>
 
             <p>
-              Track every change, assignment,
-              maintenance activity, and status
-              update across company assets.
+              Recorded activity from asset, assignment, and maintenance records.
+              Exact change history requires backend audit events.
             </p>
 
           </div>
+
+          {historyError && (
+            <div className="history-error" role="alert">
+              {historyError}
+            </div>
+          )}
 
 
           <div className="history-top-actions">
@@ -705,12 +753,7 @@ function History() {
 
                 <div className="history-dropdown">
 
-                  {[
-                    "All Actions",
-                    "MAINTENANCE",
-                    "UPDATED",
-                    "MAINTENANCE COMPLETED",
-                  ].map((item) => (
+                  {actionOptions.map((item) => (
 
                     <button
                       key={item}
@@ -921,36 +964,15 @@ function History() {
 
                         <td>
 
-                          {item.action ===
-                            "MAINTENANCE" && (
-
-                              <span className="action-maintenance">
-                                MAINTENANCE
-                              </span>
-
-                            )}
-
-
-                          {item.action ===
-                            "UPDATED" && (
-
-                              <span className="action-pill action-updated">
-                                UPDATED
-                              </span>
-
-                            )}
-
-
-                          {item.action ===
-                            "MAINTENANCE COMPLETED" && (
-
-                              <span className="action-pill action-completed">
-                                MAINTENANCE
-                                <br />
-                                COMPLETED
-                              </span>
-
-                            )}
+                          <span
+                            className={`action-pill ${
+                              item.action.includes("COMPLETED")
+                                ? "action-completed"
+                                : "action-updated"
+                            }`}
+                          >
+                            {item.action}
+                          </span>
 
                         </td>
 
@@ -1012,7 +1034,11 @@ function History() {
                       className="history-empty"
                     >
 
-                      No history records found.
+                      {historyLoading
+                        ? "Loading asset history..."
+                        : historyError
+                          ? "History could not be loaded."
+                          : "No recorded asset activity found."}
 
                     </td>
 
@@ -1091,85 +1117,27 @@ function History() {
               </button>
 
 
-              {/* PAGE 1 */}
-
-              <button
-                className={`pagination-page ${
-                  currentPage === 1
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  goToPage(1)
-                }
-              >
-                1
-              </button>
-
-
-              {/* PAGE 2 */}
-
-              <button
-                className={`pagination-page ${
-                  currentPage === 2
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  goToPage(2)
-                }
-              >
-                2
-              </button>
-
-
-              {/* PAGE 3 */}
-
-              <button
-                className={`pagination-page ${
-                  currentPage === 3
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  goToPage(3)
-                }
-              >
-                3
-              </button>
-
-
-              <span className="pagination-dots">
-                ...
-              </span>
-
-
-              {/* PAGE 10 */}
-
-              <button
-                className={`pagination-page ${
-                  currentPage === 10
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  goToPage(10)
-                }
-              >
-                10
-              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  className={`pagination-page ${currentPage === page ? "active" : ""}`}
+                  onClick={() => goToPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
 
 
               {/* NEXT */}
 
               <button
                 className={`pagination-arrow ${
-                  currentPage === 10
+                  currentPage === totalPages
                     ? "disabled"
                     : ""
                 }`}
                 disabled={
-                  currentPage === 10
+                  currentPage === totalPages
                 }
                 onClick={() =>
                   goToPage(
