@@ -1,114 +1,219 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../../../layouts/MainLayout";
+import AssetService from "../../asset/services/AssetService";
+import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
+import MaintenanceService from "../../matainance/services/MaintenanceService";
 import "../css/Dashboard.css";
 
-function Dashboard() {
-    return (
-        <MainLayout
-            activePage="Dashboard"
-            title="Dashboard"
-        >
-            <div className="dashboard-page">
+const isStatus = (value, status) =>
+    String(value ?? "").toLowerCase() === status.toLowerCase();
 
-                {/* Welcome */}
+const getAssetStatus = (asset, activeAssetIds) => {
+    if (isStatus(asset.status, "maintenance")) {
+        return { label: "Maintenance", className: "maintenance" };
+    }
+
+    if (activeAssetIds.has(String(asset.id))) {
+        return { label: "Assigned", className: "assigned" };
+    }
+
+    if (isStatus(asset.status, "active") || isStatus(asset.status, "available")) {
+        return { label: "Available", className: "available" };
+    }
+
+    return {
+        label: asset.status || "Unknown",
+        className: isStatus(asset.status, "inactive") ? "inactive" : "",
+    };
+};
+
+const formatCurrency = (value) =>
+    new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+    }).format(value);
+
+function Dashboard() {
+    const navigate = useNavigate();
+    const [assets, setAssets] = useState([]);
+    const [assignments, setAssignments] = useState([]);
+    const [maintenanceRecords, setMaintenanceRecords] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadDashboardData = async () => {
+            try {
+                const [assetResponse, assignmentResponse, maintenanceResponse] =
+                    await Promise.all([
+                        AssetService.getAll(),
+                        AssetAssignmentService.getAll(),
+                        MaintenanceService.getAll(),
+                    ]);
+
+                if (
+                    !Array.isArray(assetResponse.data) ||
+                    !Array.isArray(assignmentResponse.data) ||
+                    !Array.isArray(maintenanceResponse.data)
+                ) {
+                    throw new Error("The server returned an invalid dashboard response.");
+                }
+
+                if (isMounted) {
+                    setAssets(assetResponse.data);
+                    setAssignments(assignmentResponse.data);
+                    setMaintenanceRecords(maintenanceResponse.data);
+                }
+            } catch (error) {
+                console.error("Failed to load dashboard data:", error);
+                if (isMounted) {
+                    setErrorMessage(
+                        error.response?.data?.message ||
+                        error.message ||
+                        "Unable to load dashboard data. Please try again."
+                    );
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadDashboardData();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const activeAssignments = useMemo(
+        () => assignments.filter((assignment) => isStatus(assignment.status, "ACTIVE")),
+        [assignments]
+    );
+
+    const activeAssetIds = useMemo(
+        () =>
+            new Set(
+                activeAssignments
+                    .map((assignment) => assignment.asset?.id)
+                    .filter((id) => id !== undefined && id !== null)
+                    .map(String)
+            ),
+        [activeAssignments]
+    );
+
+    const sortedAssets = useMemo(
+        () =>
+            [...assets].sort((a, b) => {
+                const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+
+                if (Number.isFinite(dateA) && Number.isFinite(dateB) && dateA !== dateB) {
+                    return dateB - dateA;
+                }
+
+                return Number(b.id || 0) - Number(a.id || 0);
+            }),
+        [assets]
+    );
+
+    const availableCount = assets.filter(
+        (asset) =>
+            (isStatus(asset.status, "active") || isStatus(asset.status, "available")) &&
+            !activeAssetIds.has(String(asset.id))
+    ).length;
+    const assignedCount = activeAssetIds.size;
+    const maintenanceCount = assets.filter((asset) =>
+        isStatus(asset.status, "maintenance")
+    ).length;
+    const activeMaintenanceCount = maintenanceRecords.filter(
+        (record) =>
+            !isStatus(record.status, "completed") &&
+            !isStatus(record.status, "cancelled") &&
+            !isStatus(record.status, "canceled")
+    ).length;
+    const totalAssetValue = assets.reduce(
+        (total, asset) => total + (Number(asset.purchasePrice) || 0),
+        0
+    );
+
+    const statCards = [
+        {
+            label: "Total Assets",
+            value: assets.length,
+            description: "Registered assets",
+            icon: "📦",
+            color: "blue",
+        },
+        {
+            label: "Available",
+            value: availableCount,
+            description: "Ready for assignment",
+            icon: "✓",
+            color: "green",
+        },
+        {
+            label: "Assigned",
+            value: assignedCount,
+            description: "Currently in use",
+            icon: "👤",
+            color: "purple",
+        },
+        {
+            label: "Maintenance",
+            value: maintenanceCount,
+            description: "Assets requiring attention",
+            icon: "🔧",
+            color: "orange",
+        },
+    ];
+
+    return (
+        <MainLayout activePage="Dashboard" title="Dashboard">
+            <div className="dashboard-page">
                 <div className="dashboard-welcome">
                     <h2>Welcome back 👋</h2>
-                    <p>
-                        Here's what's happening with your assets today.
-                    </p>
+                    <p>Here&apos;s what&apos;s happening with your assets today.</p>
                 </div>
 
-                {/* Statistics */}
+                {errorMessage && (
+                    <div className="dashboard-error" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
+
                 <div className="dashboard-stats">
-
-                    <div className="stat-card">
-                        <div className="stat-content">
-                            <span className="stat-label">
-                                Total Assets
-                            </span>
-
-                            <h3>1,248</h3>
-
-                            <span className="stat-change positive">
-                                ↑ 12.5% from last month
-                            </span>
+                    {statCards.map((card) => (
+                        <div className="stat-card" key={card.label}>
+                            <div className="stat-content">
+                                <span className="stat-label">{card.label}</span>
+                                <h3>
+                                    {loading || errorMessage ? "—" : card.value.toLocaleString()}
+                                </h3>
+                                <span className="stat-description">{card.description}</span>
+                            </div>
+                            <div className={`stat-icon ${card.color}`}>{card.icon}</div>
                         </div>
-
-                        <div className="stat-icon blue">
-                            📦
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-content">
-                            <span className="stat-label">
-                                Available
-                            </span>
-
-                            <h3>856</h3>
-
-                            <span className="stat-description">
-                                Ready for assignment
-                            </span>
-                        </div>
-
-                        <div className="stat-icon green">
-                            ✓
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-content">
-                            <span className="stat-label">
-                                Assigned
-                            </span>
-
-                            <h3>342</h3>
-
-                            <span className="stat-description">
-                                Currently in use
-                            </span>
-                        </div>
-
-                        <div className="stat-icon purple">
-                            👤
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-content">
-                            <span className="stat-label">
-                                Maintenance
-                            </span>
-
-                            <h3>50</h3>
-
-                            <span className="stat-change warning">
-                                Requires attention
-                            </span>
-                        </div>
-
-                        <div className="stat-icon orange">
-                            🔧
-                        </div>
-                    </div>
-
+                    ))}
                 </div>
 
-                {/* Main Content */}
                 <div className="dashboard-content">
-
-                    {/* Recent Assets */}
                     <section className="dashboard-card assets-card">
-
                         <div className="card-header">
                             <div>
                                 <h3>Recent Assets</h3>
-                                <p>
-                                    Recently added or updated assets
-                                </p>
+                                <p>Recently added or updated assets</p>
                             </div>
-
-                            <button className="view-all-btn">
+                            <button
+                                type="button"
+                                className="view-all-btn"
+                                onClick={() => navigate("/assets")}
+                            >
                                 View All
                             </button>
                         </div>
@@ -123,226 +228,120 @@ function Dashboard() {
                                         <th>Location</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td className="dashboard-table-message" colSpan="4">
+                                                Loading assets…
+                                            </td>
+                                        </tr>
+                                    ) : sortedAssets.length === 0 ? (
+                                        <tr>
+                                            <td className="dashboard-table-message" colSpan="4">
+                                                {errorMessage ? "Assets could not be loaded." : "No assets found."}
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        sortedAssets.slice(0, 5).map((asset) => {
+                                            const status = getAssetStatus(asset, activeAssetIds);
 
-                                    <tr>
-                                        <td>
-                                            <div className="asset-details">
-                                                <strong>
-                                                    MacBook Pro 14"
-                                                </strong>
-
-                                                <span>
-                                                    AST-00124
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        <td>Laptop</td>
-
-                                        <td>
-                                            <span className="status available">
-                                                Available
-                                            </span>
-                                        </td>
-
-                                        <td>Phnom Penh</td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div className="asset-details">
-                                                <strong>
-                                                    Dell Monitor 27"
-                                                </strong>
-
-                                                <span>
-                                                    AST-00123
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        <td>Monitor</td>
-
-                                        <td>
-                                            <span className="status assigned">
-                                                Assigned
-                                            </span>
-                                        </td>
-
-                                        <td>Office A</td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div className="asset-details">
-                                                <strong>
-                                                    iPhone 15 Pro
-                                                </strong>
-
-                                                <span>
-                                                    AST-00122
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        <td>Mobile</td>
-
-                                        <td>
-                                            <span className="status maintenance">
-                                                Maintenance
-                                            </span>
-                                        </td>
-
-                                        <td>Service Center</td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div className="asset-details">
-                                                <strong>
-                                                    HP LaserJet
-                                                </strong>
-
-                                                <span>
-                                                    AST-00121
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        <td>Printer</td>
-
-                                        <td>
-                                            <span className="status available">
-                                                Available
-                                            </span>
-                                        </td>
-
-                                        <td>Office B</td>
-                                    </tr>
-
+                                            return (
+                                                <tr key={asset.id}>
+                                                    <td>
+                                                        <div className="asset-details">
+                                                            <strong>{asset.name || "Unnamed asset"}</strong>
+                                                            <span>{asset.assetCode || "—"}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>{asset.category?.name || "—"}</td>
+                                                    <td>
+                                                        <span className={`status ${status.className}`}>
+                                                            {status.label}
+                                                        </span>
+                                                    </td>
+                                                    <td>{asset.location || "—"}</td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-
                     </section>
 
-                    {/* Quick Actions */}
                     <section className="dashboard-card actions-card">
-
                         <div className="card-header">
                             <div>
                                 <h3>Quick Actions</h3>
-                                <p>
-                                    Manage your assets quickly
-                                </p>
+                                <p>Manage your assets quickly</p>
                             </div>
                         </div>
 
                         <div className="quick-actions">
-
-                            <button className="quick-action blue">
-                                <span className="action-icon">
-                                    +
-                                </span>
-
+                            <button
+                                type="button"
+                                className="quick-action blue"
+                                onClick={() => navigate("/assets")}
+                            >
+                                <span className="action-icon">+</span>
                                 <span className="action-text">
-                                    <strong>
-                                        Add Asset
-                                    </strong>
-
-                                    <small>
-                                        Register a new asset
-                                    </small>
+                                    <strong>Add Asset</strong>
+                                    <small>Register a new asset</small>
                                 </span>
                             </button>
-
-                            <button className="quick-action green">
-                                <span className="action-icon">
-                                    ↗
-                                </span>
-
+                            <button
+                                type="button"
+                                className="quick-action green"
+                                onClick={() => navigate("/assign-assets")}
+                            >
+                                <span className="action-icon">↗</span>
                                 <span className="action-text">
-                                    <strong>
-                                        Assign Asset
-                                    </strong>
-
-                                    <small>
-                                        Assign asset to employee
-                                    </small>
+                                    <strong>Assign Asset</strong>
+                                    <small>Assign asset to employee</small>
                                 </span>
                             </button>
-
-                            <button className="quick-action purple">
-                                <span className="action-icon">
-                                    📊
-                                </span>
-
+                            <button
+                                type="button"
+                                className="quick-action purple"
+                                onClick={() => navigate("/history")}
+                            >
+                                <span className="action-icon">📊</span>
                                 <span className="action-text">
-                                    <strong>
-                                        View Reports
-                                    </strong>
-
-                                    <small>
-                                        Check asset reports
-                                    </small>
+                                    <strong>View History</strong>
+                                    <small>Review asset activity</small>
                                 </span>
                             </button>
-
                         </div>
-
                     </section>
-
                 </div>
 
-                {/* Bottom Summary */}
                 <div className="summary-grid">
-
                     <div className="summary-card">
-                        <span className="summary-label">
-                            Asset Value
-                        </span>
-
+                        <span className="summary-label">Total Asset Value</span>
                         <strong>
-                            $428,560
+                            {loading || errorMessage ? "—" : formatCurrency(totalAssetValue)}
                         </strong>
-
-                        <small className="positive">
-                            ↑ 8.2% this month
-                        </small>
+                        <small>Based on recorded purchase prices</small>
                     </div>
-
                     <div className="summary-card">
-                        <span className="summary-label">
-                            Pending Requests
-                        </span>
-
+                        <span className="summary-label">Active Assignments</span>
                         <strong>
-                            18
+                            {loading || errorMessage
+                                ? "—"
+                                : activeAssignments.length.toLocaleString()}
                         </strong>
-
-                        <small className="warning">
-                            Need review
-                        </small>
+                        <small>Assets currently assigned to staff</small>
                     </div>
-
                     <div className="summary-card">
-                        <span className="summary-label">
-                            Retired Assets
-                        </span>
-
+                        <span className="summary-label">Open Maintenance</span>
                         <strong>
-                            32
+                            {loading || errorMessage
+                                ? "—"
+                                : activeMaintenanceCount.toLocaleString()}
                         </strong>
-
-                        <small>
-                            This year
-                        </small>
+                        <small>Maintenance records not completed</small>
                     </div>
-
                 </div>
-
             </div>
         </MainLayout>
     );

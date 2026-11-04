@@ -54,15 +54,38 @@ const getErrorMessage = (error, fallback) => {
 
 
 const getFullName = (user) => {
-    return `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+    return user?.fullName || "UNKNOWN";
 };
 
 
 const getInitials = (user) => {
-    const first = user?.firstName?.charAt(0) || "";
-    const last = user?.lastName?.charAt(0) || "";
+    const fullName = (user?.fullName || "User").trim();
+    const words = fullName.split(/\s+/).filter(Boolean);
 
-    return `${first}${last}`.toUpperCase() || "U";
+    if (words.length === 1) {
+        return words[0].slice(0, 2).toUpperCase();
+    }
+
+    return words
+        .slice(0, 2)
+        .map((word) => word.charAt(0))
+        .join("")
+        .toUpperCase() || "U";
+};
+
+const normalizeGender = (value) => {
+    if (value === null || value === undefined || value === "") {
+        return "";
+    }
+
+    const normalized = String(value).trim();
+    const upper = normalized.toUpperCase();
+
+    if (["MALE", "FEMALE", "OTHER"].includes(upper)) {
+        return upper;
+    }
+
+    return normalized;
 };
 
 
@@ -103,6 +126,7 @@ function UserHome() {
     ===================================================== */
 
     const [userDialog, setUserDialog] = useState(null);
+    const [userDetailDialog, setUserDetailDialog] = useState(null);
     const [roleDialog, setRoleDialog] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState(null);
 
@@ -235,23 +259,30 @@ function UserHome() {
             setSavingUser(true);
             setUserError("");
 
+            const fullName = (formData.fullName || "").trim();
+            const roleId = Number(formData.roleId);
+
             const data = {
 
                 username: formData.username.trim(),
 
                 email: formData.email.trim(),
 
-                firstName: formData.firstName.trim(),
+                fullName,
 
-                lastName: formData.lastName.trim(),
+                gender: normalizeGender(formData.gender) || null,
 
-                phone: formData.phone.trim(),
+                phone: formData.phone?.trim() || null,
 
-                status: formData.status,
+                department: formData.department?.trim() || null,
 
-                role: {
-                    id: Number(formData.roleId),
-                },
+                position: formData.position?.trim() || null,
+
+                status: formData.status || "ACTIVE",
+
+                role: roleId ? { id: roleId } : null,
+
+                roleId: roleId || null,
 
             };
 
@@ -500,6 +531,11 @@ function UserHome() {
     };
 
 
+    const openUserDetail = (user) => {
+        setUserDetailDialog(user);
+    };
+
+
     /* =====================================================
        OPEN ROLE DIALOG
     ===================================================== */
@@ -684,6 +720,8 @@ function UserHome() {
 
                             onEdit={openEditUser}
 
+                            onDetail={openUserDetail}
+
                             onDelete={(user) =>
                                 openDeleteDialog("user", user)
                             }
@@ -743,6 +781,19 @@ function UserHome() {
                     onClose={() => setUserDialog(null)}
 
                     onSave={handleSaveUser}
+
+                />
+
+            )}
+
+
+            {userDetailDialog && (
+
+                <UserDetailDialog
+
+                    user={userDetailDialog}
+
+                    onClose={() => setUserDetailDialog(null)}
 
                 />
 
@@ -815,6 +866,7 @@ function UserList({
     onRetry,
     onAdd,
     onEdit,
+    onDetail,
     onDelete,
 }) {
 
@@ -1102,8 +1154,9 @@ function UserList({
                                             <button
                                                 type="button"
                                                 className="icon-action more"
-                                                title="More actions"
-                                                onClick={() => onEdit(user)}
+                                                title="View user details"
+                                                onClick={() => onDetail(user)}
+                                                aria-label={`View details for ${getFullName(user)}`}
                                             >
                                                 <MoreHorizontal size={17} />
                                             </button>
@@ -1326,13 +1379,17 @@ function UserDialog({
 
         id: user?.id || null,
 
-        firstName: user?.firstName || "",
-
-        lastName: user?.lastName || "",
+        fullName: user?.fullName || "",
 
         email: user?.email || "",
 
         phone: user?.phone || "",
+
+        gender: normalizeGender(user?.gender),
+
+        department: user?.department || "",
+
+        position: user?.position || "",
 
         username: user?.username || "",
 
@@ -1376,15 +1433,16 @@ function UserDialog({
         setError("");
 
 
-        if (
-            !form.firstName.trim() ||
-            !form.lastName.trim() ||
-            !form.email.trim()
-        ) {
+        if (!form.fullName.trim()) {
 
-            setError(
-                "First name, last name and email are required."
-            );
+            setError("Full name is required.");
+
+            return;
+        }
+
+        if (!form.email.trim()) {
+
+            setError("Email is required.");
 
             return;
         }
@@ -1426,17 +1484,23 @@ function UserDialog({
 
             id: form.id,
 
-            firstName: form.firstName.trim(),
-
-            lastName: form.lastName.trim(),
+            fullName: form.fullName.trim(),
 
             email: form.email.trim(),
 
-            phone: form.phone.trim(),
+            phone: form.phone.trim() || null,
+
+            gender: normalizeGender(form.gender) || null,
+
+            department: form.department.trim() || null,
+
+            position: form.position.trim() || null,
 
             username: form.username.trim(),
 
             roleId: Number(form.roleId),
+
+            role: Number(form.roleId) ? { id: Number(form.roleId) } : null,
 
             status: form.status,
 
@@ -1527,35 +1591,16 @@ function UserDialog({
                             <div className="form-group">
 
                                 <label>
-                                    First Name <span className="required">*</span>
+                                    Full Name <span className="required">*</span>
                                 </label>
 
                                 <input
                                     type="text"
-                                    value={form.firstName}
+                                    value={form.fullName}
                                     onChange={(e) =>
-                                        updateField("firstName", e.target.value)
+                                        updateField("fullName", e.target.value)
                                     }
-                                    placeholder="Enter first name"
-                                    required
-                                />
-
-                            </div>
-
-
-                            <div className="form-group">
-
-                                <label>
-                                    Last Name <span className="required">*</span>
-                                </label>
-
-                                <input
-                                    type="text"
-                                    value={form.lastName}
-                                    onChange={(e) =>
-                                        updateField("lastName", e.target.value)
-                                    }
-                                    placeholder="Enter last name"
+                                    placeholder="Enter full name"
                                     required
                                 />
 
@@ -1592,6 +1637,56 @@ function UserDialog({
                                         updateField("phone", e.target.value)
                                     }
                                     placeholder="Enter phone number"
+                                />
+
+                            </div>
+
+                            <div className="form-group">
+
+                                <label>Gender</label>
+
+                                <select
+                                    value={form.gender}
+                                    onChange={(e) =>
+                                        updateField("gender", e.target.value)
+                                    }
+                                >
+
+                                    <option value="">Select gender</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+
+                                </select>
+
+                            </div>
+
+                            <div className="form-group">
+
+                                <label>Department</label>
+
+                                <input
+                                    type="text"
+                                    value={form.department}
+                                    onChange={(e) =>
+                                        updateField("department", e.target.value)
+                                    }
+                                    placeholder="Enter department"
+                                />
+
+                            </div>
+
+                            <div className="form-group">
+
+                                <label>Position</label>
+
+                                <input
+                                    type="text"
+                                    value={form.position}
+                                    onChange={(e) =>
+                                        updateField("position", e.target.value)
+                                    }
+                                    placeholder="Enter position"
                                 />
 
                             </div>
@@ -1779,6 +1874,111 @@ function UserDialog({
 
     );
 
+}
+
+
+/* =========================================================
+   USER DETAIL DIALOG
+========================================================= */
+
+function UserDetailDialog({
+    user,
+    onClose,
+}) {
+    return (
+        <div
+            className="dialog-overlay"
+            onMouseDown={onClose}
+        >
+            <div
+                className="dialog user-detail-dialog"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+                <div className="dialog-header">
+                    <div className="dialog-title">
+                        <div className="dialog-icon">
+                            <User size={20} />
+                        </div>
+
+                        <div>
+                            <h3>User Details</h3>
+                            <p>Read-only account overview</p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="dialog-close"
+                        onClick={onClose}
+                    >
+                        <X size={19} />
+                    </button>
+                </div>
+
+                <div className="dialog-body user-detail-body">
+                    <div className="detail-profile-header">
+                        <div className="detail-avatar">
+                            {getInitials(user)}
+                        </div>
+
+                        <div className="detail-profile-info">
+                            <h4>{getFullName(user) || "Unnamed User"}</h4>
+                            <p>{user.email || "No email"}</p>
+                        </div>
+
+                        <span
+                            className={`status-badge ${(user.status || "ACTIVE").toLowerCase()}`}
+                        >
+                            <span className="status-dot" />
+                            {user.status || "ACTIVE"}
+                        </span>
+                    </div>
+
+                    <div className="detail-grid">
+                        <div className="detail-item">
+                            <label>Username</label>
+                            <span>{user.username || "-"}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <label>Role</label>
+                            <span>{user.role?.name || "No Role"}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <label>Phone</label>
+                            <span>{user.phone || "-"}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <label>Gender</label>
+                            <span>{user.gender || "-"}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <label>Department</label>
+                            <span>{user.department || "-"}</span>
+                        </div>
+
+                        <div className="detail-item">
+                            <label>Position</label>
+                            <span>{user.position || "-"}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="dialog-footer">
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 
@@ -2016,6 +2216,35 @@ function DeleteDialog({
         ? getFullName(item)
         : item?.name;
 
+    const summary = isUser ? (
+        <div className="delete-summary-card">
+            <div className="delete-summary-avatar">
+                {getInitials(item)}
+            </div>
+
+            <div className="delete-summary-info">
+                <h4>{name || "Unnamed User"}</h4>
+                <p>{item?.email || "No email"}</p>
+                <div className="delete-summary-meta">
+                    <span>{item?.role?.name || "No Role"}</span>
+                    <span className={`mini-status ${(item?.status || "ACTIVE").toLowerCase()}`}>
+                        {item?.status || "ACTIVE"}
+                    </span>
+                </div>
+            </div>
+        </div>
+    ) : (
+        <div className="delete-summary-card delete-summary-role">
+            <div className="delete-summary-avatar role-avatar">
+                <Shield size={18} />
+            </div>
+
+            <div className="delete-summary-info">
+                <h4>{name || "Role"}</h4>
+                <p>{item?.description || "No description"}</p>
+            </div>
+        </div>
+    );
 
     return (
 
@@ -2033,26 +2262,19 @@ function DeleteDialog({
                     <Trash2 size={23} />
                 </div>
 
-
                 <h3>{title}</h3>
 
+                {summary}
 
-                <p>
-
+                <p className="delete-warning">
                     Are you sure you want to delete{" "}
-
                     <strong>
                         {name || "this item"}
                     </strong>
-
                     ?
-
                     <br />
-
                     This action cannot be undone.
-
                 </p>
-
 
                 <div className="delete-actions">
 
@@ -2064,7 +2286,6 @@ function DeleteDialog({
                     >
                         Cancel
                     </button>
-
 
                     <button
                         type="button"

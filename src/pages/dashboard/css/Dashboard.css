@@ -33,6 +33,16 @@
     font-size: 14px;
 }
 
+.dashboard-error {
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    border: 1px solid #f3c7c7;
+    border-radius: 10px;
+    background: #fff3f3;
+    color: #a83232;
+    font-size: 13px;
+}
+
 /* =========================================
    STATISTICS
 ========================================= */
@@ -316,6 +326,17 @@
 .status.maintenance {
     background: #fff3e3;
     color: #d9821f;
+}
+
+.status.inactive {
+    background: #f0f2f5;
+    color: #626c7c;
+}
+
+.dashboard-table-message {
+    height: 100px;
+    text-align: center;
+    color: #929baa !important;
 }
 
 /* =========================================

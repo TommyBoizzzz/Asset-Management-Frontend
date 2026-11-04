@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import Login from "./pages/auth/screens/Login";
-import UserHome from "./pages/auth/screens/user_home";
+import UserHome from "./pages/auth/screens/User_home";
 import Dashboard from "./pages/dashboard/screens/Dashboard";
 import Assets from "./pages/asset/screens/asset_home";
 import StaffHome from "./pages/staff/screens/staff_home";

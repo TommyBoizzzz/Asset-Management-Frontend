@@ -28,31 +28,51 @@ const getCurrentUser = () => {
     }
 };
 
+const normalizeGender = (value) => {
+    if (value === null || value === undefined || value === "") {
+        return "";
+    }
+
+    const normalized = String(value).trim();
+    const upper = normalized.toUpperCase();
+
+    if (["MALE", "FEMALE", "OTHER"].includes(upper)) {
+        return upper;
+    }
+
+    return normalized;
+};
+
 const getProfileFromUser = (user) => {
-    const fullName =
-        user?.fullName ||
-        [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-        "User";
+    const fullName = user?.fullName || "User";
 
     return {
+        username: user?.username || "",
         fullName,
         email: user?.email || "",
         phone: user?.phone || "",
+        gender: normalizeGender(user?.gender),
+        position: user?.position || "",
         department:
             user?.department ||
             user?.position ||
             user?.role?.name ||
             "IT Operations",
         role: user?.role?.name || user?.role || "User",
+        password: "",
     };
 };
 
 const defaultProfile = {
+    username: "",
     fullName: "User",
     email: "",
     phone: "",
+    gender: "",
+    position: "",
     department: "IT Operations",
     role: "User",
+    password: "",
 };
 
 const initialPreferences = {
@@ -120,16 +140,18 @@ function SettingHome() {
                     : sessionStorage;
             const currentUser = getCurrentUser();
 
+            const updatedPassword = profile.password?.trim();
+            const fullName = (profile.fullName || "").trim() || "User";
+
             const payload = {
-                username: currentUser?.username || "",
-                password: currentUser?.password || "",
+                username: profile.username || currentUser?.username || "",
+                password: updatedPassword || currentUser?.password || "",
+                fullName,
                 email: profile.email,
-                firstName: profile.fullName.split(" ")[0] || "",
-                lastName: profile.fullName.split(" ").slice(1).join(" ") || "",
+                gender: normalizeGender(profile.gender),
                 phone: profile.phone,
                 department: profile.department,
-                position: currentUser?.position || "",
-                gender: currentUser?.gender || "",
+                position: profile.position,
                 status: currentUser?.status || "ACTIVE",
                 role: currentUser?.role && typeof currentUser.role === "object"
                     ? { ...currentUser.role, name: profile.role }
@@ -142,15 +164,14 @@ function SettingHome() {
 
                 const nextUser = {
                     ...savedUser,
-                    fullName:
-                        savedUser?.fullName ||
-                        [savedUser?.firstName, savedUser?.lastName]
-                            .filter(Boolean)
-                            .join(" ") ||
-                        profile.fullName,
+                    username: savedUser?.username || profile.username || currentUser?.username,
+                    fullName: savedUser?.fullName || fullName,
                     email: savedUser?.email || profile.email,
                     phone: savedUser?.phone || profile.phone,
+                    gender: normalizeGender(savedUser?.gender) || normalizeGender(profile.gender),
+                    position: savedUser?.position || profile.position,
                     department: savedUser?.department || profile.department,
+                    password: updatedPassword || savedUser?.password || currentUser?.password || "",
                     role:
                         savedUser?.role && typeof savedUser.role === "object"
                             ? savedUser.role
@@ -168,6 +189,7 @@ function SettingHome() {
             });
 
             await new Promise((resolve) => setTimeout(resolve, 700));
+            setProfile((prev) => ({ ...prev, password: "" }));
             setIsSuccessModalOpen(true);
         } catch (error) {
             console.error("Failed to save profile:", error);
@@ -229,6 +251,20 @@ function SettingHome() {
 
                         <div className="settings-form-grid">
                             <label className="form-field">
+                                <span>Username</span>
+                                <input
+                                    type="text"
+                                    value={profile.username}
+                                    onChange={(event) =>
+                                        handleProfileChange(
+                                            "username",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </label>
+
+                            <label className="form-field">
                                 <span>Full name</span>
                                 <input
                                     type="text"
@@ -257,6 +293,20 @@ function SettingHome() {
                             </label>
 
                             <label className="form-field">
+                                <span>Gender</span>
+                                <input
+                                    type="text"
+                                    value={profile.gender}
+                                    onChange={(event) =>
+                                        handleProfileChange(
+                                            "gender",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </label>
+
+                            <label className="form-field">
                                 <span>Phone</span>
                                 <input
                                     type="tel"
@@ -264,6 +314,20 @@ function SettingHome() {
                                     onChange={(event) =>
                                         handleProfileChange(
                                             "phone",
+                                            event.target.value
+                                        )
+                                    }
+                                />
+                            </label>
+
+                            <label className="form-field">
+                                <span>Position</span>
+                                <input
+                                    type="text"
+                                    value={profile.position}
+                                    onChange={(event) =>
+                                        handleProfileChange(
+                                            "position",
                                             event.target.value
                                         )
                                     }
@@ -295,6 +359,21 @@ function SettingHome() {
                                             event.target.value
                                         )
                                     }
+                                />
+                            </label>
+
+                            <label className="form-field form-field-full">
+                                <span>Password</span>
+                                <input
+                                    type="password"
+                                    value={profile.password || ""}
+                                    onChange={(event) =>
+                                        handleProfileChange(
+                                            "password",
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="Leave blank to keep current password"
                                 />
                             </label>
                         </div>

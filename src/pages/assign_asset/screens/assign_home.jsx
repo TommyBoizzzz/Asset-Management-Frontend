@@ -22,7 +22,7 @@ import AssetAssignmentService from "../services/AssetAssignmentService";
 import AssetService from "../../asset/services/AssetService";
 import StaffService from "../../staff/services/staff_home";
 
-const REQUIRED_ROLE = "SUPER_ADMIN";
+const REQUIRED_ROLE = "SUPERADMIN";
 
 /* =============================================================
    GET CURRENT USER
@@ -1123,7 +1123,7 @@ function AssignAssets() {
                                         <span>Assigned By</span>
                                         <strong>
                                             {selectedAssignment.assignedBy
-                                                ? `${selectedAssignment.assignedBy.firstName || ""} ${selectedAssignment.assignedBy.lastName || ""}`.trim() || "-"
+                                                ? selectedAssignment.assignedBy.fullName || "-"
                                                 : "-"}
                                         </strong>
                                     </div>
