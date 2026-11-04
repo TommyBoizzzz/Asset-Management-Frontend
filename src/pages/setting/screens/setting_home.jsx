@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
     Bell,
     ChevronRight,
@@ -12,14 +12,47 @@ import {
 } from "lucide-react";
 
 import MainLayout from "../../../layouts/MainLayout";
+import UserService from "../../auth/services/UserService";
 import "./setting.css";
 
-const initialProfile = {
-    fullName: "John Smith",
-    email: "john.smith@bams.com",
-    phone: "+855 12 345 678",
+const getCurrentUser = () => {
+    const rawUser =
+        localStorage.getItem("user") || sessionStorage.getItem("user");
+
+    if (!rawUser) return null;
+
+    try {
+        return JSON.parse(rawUser);
+    } catch {
+        return null;
+    }
+};
+
+const getProfileFromUser = (user) => {
+    const fullName =
+        user?.fullName ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+        "User";
+
+    return {
+        fullName,
+        email: user?.email || "",
+        phone: user?.phone || "",
+        department:
+            user?.department ||
+            user?.position ||
+            user?.role?.name ||
+            "IT Operations",
+        role: user?.role?.name || user?.role || "User",
+    };
+};
+
+const defaultProfile = {
+    fullName: "User",
+    email: "",
+    phone: "",
     department: "IT Operations",
-    role: "System Administrator",
+    role: "User",
 };
 
 const initialPreferences = {
@@ -30,7 +63,9 @@ const initialPreferences = {
 };
 
 function SettingHome() {
-    const [profile, setProfile] = useState(initialProfile);
+    const [profile, setProfile] = useState(() =>
+        getProfileFromUser(getCurrentUser()) || defaultProfile
+    );
     const [preferences, setPreferences] = useState(initialPreferences);
     const [notifications, setNotifications] = useState({
         emailAlerts: true,
@@ -43,6 +78,8 @@ function SettingHome() {
         autoLock: true,
         activityLog: true,
     });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     const handleProfileChange = (field, value) => {
         setProfile((prev) => ({
@@ -65,13 +102,83 @@ function SettingHome() {
         }));
     };
 
-    const handleSave = () => {
-        console.log("Settings saved", {
-            profile,
-            preferences,
-            notifications,
-            security,
-        });
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+
+        if (currentUser) {
+            setProfile(getProfileFromUser(currentUser));
+        }
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+
+        try {
+            const activeStorage =
+                localStorage.getItem("user") !== null
+                    ? localStorage
+                    : sessionStorage;
+            const currentUser = getCurrentUser();
+
+            const payload = {
+                username: currentUser?.username || "",
+                password: currentUser?.password || "",
+                email: profile.email,
+                firstName: profile.fullName.split(" ")[0] || "",
+                lastName: profile.fullName.split(" ").slice(1).join(" ") || "",
+                phone: profile.phone,
+                department: profile.department,
+                position: currentUser?.position || "",
+                gender: currentUser?.gender || "",
+                status: currentUser?.status || "ACTIVE",
+                role: currentUser?.role && typeof currentUser.role === "object"
+                    ? { ...currentUser.role, name: profile.role }
+                    : { name: profile.role },
+            };
+
+            if (currentUser?.id) {
+                const response = await UserService.update(currentUser.id, payload);
+                const savedUser = response?.data || currentUser;
+
+                const nextUser = {
+                    ...savedUser,
+                    fullName:
+                        savedUser?.fullName ||
+                        [savedUser?.firstName, savedUser?.lastName]
+                            .filter(Boolean)
+                            .join(" ") ||
+                        profile.fullName,
+                    email: savedUser?.email || profile.email,
+                    phone: savedUser?.phone || profile.phone,
+                    department: savedUser?.department || profile.department,
+                    role:
+                        savedUser?.role && typeof savedUser.role === "object"
+                            ? savedUser.role
+                            : { name: profile.role },
+                };
+
+                activeStorage.setItem("user", JSON.stringify(nextUser));
+            }
+
+            console.log("Settings saved", {
+                profile,
+                preferences,
+                notifications,
+                security,
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            setIsSuccessModalOpen(true);
+        } catch (error) {
+            console.error("Failed to save profile:", error);
+            alert(
+                error?.response?.data?.message ||
+                error?.response?.data ||
+                "Failed to save profile. Please try again."
+            );
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -92,9 +199,19 @@ function SettingHome() {
                         type="button"
                         className="save-settings-button"
                         onClick={handleSave}
+                        disabled={isSaving}
                     >
-                        <Save size={16} />
-                        Save changes
+                        {isSaving ? (
+                            <>
+                                <span className="save-loader" aria-hidden="true" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={16} />
+                                Save changes
+                            </>
+                        )}
                     </button>
                 </div>
 
@@ -464,6 +581,27 @@ function SettingHome() {
                     </section>
                 </div>
             </div>
+
+            {isSuccessModalOpen && (
+                <div className="settings-modal-overlay" role="dialog" aria-modal="true">
+                    <div className="settings-modal-card">
+                        <div className="settings-modal-icon">
+                            <ShieldCheck size={22} />
+                        </div>
+                        <h3>Profile saved</h3>
+                        <p>
+                            Your personal settings have been updated successfully.
+                        </p>
+                        <button
+                            type="button"
+                            className="settings-modal-button"
+                            onClick={() => setIsSuccessModalOpen(false)}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 }

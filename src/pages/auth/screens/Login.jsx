@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -9,17 +10,58 @@ import {
   ShieldCheck,
   Boxes,
 } from "lucide-react";
+import LoginService from "../services/LoginService";
 import "../css/Login.css";
 
+const getErrorMessage = (error, fallback) => {
+  const responseData = error?.response?.data;
+
+  if (typeof responseData === "string") {
+    return responseData;
+  }
+
+  if (responseData?.message) {
+    return responseData.message;
+  }
+
+  if (responseData?.error) {
+    return responseData.error;
+  }
+
+  return error?.message || fallback;
+};
+
+const extractLoginPayload = (response) => {
+  const payload = response?.data;
+
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  if (payload.user || payload.token || payload.accessToken || payload.jwt) {
+    return payload;
+  }
+
+  if (payload.data && typeof payload.data === "object") {
+    return payload.data;
+  }
+
+  return payload;
+};
+
 export default function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
+
+  const usernamePlaceholder = "Enter your username";
 
   const handleChange = (e) => {
     setFormData({
@@ -34,18 +76,45 @@ export default function Login() {
     if (loading) return;
 
     setLoading(true);
+    setErrorMessage("");
 
     try {
-      // Connect your authentication API here.
-      console.log({
-        ...formData,
-        rememberMe,
+      const response = await LoginService.login({
+        username: formData.username.trim(),
+        password: formData.password,
       });
 
-      // Example:
-      // await AuthService.login(formData);
+      const loginData = extractLoginPayload(response);
+      const user = loginData.user || loginData.data || loginData;
+      const token =
+        loginData.token ||
+        loginData.accessToken ||
+        loginData.jwt ||
+        loginData.authToken;
+
+      const activeStorage = rememberMe ? localStorage : sessionStorage;
+      const inactiveStorage = rememberMe ? sessionStorage : localStorage;
+
+      inactiveStorage.removeItem("user");
+      inactiveStorage.removeItem("accessToken");
+      inactiveStorage.removeItem("isLoggedIn");
+
+      if (user) {
+        activeStorage.setItem("user", JSON.stringify(user));
+      }
+
+      if (token) {
+        activeStorage.setItem("accessToken", token);
+      }
+
+      activeStorage.setItem("isLoggedIn", "true");
+
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Login failed:", error);
+      setErrorMessage(
+        getErrorMessage(error, "Unable to sign in. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
@@ -126,19 +195,25 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleSubmit}>
-              {/* Email */}
+              {errorMessage && (
+                <div className="login-message login-message-error">
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Username */}
               <div className="form-group">
-                <label htmlFor="email">Email Address</label>
+                <label htmlFor="username">Username</label>
 
                 <div className="input-wrapper">
                   <Mail size={19} />
 
                   <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    placeholder="Enter your email address"
-                    value={formData.email}
+                    id="username"
+                    type="text"
+                    name="username"
+                    placeholder={usernamePlaceholder}
+                    value={formData.username}
                     onChange={handleChange}
                     autoComplete="username"
                     required
