@@ -18,6 +18,7 @@ import SupportHome from "./pages/support/screens/support_home";
 import {
     getStoredUser,
     hasAssetWorkspaceAccess,
+    hasUserManagementAccess,
     hasPermission,
 } from "./utils/permissions";
 
@@ -26,7 +27,12 @@ import {
 // Protected Route
 // ========================================
 
-function ProtectedRoute({ children, permissionKey, assetWorkspace }) {
+function ProtectedRoute({
+    children,
+    permissionKey,
+    assetWorkspace,
+    userManagementWorkspace,
+}) {
     const isLoggedIn =
         localStorage.getItem("isLoggedIn") === "true" ||
         sessionStorage.getItem("isLoggedIn") === "true";
@@ -38,7 +44,9 @@ function ProtectedRoute({ children, permissionKey, assetWorkspace }) {
     const user = getStoredUser();
     const hasAccess = assetWorkspace
         ? hasAssetWorkspaceAccess(user)
-        : !permissionKey || hasPermission(user, permissionKey);
+        : userManagementWorkspace
+            ? hasUserManagementAccess(user)
+            : !permissionKey || hasPermission(user, permissionKey);
 
     if (!hasAccess) {
         return (
@@ -112,7 +120,7 @@ function App() {
                 <Route
                     path="/user-home"
                     element={
-                        <ProtectedRoute permissionKey="user-management">
+                        <ProtectedRoute userManagementWorkspace>
                             <UserHome />
                         </ProtectedRoute>
                     }

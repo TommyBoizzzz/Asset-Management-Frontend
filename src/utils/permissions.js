@@ -11,6 +11,7 @@ export const APP_PERMISSION_PAGES = [
     { key: "asset-categories", label: "Asset Categories" },
     { key: "staff", label: "Staff", path: "/staff" },
     { key: "user-management", label: "User Management", path: "/user-home" },
+    { key: "role-management", label: "Role Management" },
     { key: "assign-assets", label: "Assign Assets", path: "/assign-assets" },
     { key: "maintenance", label: "Maintenance", path: "/maintenance" },
     { key: "history", label: "History", path: "/history" },
@@ -64,10 +65,16 @@ export const hasAssetWorkspaceAccess = (user) =>
     hasPermission(user, "assets", "view") ||
     hasPermission(user, "asset-categories", "view");
 
+export const hasUserManagementAccess = (user) =>
+    hasPermission(user, "user-management", "view") ||
+    hasPermission(user, "role-management", "view");
+
 export const getLandingPath = (user) =>
     APP_PERMISSION_PAGES.find((page) =>
         page.key === "assets"
             ? hasAssetWorkspaceAccess(user)
+            : page.key === "user-management"
+                ? hasUserManagementAccess(user)
             : page.path && hasPermission(user, page.key, "view")
     )?.path || "/dashboard";
 

@@ -103,15 +103,22 @@ const normalizeGender = (value) => {
 
 function UserHome() {
     const currentUser = getStoredUser();
-    const canCreate = hasPermission(currentUser, "user-management", "create");
-    const canEdit = hasPermission(currentUser, "user-management", "edit");
-    const canDelete = hasPermission(currentUser, "user-management", "delete");
+    const canViewUsers = hasPermission(currentUser, "user-management", "view");
+    const canCreateUsers = hasPermission(currentUser, "user-management", "create");
+    const canEditUsers = hasPermission(currentUser, "user-management", "edit");
+    const canDeleteUsers = hasPermission(currentUser, "user-management", "delete");
+    const canViewRoles = hasPermission(currentUser, "role-management", "view");
+    const canCreateRoles = hasPermission(currentUser, "role-management", "create");
+    const canEditRoles = hasPermission(currentUser, "role-management", "edit");
+    const canDeleteRoles = hasPermission(currentUser, "role-management", "delete");
 
     /* =====================================================
        TABS
     ===================================================== */
 
-    const [activeTab, setActiveTab] = useState("users");
+    const [activeTab, setActiveTab] = useState(() =>
+        canViewUsers ? "users" : "roles"
+    );
 
 
     /* =====================================================
@@ -265,6 +272,7 @@ function UserHome() {
     ===================================================== */
 
     const handleSaveUser = async (formData) => {
+        if (formData.id ? !canEditUsers : !canCreateUsers) return;
 
         try {
 
@@ -384,6 +392,7 @@ function UserHome() {
     ===================================================== */
 
     const handleSaveRole = async (formData) => {
+        if (formData.id ? !canEditRoles : !canCreateRoles) return;
 
         try {
 
@@ -490,6 +499,9 @@ function UserHome() {
     const handleDelete = async () => {
 
         if (!deleteDialog || deleting) return;
+        if (deleteDialog.type === "user" ? !canDeleteUsers : !canDeleteRoles) {
+            return;
+        }
 
         try {
 
@@ -556,6 +568,7 @@ function UserHome() {
     ===================================================== */
 
     const openCreateUser = () => {
+        if (!canCreateUsers) return;
         setUserDialog({
             mode: "create",
             user: null,
@@ -564,6 +577,7 @@ function UserHome() {
 
 
     const openEditUser = (user) => {
+        if (!canEditUsers) return;
         setUserDialog({
             mode: "edit",
             user,
@@ -581,6 +595,7 @@ function UserHome() {
     ===================================================== */
 
     const openCreateRole = () => {
+        if (!canCreateRoles) return;
         setRoleDialog({
             mode: "create",
             role: null,
@@ -589,6 +604,7 @@ function UserHome() {
 
 
     const openEditRole = (role) => {
+        if (!canEditRoles) return;
         setRoleDialog({
             mode: "edit",
             role,
@@ -601,6 +617,7 @@ function UserHome() {
     ===================================================== */
 
     const openDeleteDialog = (type, item) => {
+        if (type === "user" ? !canDeleteUsers : !canDeleteRoles) return;
 
         setDeleteDialog({
             type,
@@ -649,32 +666,26 @@ function UserHome() {
                     </div>
 
 
-                    {activeTab === "users" ? (
+                    {activeTab === "users" && canCreateUsers && (
+                        <button
+                            type="button"
+                            className="primary-button"
+                            onClick={openCreateUser}
+                        >
+                            <UserPlus size={18} />
+                            Add User
+                        </button>
+                    )}
 
-                        canCreate && (
-                            <button
-                                type="button"
-                                className="primary-button"
-                                onClick={openCreateUser}
-                            >
-                                <UserPlus size={18} />
-                                Add User
-                            </button>
-                        )
-
-                    ) : (
-
-                        canCreate && (
-                            <button
-                                type="button"
-                                className="primary-button"
-                                onClick={openCreateRole}
-                            >
-                                <ShieldPlus size={18} />
-                                Create Role
-                            </button>
-                        )
-
+                    {activeTab === "roles" && canCreateRoles && (
+                        <button
+                            type="button"
+                            className="primary-button"
+                            onClick={openCreateRole}
+                        >
+                            <ShieldPlus size={18} />
+                            Create Role
+                        </button>
                     )}
 
                 </div>
@@ -686,7 +697,7 @@ function UserHome() {
 
                 <div className="user-tabs">
 
-                    <button
+                    {canViewUsers && <button
                         type="button"
                         className={`user-tab ${
                             activeTab === "users" ? "active" : ""
@@ -708,10 +719,10 @@ function UserHome() {
 
                         </div>
 
-                    </button>
+                    </button>}
 
 
-                    <button
+                    {canViewRoles && <button
                         type="button"
                         className={`user-tab ${
                             activeTab === "roles" ? "active" : ""
@@ -733,7 +744,7 @@ function UserHome() {
 
                         </div>
 
-                    </button>
+                    </button>}
 
                 </div>
 
@@ -744,7 +755,7 @@ function UserHome() {
 
                 <div className="user-tab-panel">
 
-                    {activeTab === "users" && (
+                    {activeTab === "users" && canViewUsers && (
 
                         <UserList
 
@@ -766,11 +777,11 @@ function UserHome() {
 
                             onDetail={openUserDetail}
 
-                            canCreate={canCreate}
+                            canCreate={canCreateUsers}
 
-                            canEdit={canEdit}
+                            canEdit={canEditUsers}
 
-                            canDelete={canDelete}
+                            canDelete={canDeleteUsers}
 
                             onDelete={(user) =>
                                 openDeleteDialog("user", user)
@@ -781,7 +792,7 @@ function UserHome() {
                     )}
 
 
-                    {activeTab === "roles" && (
+                    {activeTab === "roles" && canViewRoles && (
 
                         <RoleList
 
@@ -797,11 +808,11 @@ function UserHome() {
 
                             onEdit={openEditRole}
 
-                            canCreate={canCreate}
+                            canCreate={canCreateRoles}
 
-                            canEdit={canEdit}
+                            canEdit={canEditRoles}
 
-                            canDelete={canDelete}
+                            canDelete={canDeleteRoles}
 
                             onDelete={(role) =>
                                 openDeleteDialog("role", role)

@@ -16,6 +16,7 @@ import "./Navbar.css";
 import {
     getStoredUser,
     hasAssetWorkspaceAccess,
+    hasUserManagementAccess,
     hasPermission,
 } from "../utils/permissions";
 
@@ -50,7 +51,7 @@ function Navbar({
             label: "Assign Users",
             icon: UserPlus,
             path: "/user-home",
-            permissionKey: "user-management",
+            canAccess: hasUserManagementAccess,
         },
         {
             label: "Assign Assets",
