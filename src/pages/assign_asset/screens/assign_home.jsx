@@ -16,7 +16,7 @@ import {
 import MainLayout from "../../../layouts/MainLayout";
 import "../css/assign_home.css";
 
-import AssetAssignmentService from "../services/AssetAssignmentService";
+import AssetAssignmentService from "../services/Assetassignmentservice";
 import AssetService from "../../asset/services/AssetService";
 import StaffService from "../../staff/services/staff_home";
 import {
