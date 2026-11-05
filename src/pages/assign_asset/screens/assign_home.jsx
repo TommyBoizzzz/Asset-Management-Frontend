@@ -11,7 +11,6 @@ import {
     Plus,
     X,
     ChevronDown,
-    ShieldAlert,
 } from "lucide-react";
 
 import MainLayout from "../../../layouts/MainLayout";
@@ -25,39 +24,12 @@ import {
     isActiveAssignment,
     isAssetAvailable,
 } from "../../../utils/assetLifecycle";
-
-const ADMIN_ROLES = ["ADMIN", "SUPERADMIN"];
-
-/* =============================================================
-   GET CURRENT USER
-   Reads whichever storage Login.jsx wrote to (remember me vs not)
-============================================================= */
-
-function getCurrentUser() {
-    const raw =
-        localStorage.getItem("user") ||
-        sessionStorage.getItem("user");
-
-    if (!raw) return null;
-
-    try {
-        return JSON.parse(raw);
-    } catch {
-        return null;
-    }
-}
+import { getStoredUser, hasPermission } from "../../../utils/permissions";
 
 function AssignAssets() {
-
-    /* =========================================================
-       AUTH / ROLE GATE
-    ========================================================= */
-
-    const currentUser = getCurrentUser();
-    const currentRole = currentUser?.role?.name;
-    const isAuthorized = ADMIN_ROLES.includes(
-        String(currentRole || "").toUpperCase()
-    );
+    const user = getStoredUser();
+    const canCreate = hasPermission(user, "assign-assets", "create");
+    const canEdit = hasPermission(user, "assign-assets", "edit");
 
 
     /* =========================================================
@@ -146,13 +118,8 @@ function AssignAssets() {
 
     useEffect(() => {
 
-        if (isAuthorized) {
-            loadAll();
-        } else {
-            setLoading(false);
-        }
+        loadAll();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
@@ -255,6 +222,7 @@ function AssignAssets() {
     ========================================================= */
 
     const handleOpenAssign = () => {
+        if (!canCreate) return;
 
         setForm(emptyForm);
         setShowAssignModal(true);
@@ -271,8 +239,9 @@ function AssignAssets() {
     };
 
     const handleAssignSubmit = async (e) => {
-
         e.preventDefault();
+
+        if (!canCreate) return;
 
         if (!form.assetId) {
             alert("Please select an asset.");
@@ -315,7 +284,7 @@ function AssignAssets() {
             return;
         }
 
-        if (!currentUser?.id) {
+        if (!user?.id) {
             alert(
                 "Could not determine the current user. Please log in again."
             );
@@ -327,7 +296,7 @@ function AssignAssets() {
             const payload = {
                 asset: { id: Number(form.assetId) },
                 staff: { id: Number(form.staffId) },
-                assignedBy: { id: currentUser.id },
+                assignedBy: { id: user.id },
                 conditionBefore: form.conditionBefore,
             };
 
@@ -392,6 +361,7 @@ function AssignAssets() {
     ========================================================= */
 
     const handleOpenReturn = (assignment) => {
+        if (!canEdit) return;
 
         setSelectedAssignment(assignment);
         setReturnForm(emptyReturnForm);
@@ -409,8 +379,9 @@ function AssignAssets() {
     };
 
     const handleReturnSubmit = async (e) => {
-
         e.preventDefault();
+
+        if (!canEdit) return;
 
         if (!selectedAssignment) return;
 
@@ -467,46 +438,6 @@ function AssignAssets() {
             );
         }
     };
-
-
-    /* =========================================================
-       ACCESS DENIED
-    ========================================================= */
-
-    if (!isAuthorized) {
-
-        return (
-            <MainLayout
-                activePage="Assign Assets"
-                title="Assign Assets"
-            >
-
-                <div className="assign-page">
-
-                    <div className="access-denied">
-
-                        <div className="access-denied-icon">
-                            <ShieldAlert size={32} />
-                        </div>
-
-                        <h3>Access Restricted</h3>
-
-                        <p>
-                            This page is only available to administrators.
-                        </p>
-
-                        <span>
-                            Contact your administrator if you believe
-                            you should have access.
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </MainLayout>
-        );
-    }
 
 
     /* =========================================================
@@ -581,13 +512,13 @@ function AssignAssets() {
                     </div>
 
 
-                    <button
+                    {canCreate && <button
                         className="primary-btn"
                         onClick={handleOpenAssign}
                     >
                         <Plus size={18} />
                         Assign Asset
-                    </button>
+                    </button>}
 
                 </div>
 
@@ -830,7 +761,7 @@ function AssignAssets() {
                                                             <Eye size={15} />
                                                         </button>
 
-                                                        {isActiveAssignment(assignment) && (
+                                                        {canEdit && isActiveAssignment(assignment) && (
                                                             <button
                                                                 className="table-btn return"
                                                                 title="Return Asset"
@@ -1222,7 +1153,7 @@ function AssignAssets() {
                                     Close
                                 </button>
 
-                                {isActiveAssignment(selectedAssignment) && (
+                                {canEdit && isActiveAssignment(selectedAssignment) && (
                                     <button
                                         type="button"
                                         className="primary-modal-btn"

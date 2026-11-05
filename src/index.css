@@ -12,3 +12,22 @@ html {
 body {
     margin: 0;
 }
+
+.access-denied {
+    min-height: 100vh;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    padding: 24px;
+    color: #334155;
+    text-align: center;
+}
+
+.access-denied h1 {
+    margin: 0 0 8px;
+    color: #172033;
+}
+
+.access-denied p {
+    margin: 0;
+}

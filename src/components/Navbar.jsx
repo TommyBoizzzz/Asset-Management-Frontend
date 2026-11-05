@@ -13,6 +13,11 @@ import {
     X,
 } from "lucide-react";
 import "./Navbar.css";
+import {
+    getStoredUser,
+    hasAssetWorkspaceAccess,
+    hasPermission,
+} from "../utils/permissions";
 
 function Navbar({
     activePage = "Dashboard",
@@ -20,47 +25,56 @@ function Navbar({
     setMobileOpen,
 }) {
     const navigate = useNavigate();
+    const user = getStoredUser();
 
     const menuItems = [
         {
             label: "Dashboard",
             icon: LayoutDashboard,
             path: "/dashboard",
+            permissionKey: "dashboard",
         },
         {
             label: "Assets",
             icon: Package,
             path: "/assets",
+            canAccess: hasAssetWorkspaceAccess,
         },
         {
             label: "Staff",
             icon: Users,
             path: "/staff",
+            permissionKey: "staff",
         },
         {
             label: "Assign Users",
             icon: UserPlus,
             path: "/user-home",
+            permissionKey: "user-management",
         },
         {
             label: "Assign Assets",
             icon: PackageCheck,
             path: "/assign-assets",
+            permissionKey: "assign-assets",
         },
         {
             label: "Maintenance",
             icon: Wrench,
             path: "/maintenance",
+            permissionKey: "maintenance",
         },
         {
             label: "History",
             icon: History,
             path: "/history",
+            permissionKey: "history",
         },
         {
             label: "Settings",
             icon: Settings,
             path: "/settings",
+            permissionKey: "settings",
         },
     ];
 
@@ -148,7 +162,13 @@ function Navbar({
                         MAIN MENU
                     </div>
 
-                    {menuItems.map((item) => {
+                    {menuItems
+                        .filter((item) =>
+                            item.canAccess
+                                ? item.canAccess(user)
+                                : hasPermission(user, item.permissionKey, "view")
+                        )
+                        .map((item) => {
                         const Icon = item.icon;
 
                         const isActive =
@@ -198,22 +218,16 @@ function Navbar({
                 <div className="navbar-bottom">
 
                     {/* Support */}
-                    <button
-                        type="button"
-                        className="navbar-bottom-item"
-                        onClick={() =>
-                            handleNavigation("/support")
-                        }
-                    >
-                        <Headphones
-                            size={17}
-                            strokeWidth={1.8}
-                        />
-
-                        <span>
-                            Support
-                        </span>
-                    </button>
+                    {hasPermission(user, "support", "view") && (
+                        <button
+                            type="button"
+                            className="navbar-bottom-item"
+                            onClick={() => handleNavigation("/support")}
+                        >
+                            <Headphones size={17} strokeWidth={1.8} />
+                            <span>Support</span>
+                        </button>
+                    )}
 
                     {/* Logout */}
                     <button

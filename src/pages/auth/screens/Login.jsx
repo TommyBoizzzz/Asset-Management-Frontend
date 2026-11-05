@@ -11,6 +11,7 @@ import {
   Boxes,
 } from "lucide-react";
 import LoginService from "../services/LoginService";
+import { getLandingPath } from "../../../utils/permissions";
 import "../css/Login.css";
 
 const getErrorMessage = (error, fallback) => {
@@ -109,7 +110,7 @@ export default function Login() {
 
       activeStorage.setItem("isLoggedIn", "true");
 
-      navigate("/dashboard", { replace: true });
+      navigate(getLandingPath(user), { replace: true });
     } catch (error) {
       console.error("Login failed:", error);
       setErrorMessage(

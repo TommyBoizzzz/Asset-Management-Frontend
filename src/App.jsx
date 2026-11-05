@@ -15,22 +15,41 @@ import AssignAssets from "./pages/assign_asset/screens/assign_home";
 import Settings from "./pages/setting/screens/setting_home";
 import History from "./pages/history/screens/history_home";
 import SupportHome from "./pages/support/screens/support_home";
+import {
+    getStoredUser,
+    hasAssetWorkspaceAccess,
+    hasPermission,
+} from "./utils/permissions";
 
 
 // ========================================
 // Protected Route
 // ========================================
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, permissionKey, assetWorkspace }) {
     const isLoggedIn =
         localStorage.getItem("isLoggedIn") === "true" ||
         sessionStorage.getItem("isLoggedIn") === "true";
 
-    return isLoggedIn ? (
-        children
-    ) : (
-        <Navigate to="/login" replace />
-    );
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
+
+    const user = getStoredUser();
+    const hasAccess = assetWorkspace
+        ? hasAssetWorkspaceAccess(user)
+        : !permissionKey || hasPermission(user, permissionKey);
+
+    if (!hasAccess) {
+        return (
+            <main className="access-denied">
+                <h1>Access denied</h1>
+                <p>Your role does not have permission to view this page.</p>
+            </main>
+        );
+    }
+
+    return children;
 }
 
 // ========================================
@@ -63,7 +82,7 @@ function App() {
                 <Route
                     path="/dashboard"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="dashboard">
                             <Dashboard />
                         </ProtectedRoute>
                     }
@@ -73,7 +92,7 @@ function App() {
                 <Route
                     path="/assets"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute assetWorkspace>
                             <Assets />
                         </ProtectedRoute>
                     }
@@ -83,7 +102,7 @@ function App() {
                 <Route
                     path="/staff"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="staff">
                             <StaffHome />
                         </ProtectedRoute>
                     }
@@ -93,7 +112,7 @@ function App() {
                 <Route
                     path="/user-home"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="user-management">
                             <UserHome />
                         </ProtectedRoute>
                     }
@@ -103,7 +122,7 @@ function App() {
                 <Route
                     path="/assign-assets"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="assign-assets">
                             <AssignAssets />
                         </ProtectedRoute>
                     }
@@ -113,7 +132,7 @@ function App() {
                 <Route
                     path="/maintenance"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="maintenance">
                             <MaintenanceHome />
                         </ProtectedRoute>
                     }
@@ -123,7 +142,7 @@ function App() {
                 <Route
                     path="/history"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="history">
                             <History />
                         </ProtectedRoute>
                     }
@@ -133,7 +152,7 @@ function App() {
                 <Route
                     path="/settings"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="settings">
                             <Settings />
                         </ProtectedRoute>
                     }
@@ -143,7 +162,7 @@ function App() {
                 <Route
                     path="/support"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permissionKey="support">
                             <SupportHome />
                         </ProtectedRoute>
                     }

@@ -8,6 +8,7 @@ import {
     isActiveAssignment,
     normalizeAssetStatus,
 } from "../../../utils/assetLifecycle";
+import { getStoredUser, hasPermission } from "../../../utils/permissions";
 import "../css/Dashboard.css";
 
 const isStatus = (value, status) =>
@@ -53,6 +54,11 @@ const formatCurrency = (value) =>
 
 function Dashboard() {
     const navigate = useNavigate();
+    const user = getStoredUser();
+    const canViewAssets = hasPermission(user, "assets", "view");
+    const canCreateAssets = hasPermission(user, "assets", "create");
+    const canCreateAssignments = hasPermission(user, "assign-assets", "create");
+    const canViewHistory = hasPermission(user, "history", "view");
     const [assets, setAssets] = useState([]);
     const [assignments, setAssignments] = useState([]);
     const [maintenanceRecords, setMaintenanceRecords] = useState([]);
@@ -254,13 +260,13 @@ function Dashboard() {
                                 <h3>Recent Assets</h3>
                                 <p>Recently added or updated assets</p>
                             </div>
-                            <button
+                            {canViewAssets && <button
                                 type="button"
                                 className="view-all-btn"
                                 onClick={() => navigate("/assets")}
                             >
                                 View All
-                            </button>
+                            </button>}
                         </div>
 
                         <div className="table-container">
@@ -323,7 +329,7 @@ function Dashboard() {
                         </div>
 
                         <div className="quick-actions">
-                            <button
+                            {canCreateAssets && <button
                                 type="button"
                                 className="quick-action blue"
                                 onClick={() => navigate("/assets")}
@@ -333,8 +339,8 @@ function Dashboard() {
                                     <strong>Add Asset</strong>
                                     <small>Register a new asset</small>
                                 </span>
-                            </button>
-                            <button
+                            </button>}
+                            {canCreateAssignments && <button
                                 type="button"
                                 className="quick-action green"
                                 onClick={() => navigate("/assign-assets")}
@@ -344,8 +350,8 @@ function Dashboard() {
                                     <strong>Assign Asset</strong>
                                     <small>Assign asset to employee</small>
                                 </span>
-                            </button>
-                            <button
+                            </button>}
+                            {canViewHistory && <button
                                 type="button"
                                 className="quick-action purple"
                                 onClick={() => navigate("/history")}
@@ -355,7 +361,7 @@ function Dashboard() {
                                     <strong>View History</strong>
                                     <small>Review asset activity</small>
                                 </span>
-                            </button>
+                            </button>}
                         </div>
                     </section>
                 </div>

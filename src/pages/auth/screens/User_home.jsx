@@ -19,6 +19,14 @@ import {
 
 import UserService from "../services/UserService";
 import RoleService from "../services/RoleService";
+import {
+    ALL_PERMISSION_KEYS,
+    APP_PERMISSION_PAGES,
+    PERMISSION_ACTIONS,
+    getStoredUser,
+    hasPermission,
+    updateStoredUser,
+} from "../../../utils/permissions";
 
 import "../css/UserHome.css";
 
@@ -94,6 +102,10 @@ const normalizeGender = (value) => {
 ========================================================= */
 
 function UserHome() {
+    const currentUser = getStoredUser();
+    const canCreate = hasPermission(currentUser, "user-management", "create");
+    const canEdit = hasPermission(currentUser, "user-management", "edit");
+    const canDelete = hasPermission(currentUser, "user-management", "delete");
 
     /* =====================================================
        TABS
@@ -311,6 +323,10 @@ function UserHome() {
                 const updatedUser =
                     response.data?.data || response.data;
 
+                if (String(getStoredUser()?.id) === String(updatedUser.id)) {
+                    updateStoredUser(updatedUser);
+                }
+
                 setUsers((current) =>
                     current.map((user) =>
                         user.id === formData.id
@@ -380,6 +396,8 @@ function UserHome() {
 
                 description: formData.description.trim(),
 
+                permissions: formData.permissions,
+
             };
 
 
@@ -394,8 +412,24 @@ function UserHome() {
                     data
                 );
 
-                const updatedRole =
+                const updatedRoleResponse =
                     response.data?.data || response.data;
+                const updatedRole = {
+                    ...data,
+                    ...updatedRoleResponse,
+                    permissions:
+                        updatedRoleResponse?.permissions ?? data.permissions,
+                };
+
+                const loggedInUser = getStoredUser();
+                if (
+                    String(loggedInUser?.role?.id) === String(updatedRole.id)
+                ) {
+                    updateStoredUser({
+                        ...loggedInUser,
+                        role: updatedRole,
+                    });
+                }
 
                 setRoles((current) =>
                     current.map((role) =>
@@ -416,8 +450,14 @@ function UserHome() {
 
                 const response = await RoleService.create(data);
 
-                const newRole =
+                const newRoleResponse =
                     response.data?.data || response.data;
+                const newRole = {
+                    ...data,
+                    ...newRoleResponse,
+                    permissions:
+                        newRoleResponse?.permissions ?? data.permissions,
+                };
 
                 setRoles((current) => [
                     ...current,
@@ -577,7 +617,7 @@ function UserHome() {
     return (
 
         <MainLayout
-            activePage="User Home"
+            activePage="Assign Users"
             title="User Management"
         >
 
@@ -611,25 +651,29 @@ function UserHome() {
 
                     {activeTab === "users" ? (
 
-                        <button
-                            type="button"
-                            className="primary-button"
-                            onClick={openCreateUser}
-                        >
-                            <UserPlus size={18} />
-                            Add User
-                        </button>
+                        canCreate && (
+                            <button
+                                type="button"
+                                className="primary-button"
+                                onClick={openCreateUser}
+                            >
+                                <UserPlus size={18} />
+                                Add User
+                            </button>
+                        )
 
                     ) : (
 
-                        <button
-                            type="button"
-                            className="primary-button"
-                            onClick={openCreateRole}
-                        >
-                            <ShieldPlus size={18} />
-                            Create Role
-                        </button>
+                        canCreate && (
+                            <button
+                                type="button"
+                                className="primary-button"
+                                onClick={openCreateRole}
+                            >
+                                <ShieldPlus size={18} />
+                                Create Role
+                            </button>
+                        )
 
                     )}
 
@@ -722,6 +766,12 @@ function UserHome() {
 
                             onDetail={openUserDetail}
 
+                            canCreate={canCreate}
+
+                            canEdit={canEdit}
+
+                            canDelete={canDelete}
+
                             onDelete={(user) =>
                                 openDeleteDialog("user", user)
                             }
@@ -746,6 +796,12 @@ function UserHome() {
                             onAdd={openCreateRole}
 
                             onEdit={openEditRole}
+
+                            canCreate={canCreate}
+
+                            canEdit={canEdit}
+
+                            canDelete={canDelete}
 
                             onDelete={(role) =>
                                 openDeleteDialog("role", role)
@@ -868,6 +924,9 @@ function UserList({
     onEdit,
     onDetail,
     onDelete,
+    canCreate,
+    canEdit,
+    canDelete,
 }) {
 
     return (
@@ -888,14 +947,16 @@ function UserList({
 
                 </div>
 
-                <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={onAdd}
-                >
-                    <UserPlus size={17} />
-                    New User
-                </button>
+                {canCreate && (
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onAdd}
+                    >
+                        <UserPlus size={17} />
+                        New User
+                    </button>
+                )}
 
             </div>
 
@@ -997,7 +1058,7 @@ function UserList({
                             Try another search or create a new user.
                         </p>
 
-                        {!searchUser && (
+                        {!searchUser && canCreate && (
 
                             <button
                                 type="button"
@@ -1132,24 +1193,27 @@ function UserList({
 
                                         <div className="row-actions">
 
-                                            <button
-                                                type="button"
-                                                className="icon-action edit"
-                                                title="Edit user"
-                                                onClick={() => onEdit(user)}
-                                            >
-                                                <Edit3 size={16} />
-                                            </button>
+                                            {canEdit && (
+                                                <button
+                                                    type="button"
+                                                    className="icon-action edit"
+                                                    title="Edit user"
+                                                    onClick={() => onEdit(user)}
+                                                >
+                                                    <Edit3 size={16} />
+                                                </button>
+                                            )}
 
-
-                                            <button
-                                                type="button"
-                                                className="icon-action delete"
-                                                title="Delete user"
-                                                onClick={() => onDelete(user)}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {canDelete && (
+                                                <button
+                                                    type="button"
+                                                    className="icon-action delete"
+                                                    title="Delete user"
+                                                    onClick={() => onDelete(user)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
 
                                             <button
                                                 type="button"
@@ -1195,6 +1259,9 @@ function RoleList({
     onAdd,
     onEdit,
     onDelete,
+    canCreate,
+    canEdit,
+    canDelete,
 }) {
 
     return (
@@ -1215,14 +1282,16 @@ function RoleList({
 
                 </div>
 
-                <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={onAdd}
-                >
-                    <ShieldPlus size={17} />
-                    New Role
-                </button>
+                {canCreate && (
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={onAdd}
+                    >
+                        <ShieldPlus size={17} />
+                        New Role
+                    </button>
+                )}
 
             </div>
 
@@ -1294,6 +1363,23 @@ function RoleList({
                                         {role.description || "No description."}
                                     </p>
 
+                                    {Array.isArray(role.permissions) && (
+                                        <div className="permission-preview">
+                                            {role.permissions.length === 0 ? (
+                                                <span>No permissions</span>
+                                            ) : (
+                                                role.permissions.slice(0, 4).map((permission) => (
+                                                    <span key={permission}>{permission}</span>
+                                                ))
+                                            )}
+                                            {role.permissions.length > 4 && (
+                                                <span className="more-permissions">
+                                                    +{role.permissions.length - 4} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
                                 </div>
 
                             </div>
@@ -1303,23 +1389,27 @@ function RoleList({
 
                             <div className="role-actions">
 
-                                <button
-                                    type="button"
-                                    className="secondary-icon-button"
-                                    onClick={() => onEdit(role)}
-                                >
-                                    <Edit3 size={16} />
-                                    Edit
-                                </button>
+                                {canEdit && (
+                                    <button
+                                        type="button"
+                                        className="secondary-icon-button"
+                                        onClick={() => onEdit(role)}
+                                    >
+                                        <Edit3 size={16} />
+                                        Edit
+                                    </button>
+                                )}
 
-                                <button
-                                    type="button"
-                                    className="danger-icon-button"
-                                    onClick={() => onDelete(role)}
-                                >
-                                    <Trash2 size={16} />
-                                    Delete
-                                </button>
+                                {canDelete && (
+                                    <button
+                                        type="button"
+                                        className="danger-icon-button"
+                                        onClick={() => onDelete(role)}
+                                    >
+                                        <Trash2 size={16} />
+                                        Delete
+                                    </button>
+                                )}
 
                             </div>
 
@@ -1334,7 +1424,7 @@ function RoleList({
 
             {/* EMPTY */}
 
-            {!loading && roles.length === 0 && (
+            {!loading && roles.length === 0 && canCreate && (
 
                 <div className="empty-state">
 
@@ -1999,9 +2089,24 @@ function RoleDialog({
         role?.description || ""
     );
 
+    const [permissions, setPermissions] = useState(
+        role
+            ? role.permissionsConfigured === true && Array.isArray(role.permissions)
+                ? role.permissions
+                : ALL_PERMISSION_KEYS
+            : []
+    );
+
     const [error, setError] = useState("");
 
     const isEdit = Boolean(role);
+    const togglePermission = (permissionKey) => {
+        setPermissions((current) =>
+            current.includes(permissionKey)
+                ? current.filter((key) => key !== permissionKey)
+                : [...current, permissionKey]
+        );
+    };
 
 
     /* =====================================================
@@ -2029,6 +2134,8 @@ function RoleDialog({
             name: name.trim(),
 
             description: description.trim(),
+
+            permissions,
 
         });
 
@@ -2139,12 +2246,71 @@ function RoleDialog({
 
                         </div>
 
-                    </div>
+                            <div className="permissions-dialog-header">
+                                <div>
+                                    <h4>Page Permissions</h4>
+                                    <p>
+                                        Select what users with this role can do on each page.
+                                        Pages without View access are hidden from navigation.
+                                    </p>
+                                </div>
+                                <div className="permission-actions">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPermissions(ALL_PERMISSION_KEYS)}
+                                    >
+                                        Select all
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPermissions([])}
+                                    >
+                                        Clear all
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="permissions-dialog-list">
+                                {APP_PERMISSION_PAGES.map((page) => (
+                                    <section className="permission-dialog-group" key={page.key}>
+                                        <h5 className="permission-dialog-category">{page.label}</h5>
+                                        <div className="permission-dialog-items">
+                                            {PERMISSION_ACTIONS.map(({ key: action, label }) => {
+                                                const permissionKey = `${page.key}:${action}`;
+                                                const checked = permissions.includes(permissionKey);
+
+                                                return (
+                                                    <label
+                                                        className={`permission-checkbox ${checked ? "checked" : ""}`}
+                                                        key={permissionKey}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={checked}
+                                                            onChange={() => togglePermission(permissionKey)}
+                                                        />
+                                                        <span className="checkbox-ui">
+                                                            {checked ? "✓" : ""}
+                                                        </span>
+                                                        {label}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                ))}
+                            </div>
+
+                        </div>
 
 
                     {/* FOOTER */}
 
                     <div className="dialog-footer">
+
+                        <span className="selected-permissions">
+                            {permissions.length} permissions selected
+                        </span>
 
                         <button
                             type="button"

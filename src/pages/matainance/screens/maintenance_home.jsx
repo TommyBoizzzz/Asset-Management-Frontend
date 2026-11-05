@@ -25,6 +25,7 @@ import {
     isActiveAssignment,
     normalizeAssetStatus,
 } from "../../../utils/assetLifecycle";
+import { getStoredUser, hasPermission } from "../../../utils/permissions";
 import "../css/Maintenace.css";
 
 const FILTER_TABS = [
@@ -134,6 +135,10 @@ const normalizeMaintenanceRecord = (record) => {
 };
 
 function MaintenanceHome() {
+    const user = getStoredUser();
+    const canCreate = hasPermission(user, "maintenance", "create");
+    const canEdit = hasPermission(user, "maintenance", "edit");
+
     const [maintenanceList, setMaintenanceList] = useState([]);
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [searchTerm, setSearchTerm] = useState("");
@@ -209,6 +214,7 @@ function MaintenanceHome() {
     }), [maintenanceList]);
 
     const updateStatus = async (id, nextStatus, completionCondition) => {
+        if (!canEdit) return;
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
         const record = maintenanceList.find((item) => item.id === id);
@@ -324,6 +330,7 @@ function MaintenanceHome() {
     };
 
     const openAddTaskModal = () => {
+        if (!canCreate) return;
         setTaskForm({
             ...emptyTaskForm,
             assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
@@ -333,6 +340,7 @@ function MaintenanceHome() {
     };
 
     const openEditTaskModal = (task) => {
+        if (!canEdit) return;
         setTaskForm({
             assetId: task.asset?.id ? String(task.asset.id) : "",
             assetName: task.asset?.name || "",
@@ -374,6 +382,7 @@ function MaintenanceHome() {
 
     const handleSaveTask = async (event) => {
         event.preventDefault();
+        if (taskModal?.mode === "edit" ? !canEdit : !canCreate) return;
 
         if (!taskForm.assetId || !taskForm.staffId) {
             setError("Please select both an asset and a staff member.");
@@ -446,10 +455,10 @@ function MaintenanceHome() {
                         <p>Manage and track scheduled service records.</p>
                     </div>
 
-                    <button type="button" className="add-maintenance-btn" onClick={openAddTaskModal}>
+                    {canCreate && <button type="button" className="add-maintenance-btn" onClick={openAddTaskModal}>
                         <Plus size={16} />
                         <span>Add Task</span>
-                    </button>
+                    </button>}
                 </header>
 
                 <section className="maintenance-stats">
@@ -572,14 +581,14 @@ function MaintenanceHome() {
                                                 >
                                                     <Eye size={15} />
                                                 </button>
-                                                <button
+                                                {canEdit && <button
                                                     type="button"
                                                     className="edit-btn"
                                                     onClick={() => openEditTaskModal(item)}
                                                     title="Edit Task"
                                                 >
                                                     <Pencil size={15} />
-                                                </button>
+                                                </button>}
                                             </td>
                                         </tr>
                                     ))
@@ -601,6 +610,7 @@ function MaintenanceHome() {
                         onClose={() => setSelectedRecord(null)}
                         onStatusUpdate={updateStatus}
                         onEdit={openEditTaskModal}
+                        canEdit={canEdit}
                     />
                 )}
 
@@ -636,7 +646,7 @@ function StatCard({ label, value, desc, icon, theme }) {
     );
 }
 
-function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
+function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
     const canAdvance = nextStatus !== record.status;
@@ -655,10 +665,12 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
                         <span className="modal-subtitle">Tracking and issue details</span>
                     </div>
                     <div className="modal-actions">
-                        <button type="button" className="edit-inline-btn" onClick={() => onEdit(record)}>
-                            <Pencil size={14} />
-                            Edit
-                        </button>
+                        {canEdit && (
+                            <button type="button" className="edit-inline-btn" onClick={() => onEdit(record)}>
+                                <Pencil size={14} />
+                                Edit
+                            </button>
+                        )}
                         <button type="button" className="close-btn" onClick={onClose}>
                             <X size={18} />
                         </button>
@@ -691,7 +703,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
                                 <strong>{progress}%</strong>
                             </div>
 
-                            <div className="status-actions">
+                            {canEdit && <div className="status-actions">
                                 {requiresCondition && (
                                     <label className="form-field">
                                         <span>Condition after maintenance</span>
@@ -737,7 +749,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit }) {
                                         Cancel Maintenance
                                     </button>
                                 )}
-                            </div>
+                            </div>}
                         </div>
 
                         <div className="progress-track">

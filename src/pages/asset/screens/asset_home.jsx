@@ -26,9 +26,19 @@ import "../css/asset_home.css";
 import AssetService from "../services/AssetService";
 import AssetCategoryService from "../services/AssetCategoryService";
 import { normalizeAssetStatus } from "../../../utils/assetLifecycle";
+import { getStoredUser, hasPermission } from "../../../utils/permissions";
 
 
 function Assets() {
+    const user = getStoredUser();
+    const canViewAssets = hasPermission(user, "assets", "view");
+    const canViewCategories = hasPermission(user, "asset-categories", "view");
+    const canCreate = hasPermission(user, "assets", "create");
+    const canEdit = hasPermission(user, "assets", "edit");
+    const canDelete = hasPermission(user, "assets", "delete");
+    const canCreateCategory = hasPermission(user, "asset-categories", "create");
+    const canEditCategory = hasPermission(user, "asset-categories", "edit");
+    const canDeleteCategory = hasPermission(user, "asset-categories", "delete");
 
     /* =========================================================
        STATE
@@ -368,6 +378,7 @@ function Assets() {
     ========================================================= */
 
     const handleAddAsset = () => {
+        if (!canCreate) return;
 
         setEditingAsset(null);
 
@@ -393,6 +404,7 @@ function Assets() {
     ========================================================= */
 
     const handleEditAsset = (asset) => {
+        if (!canEdit) return;
 
         setEditingAsset(asset);
 
@@ -476,7 +488,7 @@ function Assets() {
 
     const handleAssetSubmit = async (e) => {
 
-        e.preventDefault();
+        if (editingAsset ? !canEdit : !canCreate) return;
 
 
         const assetCode =
@@ -738,6 +750,7 @@ function Assets() {
     ========================================================= */
 
     const handleRetireAsset = async (id) => {
+        if (!canDelete) return;
 
         const asset =
             assets.find(
@@ -838,6 +851,7 @@ function Assets() {
     ========================================================= */
 
     const handleAddCategory = () => {
+        if (!canCreateCategory) return;
 
         setEditingCategory(null);
 
@@ -856,6 +870,7 @@ function Assets() {
     const handleEditCategory = (
         category
     ) => {
+        if (!canEditCategory) return;
 
         setEditingCategory(category);
 
@@ -884,6 +899,7 @@ function Assets() {
     const handleCategorySubmit = async (e) => {
 
         e.preventDefault();
+        if (editingCategory ? !canEditCategory : !canCreateCategory) return;
 
 
         const name =
@@ -1025,6 +1041,7 @@ function Assets() {
     const handleDeleteCategory = async (
         category
     ) => {
+        if (!canDeleteCategory) return;
 
         const usedCount =
             getCategoryCount(
@@ -1207,12 +1224,13 @@ function Assets() {
                         <div>
 
                             <h2>
-                                Asset Management
+                                {canViewAssets ? "Asset Management" : "Asset Categories"}
                             </h2>
 
                             <p>
-                                Manage company assets and
-                                asset categories in one place.
+                                {canViewAssets
+                                    ? "Manage company assets and asset categories in one place."
+                                    : "Manage asset categories."}
                             </p>
 
                         </div>
@@ -1220,7 +1238,7 @@ function Assets() {
                     </div>
 
 
-                    <button
+                    {canCreate && <button
                         className="primary-btn"
                         onClick={
                             handleAddAsset
@@ -1231,7 +1249,7 @@ function Assets() {
 
                         Add Asset
 
-                    </button>
+                    </button>}
 
                 </div>
 
@@ -1240,7 +1258,7 @@ function Assets() {
                     STATISTICS
                 ================================================= */}
 
-                <div className="asset-stat-grid">
+                {canViewAssets && <div className="asset-stat-grid">
 
                     <div className="stat-card">
 
@@ -1338,7 +1356,7 @@ function Assets() {
 
                     </div>
 
-                </div>
+                </div>}
 
 
                 {/* =================================================
@@ -1352,7 +1370,7 @@ function Assets() {
                         ASSETS
                     ================================================= */}
 
-                    <section className="management-card assets-card">
+                    {canViewAssets && <section className="management-card assets-card">
 
                         <div className="card-header">
 
@@ -1377,7 +1395,7 @@ function Assets() {
                             </div>
 
 
-                            <button
+                            {canCreate && <button
                                 className="small-primary-btn"
                                 onClick={
                                     handleAddAsset
@@ -1388,7 +1406,7 @@ function Assets() {
 
                                 Add Asset
 
-                            </button>
+                            </button>}
 
                         </div>
 
@@ -1415,7 +1433,6 @@ function Assets() {
                                 />
 
                                 {assetSearch && (
-
                                     <button
                                         onClick={() =>
                                             setAssetSearch("")
@@ -1695,7 +1712,7 @@ function Assets() {
                                                                 </button>
 
 
-                                                                <button
+                                                                {canEdit && <button
                                                                     className="table-btn edit"
                                                                     title="Edit"
                                                                     onClick={() =>
@@ -1705,10 +1722,10 @@ function Assets() {
                                                                     }
                                                                 >
                                                                     <Pencil size={15} />
-                                                                </button>
+                                                                </button>}
 
 
-                                                                <button
+                                                                {canDelete && <button
                                                                     className="table-btn delete"
                                                                     title="Retire"
                                                                     onClick={() =>
@@ -1718,7 +1735,7 @@ function Assets() {
                                                                     }
                                                                 >
                                                                     <Trash2 size={15} />
-                                                                </button>
+                                                                </button>}
 
                                                             </div>
 
@@ -1759,14 +1776,14 @@ function Assets() {
 
                         </div>
 
-                    </section>
+                    </section>}
 
 
                     {/* =================================================
                         CATEGORY PANEL
                     ================================================= */}
 
-                    <section className="management-card categories-card">
+                    {canViewCategories && <section className="management-card categories-card">
 
                         <div className="card-header">
 
@@ -1791,7 +1808,7 @@ function Assets() {
                             </div>
 
 
-                            <button
+                            {canCreateCategory && <button
                                 className="small-primary-btn"
                                 onClick={
                                     handleAddCategory
@@ -1802,7 +1819,7 @@ function Assets() {
 
                                 Add Category
 
-                            </button>
+                            </button>}
 
                         </div>
 
@@ -1942,7 +1959,7 @@ function Assets() {
                                                     </button>
 
 
-                                                    <button
+                                                    {canEditCategory && <button
                                                         className="category-action edit"
                                                         title="Edit"
                                                         onClick={() =>
@@ -1952,10 +1969,10 @@ function Assets() {
                                                         }
                                                     >
                                                         <Pencil size={15} />
-                                                    </button>
+                                                    </button>}
 
 
-                                                    <button
+                                                    {canDeleteCategory && <button
                                                         className="category-action delete"
                                                         title="Delete"
                                                         onClick={() =>
@@ -1965,7 +1982,7 @@ function Assets() {
                                                         }
                                                     >
                                                         <Trash2 size={15} />
-                                                    </button>
+                                                    </button>}
 
                                                 </div>
 
@@ -2008,7 +2025,7 @@ function Assets() {
 
                         </div>
 
-                    </section>
+                    </section>}
 
                 </div>
 
@@ -3021,7 +3038,7 @@ function Assets() {
                                     </button>
 
 
-                                    <button
+                                    {canEdit && <button
                                         type="button"
                                         className="primary-modal-btn"
                                         onClick={() => {
@@ -3041,7 +3058,7 @@ function Assets() {
 
                                         Edit Asset
 
-                                    </button>
+                                    </button>}
 
                                 </div>
 
@@ -3221,7 +3238,7 @@ function Assets() {
                                     </button>
 
 
-                                    <button
+                                    {canEditCategory && <button
                                         type="button"
                                         className="primary-modal-btn purple-btn"
                                         onClick={() => {
@@ -3241,7 +3258,7 @@ function Assets() {
 
                                         Edit Category
 
-                                    </button>
+                                    </button>}
 
                                 </div>
 

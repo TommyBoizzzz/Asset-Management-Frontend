@@ -14,6 +14,7 @@ import {
 import StaffService from "../services/staff_home";
 import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
 import { isActiveAssignment } from "../../../utils/assetLifecycle";
+import { getStoredUser, hasPermission } from "../../../utils/permissions";
 import "../css/staff_home.css";
 
 const emptyStaffForm = {
@@ -32,6 +33,10 @@ const statusOptions = [
 ];
 
 function StaffHome() {
+    const user = getStoredUser();
+    const canCreate = hasPermission(user, "staff", "create");
+    const canEdit = hasPermission(user, "staff", "edit");
+
     const [staffList, setStaffList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -131,6 +136,7 @@ function StaffHome() {
     }, [staffList]);
 
     const openCreateDialog = () => {
+        if (!canCreate) return;
         setDialogMode("create");
         setSelectedStaffId(null);
         setFormData(emptyStaffForm);
@@ -139,6 +145,7 @@ function StaffHome() {
     };
 
     const openUpdateDialog = (staff) => {
+        if (!canEdit) return;
         setDialogMode("update");
         setSelectedStaffId(staff.id);
 
@@ -235,6 +242,7 @@ function StaffHome() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        if (dialogMode === "update" ? !canEdit : !canCreate) return;
 
         if (!validateForm()) {
             return;
@@ -324,7 +332,7 @@ function StaffHome() {
                         </p>
                     </div>
 
-                    <button
+                    {canCreate && <button
                         type="button"
                         className="add-staff-btn"
                         onClick={openCreateDialog}
@@ -333,7 +341,7 @@ function StaffHome() {
                         <span className="add-staff-label">
                             Add Staff
                         </span>
-                    </button>
+                    </button>}
                 </header>
 
                 {/* Statistics */}
@@ -485,9 +493,9 @@ function StaffHome() {
                                             key={staff.id}
                                             staff={staff}
                                             index={index}
-                                            onEdit={() =>
-                                                openUpdateDialog(staff)
-                                            }
+                                            onEdit={canEdit
+                                                ? () => openUpdateDialog(staff)
+                                                : undefined}
                                         />
                                     ))
                                 ) : (
@@ -605,7 +613,7 @@ function StaffRow({ staff, index, onEdit }) {
             </td>
 
             <td className="staff-action-column">
-                <button
+                {onEdit && <button
                     type="button"
                     className="staff-edit-btn"
                     title="Update staff"
@@ -613,7 +621,7 @@ function StaffRow({ staff, index, onEdit }) {
                     onClick={onEdit}
                 >
                     <Edit3 size={15} />
-                </button>
+                </button>}
             </td>
         </tr>
     );

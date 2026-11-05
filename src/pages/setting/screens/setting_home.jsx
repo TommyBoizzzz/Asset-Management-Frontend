@@ -13,6 +13,7 @@ import {
 
 import MainLayout from "../../../layouts/MainLayout";
 import UserService from "../../auth/services/UserService";
+import { hasPermission } from "../../../utils/permissions";
 import "./setting.css";
 
 const getCurrentUser = () => {
@@ -83,6 +84,7 @@ const initialPreferences = {
 };
 
 function SettingHome() {
+    const canEdit = hasPermission(getCurrentUser(), "settings", "edit");
     const [profile, setProfile] = useState(() =>
         getProfileFromUser(getCurrentUser()) || defaultProfile
     );
@@ -131,6 +133,8 @@ function SettingHome() {
     }, []);
 
     const handleSave = async () => {
+        if (!canEdit) return;
+
         setIsSaving(true);
 
         try {
@@ -217,7 +221,7 @@ function SettingHome() {
                         <h2>Personal settings</h2>
                     </div>
 
-                    <button
+                    {canEdit && <button
                         type="button"
                         className="save-settings-button"
                         onClick={handleSave}
@@ -234,9 +238,20 @@ function SettingHome() {
                                 Save changes
                             </>
                         )}
-                    </button>
+                    </button>}
                 </div>
 
+                <fieldset
+                    className="settings-permission-fields"
+                    disabled={!canEdit}
+                    style={{
+                        border: 0,
+                        margin: 0,
+                        padding: 0,
+                        minWidth: 0,
+                        width: "100%",
+                    }}
+                >
                 <div className="settings-grid">
                     <section className="settings-card settings-card-wide">
                         <div className="settings-card-header">
@@ -659,6 +674,7 @@ function SettingHome() {
                         </div>
                     </section>
                 </div>
+                </fieldset>
             </div>
 
             {isSuccessModalOpen && (
