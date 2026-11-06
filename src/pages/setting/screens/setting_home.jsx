@@ -656,7 +656,23 @@ function SettingHome() {
 
                                 <label className="form-field">
                                     <span>Gender</span>
-                                    <input type="text" value={profileForm.gender} disabled />
+                                    <select
+                                        value={profileForm.gender}
+                                        onChange={(event) =>
+                                            handleProfileChange("gender", event.target.value)
+                                        }
+                                    >
+                                        <option value="">Select gender</option>
+                                        {!["MALE", "FEMALE", "OTHER"].includes(profileForm.gender) &&
+                                            profileForm.gender && (
+                                                <option value={profileForm.gender}>
+                                                    {profileForm.gender}
+                                                </option>
+                                            )}
+                                        <option value="MALE">Male</option>
+                                        <option value="FEMALE">Female</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
                                 </label>
 
                                 <label className="form-field">

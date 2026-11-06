@@ -249,7 +249,8 @@
     grid-column: 1 / -1;
 }
 
-.form-field input {
+.form-field input,
+.form-field select {
     width: 100%;
     box-sizing: border-box;
     border: 1px solid #dfe7f1;
@@ -263,6 +264,7 @@
 }
 
 .form-field input:focus,
+.form-field select:focus,
 .settings-option-item select:focus {
     border-color: #76a5ff;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
