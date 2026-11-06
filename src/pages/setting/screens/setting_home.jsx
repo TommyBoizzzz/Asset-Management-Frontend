@@ -17,6 +17,11 @@ import MainLayout from "../../../layouts/MainLayout";
 import LoginService from "../../auth/services/LoginService";
 import UserService from "../../auth/services/UserService";
 import { hasPermission } from "../../../utils/permissions";
+import {
+    AUTO_LOCK_OPTIONS,
+    getAutoLockMinutes,
+    setAutoLockMinutes,
+} from "../../../utils/autoLock";
 import "./setting.css";
 
 const getCurrentUser = () => {
@@ -100,9 +105,9 @@ function SettingHome() {
     });
     const [security, setSecurity] = useState({
         twoFactor: true,
-        autoLock: true,
         activityLog: true,
     });
+    const [autoLockMinutes, setAutoLockMinutesState] = useState(getAutoLockMinutes);
     const [isSaving, setIsSaving] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [profileForm, setProfileForm] = useState(() =>
@@ -148,6 +153,11 @@ function SettingHome() {
             ...prev,
             [key]: !prev[key],
         }));
+    };
+
+    const handleAutoLockChange = (value) => {
+        setAutoLockMinutes(value);
+        setAutoLockMinutesState(value);
     };
 
     const handlePasswordFormChange = (field, value) => {
@@ -516,26 +526,24 @@ function SettingHome() {
                                     <span />
                                 </button>
                             </div>
-
-                            <div className="toggle-row">
-                                <div>
-                                    <strong>Auto lock</strong>
-                                    <span>Lock after inactivity</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`toggle-switch ${security.autoLock ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setSecurity,
-                                            "autoLock"
-                                        )
-                                    }
-                                >
-                                    <span />
-                                </button>
-                            </div>
                         </div>
+                        <label className="settings-option-item security-auto-lock-option">
+                            <span>Auto lock (log out after inactivity)</span>
+                            <select
+                                value={autoLockMinutes}
+                                onChange={(event) =>
+                                    handleAutoLockChange(event.target.value)
+                                }
+                            >
+                                {AUTO_LOCK_OPTIONS.map((duration) => (
+                                    <option key={duration} value={duration}>
+                                        {duration === "forever"
+                                            ? "Forever"
+                                            : `${duration} minutes`}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
 
                         <button
                             type="button"

@@ -304,6 +304,10 @@
     outline: none;
 }
 
+.security-auto-lock-option {
+    margin: 0 22px 20px;
+}
+
 .toggle-row {
     display: flex;
     align-items: center;
