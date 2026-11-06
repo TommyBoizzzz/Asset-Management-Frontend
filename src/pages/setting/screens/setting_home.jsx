@@ -318,6 +318,7 @@ function SettingHome() {
                                             event.target.value
                                         )
                                     }
+                                    disabled
                                 />
                             </label>
 
@@ -329,48 +330,6 @@ function SettingHome() {
                                     onChange={(event) =>
                                         handleProfileChange(
                                             "phone",
-                                            event.target.value
-                                        )
-                                    }
-                                />
-                            </label>
-
-                            <label className="form-field">
-                                <span>Position</span>
-                                <input
-                                    type="text"
-                                    value={profile.position}
-                                    onChange={(event) =>
-                                        handleProfileChange(
-                                            "position",
-                                            event.target.value
-                                        )
-                                    }
-                                />
-                            </label>
-
-                            <label className="form-field">
-                                <span>Department</span>
-                                <input
-                                    type="text"
-                                    value={profile.department}
-                                    onChange={(event) =>
-                                        handleProfileChange(
-                                            "department",
-                                            event.target.value
-                                        )
-                                    }
-                                />
-                            </label>
-
-                            <label className="form-field form-field-full">
-                                <span>Role</span>
-                                <input
-                                    type="text"
-                                    value={profile.role}
-                                    onChange={(event) =>
-                                        handleProfileChange(
-                                            "role",
                                             event.target.value
                                         )
                                     }
@@ -439,130 +398,6 @@ function SettingHome() {
                                     <option>French</option>
                                 </select>
                             </label>
-
-                            <label className="settings-option-item">
-                                <span>Timezone</span>
-                                <select
-                                    value={preferences.timezone}
-                                    onChange={(event) =>
-                                        handlePreferenceChange(
-                                            "timezone",
-                                            event.target.value
-                                        )
-                                    }
-                                >
-                                    <option>Bangkok (UTC+7)</option>
-                                    <option>UTC</option>
-                                    <option>Singapore (UTC+8)</option>
-                                </select>
-                            </label>
-
-                            <label className="settings-option-item">
-                                <span>Date format</span>
-                                <select
-                                    value={preferences.dateFormat}
-                                    onChange={(event) =>
-                                        handlePreferenceChange(
-                                            "dateFormat",
-                                            event.target.value
-                                        )
-                                    }
-                                >
-                                    <option>DD/MM/YYYY</option>
-                                    <option>MM/DD/YYYY</option>
-                                    <option>YYYY-MM-DD</option>
-                                </select>
-                            </label>
-                        </div>
-                    </section>
-
-                    <section className="settings-card">
-                        <div className="settings-card-header">
-                            <div className="settings-icon accent-gold">
-                                <Bell size={18} />
-                            </div>
-                            <div>
-                                <h3>Notifications</h3>
-                                <p>Alert preferences</p>
-                            </div>
-                        </div>
-
-                        <div className="settings-toggle-list">
-                            <div className="toggle-row">
-                                <div>
-                                    <strong>Email alerts</strong>
-                                    <span>Receive key updates by email</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`toggle-switch ${notifications.emailAlerts ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setNotifications,
-                                            "emailAlerts"
-                                        )
-                                    }
-                                >
-                                    <span />
-                                </button>
-                            </div>
-
-                            <div className="toggle-row">
-                                <div>
-                                    <strong>Push notifications</strong>
-                                    <span>Instant notifications in browser</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`toggle-switch ${notifications.pushAlerts ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setNotifications,
-                                            "pushAlerts"
-                                        )
-                                    }
-                                >
-                                    <span />
-                                </button>
-                            </div>
-
-                            <div className="toggle-row">
-                                <div>
-                                    <strong>Weekly reports</strong>
-                                    <span>Scheduled summary of asset usage</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`toggle-switch ${notifications.weeklyReports ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setNotifications,
-                                            "weeklyReports"
-                                        )
-                                    }
-                                >
-                                    <span />
-                                </button>
-                            </div>
-
-                            <div className="toggle-row">
-                                <div>
-                                    <strong>Maintenance reminders</strong>
-                                    <span>Equipment service reminders</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    className={`toggle-switch ${notifications.maintenanceReminders ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setNotifications,
-                                            "maintenanceReminders"
-                                        )
-                                    }
-                                >
-                                    <span />
-                                </button>
-                            </div>
                         </div>
                     </section>
 
@@ -659,17 +494,22 @@ function SettingHome() {
                                 <span className="label">Company</span>
                                 <strong>BAMS Asset Management</strong>
                             </div>
+
                             <div className="workspace-item">
-                                <span className="label">Portal</span>
-                                <strong>Staff portal</strong>
+                                <span className="label">Role</span>
+                                <strong>{profile.role}</strong>
                             </div>
+
                             <div className="workspace-item">
-                                <span className="label">Theme</span>
-                                <strong>{preferences.theme}</strong>
+                                <span className="label">Department</span>
+                                <strong>{profile.department}</strong>
                             </div>
+
                             <div className="workspace-item">
-                                <span className="label">Security</span>
-                                <strong>{security.twoFactor ? "Protected" : "Basic"}</strong>
+                                <span className="label">Position</span>
+                                <strong>
+                                    {profile.position}
+                                </strong>
                             </div>
                         </div>
                     </section>
