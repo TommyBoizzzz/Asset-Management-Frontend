@@ -874,29 +874,41 @@ function History() {
                 <tr>
 
                   <th className="date-column">
-                    DATE
+                    <span className="history-header-label">
+                      DATE
+                    </span>
                   </th>
 
                   <th className="code-column">
-                    ASSET
-                    <br />
-                    CODE
+                    <span className="history-header-label">
+                      ASSET
+                      <br />
+                      CODE
+                    </span>
                   </th>
 
                   <th className="name-column">
-                    ASSET NAME
+                    <span className="history-header-label">
+                      ASSET NAME
+                    </span>
                   </th>
 
                   <th className="action-column">
-                    ACTION
+                    <span className="history-header-label">
+                      ACTION
+                    </span>
                   </th>
 
                   <th className="status-column">
-                    STATUS CHANGE
+                    <span className="history-header-label">
+                      STATUS CHANGE
+                    </span>
                   </th>
 
                   <th className="description-column">
-                    DESCRIPTION
+                    <span className="history-header-label">
+                      DESCRIPTION
+                    </span>
                   </th>
 
                 </tr>

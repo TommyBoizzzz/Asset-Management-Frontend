@@ -571,6 +571,12 @@
   letter-spacing: 1.15px;
 }
 
+.history-header-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
 
 /* =========================================================
    TABLE BODY
