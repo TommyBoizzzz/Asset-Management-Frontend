@@ -223,6 +223,7 @@
 
 .history-toolbar {
   width: 100%;
+  max-width: 100%;
   min-height: 76px;
 
   display: flex;
@@ -1054,6 +1055,8 @@
     flex-wrap: nowrap;
 
     align-items: center;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
 
   .history-search-box {
