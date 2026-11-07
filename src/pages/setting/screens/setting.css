@@ -372,6 +372,17 @@
     transform: translateX(20px);
 }
 
+.toggle-switch.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #9ca3af;
+    pointer-events: auto;
+}
+
+.toggle-switch.disabled span {
+    transform: translateX(0) !important;
+}
+
 .security-link {
     display: flex;
     align-items: center;

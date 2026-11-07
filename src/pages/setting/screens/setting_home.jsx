@@ -85,10 +85,8 @@ const defaultProfile = {
 };
 
 const initialPreferences = {
-    theme: "Dark mode",
+    theme: "Light mode",
     language: "English",
-    timezone: "Bangkok (UTC+7)",
-    dateFormat: "DD/MM/YYYY",
 };
 
 function SettingHome() {
@@ -471,9 +469,13 @@ function SettingHome() {
                                         )
                                     }
                                 >
-                                    <option>Dark mode</option>
-                                    <option>Light mode</option>
-                                    <option>System default</option>
+                                    <option value="Light mode">Light mode</option>
+                                    <option value="Dark mode" disabled>
+                                        Dark mode
+                                    </option>
+                                    <option value="System default" disabled>
+                                        System default
+                                    </option>
                                 </select>
                             </label>
 
@@ -488,9 +490,10 @@ function SettingHome() {
                                         )
                                     }
                                 >
-                                    <option>English</option>
-                                    <option>Khmer</option>
-                                    <option>French</option>
+                                    <option value="English">English</option>
+                                    <option value="Khmer" disabled>
+                                        Khmer
+                                    </option>
                                 </select>
                             </label>
                         </div>
@@ -513,15 +516,14 @@ function SettingHome() {
                                     <strong>Two-factor authentication</strong>
                                     <span>Extra login protection</span>
                                 </div>
+
                                 <button
                                     type="button"
-                                    className={`toggle-switch ${security.twoFactor ? "on" : ""}`}
-                                    onClick={() =>
-                                        handleToggle(
-                                            setSecurity,
-                                            "twoFactor"
-                                        )
-                                    }
+                                    className="toggle-switch disabled"
+                                    onClick={() => {
+                                        alert("Two-factor authentication is coming soon!");
+                                    }}
+                                    aria-label="Two-factor authentication coming soon"
                                 >
                                     <span />
                                 </button>
