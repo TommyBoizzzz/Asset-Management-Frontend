@@ -13,6 +13,13 @@ body {
     margin: 0;
 }
 
+table td > * {
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
 .access-denied {
     min-height: 100vh;
     display: grid;

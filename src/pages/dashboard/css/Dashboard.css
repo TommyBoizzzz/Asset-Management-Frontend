@@ -234,6 +234,7 @@
 .assets-table {
     width: 100%;
     border-collapse: collapse;
+    text-align: center;
 }
 
 .assets-table thead {
@@ -243,7 +244,7 @@
 .assets-table th {
     padding: 13px 20px;
 
-    text-align: left;
+    text-align: center;
 
     color: #929baa;
     font-size: 10px;
@@ -262,6 +263,7 @@
     font-size: 13px;
 
     border-bottom: 1px solid #f0f2f5;
+    text-align: center;
 }
 
 .assets-table tbody tr {

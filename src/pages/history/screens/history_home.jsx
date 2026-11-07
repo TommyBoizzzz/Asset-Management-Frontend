@@ -983,27 +983,31 @@ function History() {
 
                           <div className="status-change">
 
-                            <span
-                              className={statusClass(
-                                item.oldStatus
-                              )}
-                            >
-                              {item.oldStatus}
-                            </span>
+                            {item.newStatus === "Registered" ? (
+                              <span
+                                className={statusClass(item.newStatus)}
+                              >
+                                {item.newStatus}
+                              </span>
+                            ) : (
+                              <>
+                                <span
+                                  className={statusClass(item.oldStatus)}
+                                >
+                                  {item.oldStatus}
+                                </span>
 
+                                <span className="status-arrow">
+                                  →
+                                </span>
 
-                            <span className="status-arrow">
-                              →
-                            </span>
-
-
-                            <span
-                              className={statusClass(
-                                item.newStatus
-                              )}
-                            >
-                              {item.newStatus}
-                            </span>
+                                <span
+                                  className={statusClass(item.newStatus)}
+                                >
+                                  {item.newStatus}
+                                </span>
+                              </>
+                            )}
 
                           </div>
 
