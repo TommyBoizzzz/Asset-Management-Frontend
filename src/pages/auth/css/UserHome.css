@@ -480,14 +480,14 @@
    TABLE ACTIONS
 ========================================================= */
 
-.action-column {
-    text-align: right !important;
+.users-table .action-column {
+    text-align: center !important;
 }
 
-.row-actions {
+.users-table .row-actions {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 6px;
 }
 
