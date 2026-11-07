@@ -1091,7 +1091,7 @@ function UserList({
                         <thead>
 
                             <tr>
-                                <th>User</th>
+                                <th className="user-column">User</th>
                                 <th>Username</th>
                                 <th>Role</th>
                                 <th>Status</th>
@@ -1112,7 +1112,7 @@ function UserList({
 
                                     {/* USER */}
 
-                                    <td>
+                                    <td className="user-column">
 
                                         <div className="user-cell">
 

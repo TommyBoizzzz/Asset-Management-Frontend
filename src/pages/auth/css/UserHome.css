@@ -308,6 +308,10 @@
     text-align: center;
 }
 
+.users-table .user-column {
+    text-align: left;
+}
+
 .users-table tbody tr {
     transition: background 0.15s ease;
 }
@@ -331,11 +335,14 @@
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 11px;
 
     width: 100%;
     min-width: 180px;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
     white-space: nowrap;
 }
 
