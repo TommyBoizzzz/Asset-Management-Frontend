@@ -87,6 +87,19 @@ export default function Login() {
 
       const loginData = extractLoginPayload(response);
       const user = loginData.user || loginData.data || loginData;
+
+      if (String(user?.status || "").trim().toUpperCase() === "INACTIVE") {
+        for (const storage of [localStorage, sessionStorage]) {
+          storage.removeItem("user");
+          storage.removeItem("accessToken");
+          storage.removeItem("isLoggedIn");
+        }
+        setErrorMessage(
+          "Your account is inactive. Please contact an administrator."
+        );
+        return;
+      }
+
       const token =
         loginData.token ||
         loginData.accessToken ||
