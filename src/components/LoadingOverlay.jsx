@@ -3,6 +3,8 @@ import axios from "axios";
 import { useLocation } from "react-router-dom";
 import "./LoadingOverlay.css";
 
+const MINIMUM_CHANGE_LOADING_MS = 1500;
+
 function LoadingOverlay() {
     const location = useLocation();
     const [settledLocation, setSettledLocation] = useState(null);
@@ -23,12 +25,18 @@ function LoadingOverlay() {
             if (!config?.__globalLoading) return;
 
             config.__globalLoading = false;
-            setPendingChanges((count) => Math.max(0, count - 1));
+            const elapsed = Date.now() - config.__globalLoadingStartedAt;
+            const remaining = Math.max(0, MINIMUM_CHANGE_LOADING_MS - elapsed);
+
+            window.setTimeout(() => {
+                setPendingChanges((count) => Math.max(0, count - 1));
+            }, remaining);
         };
 
         const requestInterceptor = axios.interceptors.request.use((config) => {
-            if (config.method?.toLowerCase() !== "get") {
+            if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())) {
                 config.__globalLoading = true;
+                config.__globalLoadingStartedAt = Date.now();
                 setPendingChanges((count) => count + 1);
             }
 
