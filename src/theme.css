@@ -1006,3 +1006,22 @@ html[data-theme="dark"] .main-layout .main-content
     :is(.dialog-icon, .modal-icon) {
     color: #9dcaff;
 }
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading, .modal-title, .dialog-title) {
+    background: transparent !important;
+    background-image: none !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .category-modal .category-form-preview {
+    border-color: var(--theme-border);
+    background: var(--theme-surface-raised);
+}
+
+html[data-theme="dark"] .main-layout .main-content .category-modal .category-form-preview strong {
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .category-modal .category-form-preview span {
+    color: var(--theme-text);
+}
