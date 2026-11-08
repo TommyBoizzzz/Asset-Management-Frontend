@@ -6,10 +6,28 @@ html[data-theme="dark"] {
     --theme-border: #28384d;
     --theme-text: #e5edf7;
     --theme-muted: #9aabc0;
+    --modal-backdrop: rgb(4 9 17 / 76%);
+    --modal-surface:
+        radial-gradient(ellipse at 0% 0%, rgb(54 106 164 / 10%), transparent 58%),
+        linear-gradient(145deg, #17263a, #111c2c);
+    --modal-border: #30425a;
+    --modal-text: #e5edf7;
+    --modal-muted: #9aabc0;
+    --modal-field: #0e1928;
+    --modal-field-border: #35485f;
+    --modal-inset: #101b2a;
 }
 
 html[data-theme="light"] {
     color-scheme: light;
+    --modal-backdrop: rgb(15 23 42 / 48%);
+    --modal-surface: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    --modal-border: #e4e9f0;
+    --modal-text: #172033;
+    --modal-muted: #667085;
+    --modal-field: #ffffff;
+    --modal-field-border: #d5deea;
+    --modal-inset: #f6f8fb;
 }
 
 html[data-theme="dark"] body,
@@ -65,7 +83,7 @@ html[data-theme="dark"] .main-layout .main-content
 
 html[data-theme="dark"] .main-layout .main-content
     :is([class$="-header"], [class*="page-header"], [class*="hero"]) {
-    background: linear-gradient(135deg, #17263a, #131f30);
+    background: transparent;
     border-color: var(--theme-border);
     color: var(--theme-text);
 }
@@ -656,4 +674,335 @@ html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-tab
     border-color: #51416f;
     background: #30264f;
     color: #c2a8ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-table .staff-code {
+    border-color: #344a63;
+    background: linear-gradient(135deg, #1d3046, #18283b);
+    color: #b7d8f8;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal-overlay, .dialog-overlay, .settings-modal-overlay, .staff-modal-overlay) {
+    background: rgb(4 9 17 / 76%);
+    backdrop-filter: blur(8px) saturate(115%);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content) {
+    border: 1px solid #30425a;
+    border-radius: 16px;
+    background:
+        radial-gradient(ellipse at 0% 0%, rgb(54 106 164 / 10%), transparent 58%),
+        linear-gradient(145deg, #17263a, #111c2c);
+    box-shadow:
+        0 28px 80px rgb(0 0 0 / 42%),
+        0 8px 24px rgb(0 0 0 / 20%),
+        inset 0 1px 0 rgb(255 255 255 / 3%);
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal-header, .dialog-header, .staff-modal-header, .modal-footer, .dialog-footer, .staff-modal-footer) {
+    border-color: var(--theme-border);
+    background: transparent;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(h1, h2, h3, h4, p) {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(p, .modal-subtitle) {
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(label, .form-group label, .staff-form-group label) {
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea) {
+    border-color: #35485f;
+    background-color: #0e1928;
+    color: var(--theme-text);
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea)::placeholder {
+    color: #788ba3;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea):focus {
+    border-color: #4779ad;
+    background-color: #101d2e;
+    box-shadow: 0 0 0 3px rgb(71 121 173 / 16%);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.dialog-section-title, .permissions-dialog-header, .workspace-item, .delete-summary-card, .tracking-panel, .text-box) {
+    border-color: var(--theme-border);
+    background: #101b2a;
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.dialog-section-title, .permissions-dialog-header) {
+    background: #1b2c43;
+    color: #b7d8f8;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.dialog-icon, .modal-icon) {
+    border-color: #35485f;
+    background: #1b2c43;
+    color: #9dcaff;
+}
+
+html[data-theme] .main-content
+    :is(.modal-overlay, .dialog-overlay, .settings-modal-overlay, .staff-modal-overlay) {
+    background: var(--modal-backdrop);
+    backdrop-filter: blur(7px) saturate(115%);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content) {
+    border: 1px solid var(--modal-border);
+    border-radius: 16px;
+    background: var(--modal-surface);
+    box-shadow: 0 24px 64px rgb(15 23 42 / 20%);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-content
+    :is(.modal-header, .dialog-header, .staff-modal-header, .modal-footer, .dialog-footer, .staff-modal-footer) {
+    border-color: var(--modal-border);
+    background: transparent;
+}
+
+html[data-theme] .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(h1, h2, h3, h4) {
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(p, .modal-subtitle) {
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(label, .form-group label, .staff-form-group label) {
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea) {
+    border-color: var(--modal-field-border);
+    background-color: var(--modal-field);
+    color: var(--modal-text);
+    color-scheme: var(--modal-color-scheme, light);
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea) {
+    --modal-color-scheme: dark;
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea)::placeholder {
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea):focus {
+    border-color: #6b9ed2;
+    box-shadow: 0 0 0 3px rgb(75 131 194 / 14%);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button, .secondary-btn) {
+    border-color: var(--modal-field-border);
+    background: var(--modal-inset);
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button, .secondary-btn):hover:not(:disabled) {
+    border-color: #6b88a8;
+    background: var(--modal-field);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-section-title, .permissions-dialog-header, .workspace-item, .delete-summary-card, .tracking-panel, .text-box, .permission-dialog-group, .permission-dialog-category) {
+    border-color: var(--modal-border);
+    background: var(--modal-inset);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-icon, .modal-icon) {
+    border-color: var(--modal-border);
+    background: var(--modal-inset);
+    color: #3979c6;
+}
+
+html[data-theme="dark"] .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-icon, .modal-icon) {
+    color: #9dcaff;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-overlay, .dialog-overlay, .settings-modal-overlay, .staff-modal-overlay) {
+    background: var(--modal-backdrop);
+    backdrop-filter: blur(5px) saturate(110%);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content) {
+    border: 1px solid var(--modal-border);
+    border-radius: 22px;
+    background: var(--modal-surface);
+    box-shadow:
+        0 32px 80px rgb(15 23 42 / 22%),
+        0 10px 24px rgb(37 99 235 / 8%);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-header, .dialog-header, .staff-modal-header) {
+    min-height: 78px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--modal-border);
+    background: transparent;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-footer, .dialog-footer, .staff-modal-footer) {
+    border-top: 1px solid var(--modal-border);
+    background: transparent;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(h1, h2, h3, h4) {
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal-title, .dialog-title, .modal-header, .dialog-header, .staff-modal-header, .profile-modal-heading, .password-modal-heading)
+    :is(p, .modal-subtitle) {
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(label, .form-group label, .staff-form-group label) {
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea) {
+    border: 1px solid var(--modal-field-border);
+    border-radius: 12px;
+    background-color: var(--modal-field);
+    color: var(--modal-text);
+    color-scheme: var(--modal-color-scheme, light);
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea) {
+    --modal-color-scheme: dark;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea)::placeholder {
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(input, select, textarea):focus {
+    border-color: #6b9ed2;
+    box-shadow: 0 0 0 3px rgb(75 131 194 / 14%);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button, .secondary-btn) {
+    border: 1px solid var(--modal-field-border);
+    border-radius: 10px;
+    background: var(--modal-inset);
+    color: var(--modal-muted);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.close-modal, .close-btn, .dialog-close, .staff-close-btn, .password-modal-cancel, .staff-cancel-btn, .secondary-button, .secondary-btn):hover:not(:disabled) {
+    border-color: #6b88a8;
+    background: var(--modal-field);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-section-title, .permissions-dialog-header, .workspace-item, .delete-summary-card, .tracking-panel, .text-box, .permission-dialog-group, .permission-dialog-category) {
+    border-color: var(--modal-border);
+    background: var(--modal-inset);
+    color: var(--modal-text);
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-icon, .modal-icon) {
+    border-color: var(--modal-border);
+    border-radius: 12px;
+    background: var(--modal-inset);
+    color: #3979c6;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.modal, .modal-content, .task-modal-content, .dialog, .role-dialog, .settings-modal-card, .password-modal-card, .profile-modal-card, .staff-modal-content)
+    :is(.dialog-icon, .modal-icon) {
+    color: #9dcaff;
 }

@@ -3,9 +3,9 @@
 ========================================================= */
 
 .staff-page {
-    --staff-primary: #00a8e8;
-    --staff-primary-dark: #008fc7;
-    --staff-primary-soft: #e8f8ff;
+    --staff-primary: #356ae6;
+    --staff-primary-dark: #285bd3;
+    --staff-primary-soft: #eef4ff;
 
     --staff-heading: #172033;
     --staff-text: #475569;
@@ -93,7 +93,7 @@
     cursor: pointer;
 
     box-shadow:
-        0 5px 14px rgba(0, 168, 232, 0.18),
+        0 5px 14px rgba(53, 106, 230, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.16);
 
     transition:
@@ -108,7 +108,7 @@
     border-color: var(--staff-primary-dark);
 
     box-shadow:
-        0 8px 18px rgba(0, 168, 232, 0.23),
+        0 8px 18px rgba(53, 106, 230, 0.23),
         inset 0 1px 0 rgba(255, 255, 255, 0.16);
 
     transform: translateY(-1px);
@@ -120,7 +120,7 @@
 }
 
 .add-staff-btn:focus-visible {
-    outline: 3px solid rgba(0, 168, 232, 0.2);
+    outline: 3px solid rgba(53, 106, 230, 0.2);
     outline-offset: 2px;
 }
 
@@ -1314,14 +1314,14 @@
     background: var(--staff-primary);
     color: #ffffff;
 
-    box-shadow: 0 5px 12px rgba(0, 168, 232, 0.17);
+    box-shadow: 0 5px 12px rgba(53, 106, 230, 0.17);
 }
 
 .staff-submit-btn:hover {
     background: var(--staff-primary-dark);
     border-color: var(--staff-primary-dark);
 
-    box-shadow: 0 7px 15px rgba(0, 168, 232, 0.22);
+    box-shadow: 0 7px 15px rgba(53, 106, 230, 0.22);
     transform: translateY(-1px);
 }
 
