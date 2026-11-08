@@ -469,6 +469,51 @@ html[data-theme="dark"] .input-wrapper input {
     color: #e5edf7;
 }
 
+html[data-theme="dark"] .login-page .input-wrapper {
+    border-color: #2d4058;
+    background: #101b2a;
+}
+
+html[data-theme="dark"] .login-page .input-wrapper:focus-within {
+    border-color: #5685b8;
+    background: #101b2a;
+    box-shadow: 0 0 0 4px rgb(86 133 184 / 16%);
+}
+
+html[data-theme="dark"] .login-page .input-wrapper input {
+    background: transparent;
+    color: #e5edf7;
+    caret-color: #9dcaff;
+    color-scheme: dark;
+    -webkit-text-fill-color: #e5edf7;
+}
+
+html[data-theme="dark"] .login-page .input-wrapper input::placeholder {
+    color: #788ba3;
+    -webkit-text-fill-color: #788ba3;
+}
+
+html[data-theme="dark"] .login-page .input-wrapper input:-webkit-autofill,
+html[data-theme="dark"] .login-page .input-wrapper input:-webkit-autofill:hover,
+html[data-theme="dark"] .login-page .input-wrapper input:-webkit-autofill:focus,
+html[data-theme="dark"] .login-page .input-wrapper input:-webkit-autofill:active {
+    border-radius: 6px;
+    background-color: #101b2a;
+    caret-color: #9dcaff;
+    -webkit-box-shadow: 0 0 0 1000px #101b2a inset;
+    -webkit-text-fill-color: #e5edf7;
+    transition: background-color 9999s ease-out 0s;
+}
+
+html[data-theme="dark"] .login-page .input-wrapper > svg,
+html[data-theme="dark"] .login-page .password-toggle {
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .login-page .password-toggle:hover {
+    color: #c4d2e3;
+}
+
 .login-theme-toggle {
     position: absolute;
     top: 22px;
