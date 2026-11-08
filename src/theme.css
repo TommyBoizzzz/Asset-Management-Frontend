@@ -604,3 +604,56 @@ html[data-theme="dark"] .main-layout .main-content .action-pill {
     background: #24354b;
     color: #c4d2e3;
 }
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .type-badge {
+    border: 1px solid #344a63;
+    background: #1a2c42;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table
+    :is(.status-pill.in-progress, .status-pill.scheduled, .status-pill.completed) {
+    border: 1px solid #35485f;
+    background: #24354b;
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .status-pill.in-progress {
+    border-color: #66502e;
+    background: #49341f;
+    color: #ffc078;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .status-pill.scheduled {
+    border-color: #51416f;
+    background: #30264f;
+    color: #c2a8ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .status-pill.completed {
+    border-color: #245649;
+    background: #153b34;
+    color: #71e0b3;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .view-btn,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .edit-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #35485f;
+    border-radius: 8px;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .view-btn:hover {
+    border-color: #3b668a;
+    background: #203850;
+    color: #9dcaff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .edit-btn:hover {
+    border-color: #51416f;
+    background: #30264f;
+    color: #c2a8ff;
+}
