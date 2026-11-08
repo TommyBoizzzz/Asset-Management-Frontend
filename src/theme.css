@@ -843,6 +843,30 @@ html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-tab
     color: #71e0b3;
 }
 
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-action-error {
+    border-color: #633b49;
+    background: #351f2a;
+    color: #ffb4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-assignee-avatar {
+    border-color: #345477;
+    background: linear-gradient(145deg, #203b5a, #1a304a);
+    color: #a9d2ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-assignee-copy strong {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-assignee-copy small {
+    color: #91a4bc;
+}
+
 html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .view-btn,
 html[data-theme="dark"] .main-layout .main-content .maintenance-page .assets-table .action-cell .edit-btn {
     width: 32px;

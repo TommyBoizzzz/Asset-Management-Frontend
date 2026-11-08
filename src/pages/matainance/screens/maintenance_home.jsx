@@ -19,7 +19,7 @@ import {
 import MaintenanceService from "../services/MaintenanceService";
 import AssetService from "../../asset/services/AssetService";
 import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
-import StaffService from "../../staff/services/staff_home";
+import UserService from "../../auth/services/UserService";
 import {
     getStatusAfterInspection,
     isActiveAssignment,
@@ -64,9 +64,7 @@ const emptyTaskForm = {
     assetId: "",
     assetName: "",
     assetTag: "",
-    staffId: "",
-    technicianName: "",
-    department: "IT Support",
+    userId: "",
     maintenanceType: "REPAIR",
     scheduledDate: "",
     completedDate: "",
@@ -78,9 +76,11 @@ const emptyTaskForm = {
     notes: "",
 };
 
-const normalizeMaintenanceRecord = (record) => {
+const normalizeMaintenanceRecord = (record, users = []) => {
     const asset = record.asset || {};
     const assignedTo = record.assignedTo || {};
+    const legacyAssignedTo = record.legacyAssignedTo || null;
+    const user = users.find((item) => String(item.id) === String(assignedTo.id));
 
     const normalizeDate = (value) => {
         if (!value) return "";
@@ -101,8 +101,14 @@ const normalizeMaintenanceRecord = (record) => {
         },
         assignedTo: {
             id: assignedTo.id ?? null,
-            name: assignedTo.fullName || assignedTo.name || "Unassigned",
-            department: assignedTo.position || assignedTo.department || "IT Support",
+            name: assignedTo.fullName || assignedTo.name || user?.fullName || user?.username ||
+                (legacyAssignedTo
+                    ? `Legacy staff: ${legacyAssignedTo.fullName || "Unknown"}`
+                    : assignedTo.id != null
+                        ? `User #${assignedTo.id}`
+                        : "Unassigned"),
+            detail: assignedTo.role?.name || assignedTo.email || user?.email ||
+                (legacyAssignedTo ? "No matching system user account" : ""),
         },
         maintenanceType: record.maintenanceType || "REPAIR",
         scheduledDate: normalizeDate(record.scheduledDate),
@@ -149,9 +155,10 @@ function MaintenanceHome() {
     const [taskForm, setTaskForm] = useState(emptyTaskForm);
     const [assetOptions, setAssetOptions] = useState([]);
     const [assignments, setAssignments] = useState([]);
-    const [staffOptions, setStaffOptions] = useState([]);
+    const [userOptions, setUserOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [statusActionError, setStatusActionError] = useState("");
 
     const fetchData = async (background = false) => {
         try {
@@ -160,21 +167,25 @@ function MaintenanceHome() {
                 setError("");
             }
 
-            const [maintenanceResponse, assetResponse, assignmentResponse, staffResponse] = await Promise.all([
+            const [maintenanceResponse, assetResponse, assignmentResponse, userResponse] = await Promise.all([
                 MaintenanceService.getAll(),
                 AssetService.getAll(),
                 AssetAssignmentService.getAll(),
-                StaffService.getAll(),
+                UserService.getAll(),
             ]);
 
-            const normalized = (maintenanceResponse.data || []).map(normalizeMaintenanceRecord);
+            const users = Array.isArray(userResponse.data)
+                ? userResponse.data
+                : userResponse.data?.data || [];
+            const normalized = (maintenanceResponse.data || []).map((record) =>
+                normalizeMaintenanceRecord(record, users)
+            );
             const assets = assetResponse.data || [];
-            const staff = staffResponse.data || [];
 
             setMaintenanceList(normalized);
             setAssetOptions(assets);
             setAssignments(assignmentResponse.data || []);
-            setStaffOptions(staff);
+            setUserOptions(users);
             setError("");
         } catch (err) {
             console.error("Failed to load maintenance records:", err);
@@ -183,7 +194,7 @@ function MaintenanceHome() {
                 setMaintenanceList([]);
                 setAssetOptions([]);
                 setAssignments([]);
-                setStaffOptions([]);
+                setUserOptions([]);
             }
         } finally {
             if (!background) setLoading(false);
@@ -222,6 +233,7 @@ function MaintenanceHome() {
 
     const updateStatus = async (id, nextStatus, completionCondition) => {
         if (!canEdit) return;
+        setStatusActionError("");
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
         const record = maintenanceList.find((item) => item.id === id);
@@ -233,7 +245,7 @@ function MaintenanceHome() {
         );
 
         if (!asset) {
-            setError("The asset for this maintenance record could not be found.");
+            setStatusActionError("The asset for this maintenance record could not be found.");
             return;
         }
 
@@ -241,7 +253,7 @@ function MaintenanceHome() {
             normalizeAssetStatus(asset.status) === "Retired" &&
             nextStatus !== "CANCELLED"
         ) {
-            setError("Retired assets cannot enter maintenance.");
+            setStatusActionError("Retired assets cannot enter maintenance.");
             return;
         }
 
@@ -253,7 +265,7 @@ function MaintenanceHome() {
             );
 
             if (hasActiveAssignment) {
-                setError("Return or transfer this asset before starting maintenance.");
+                setStatusActionError("This asset is currently assigned to a staff member. Return it before starting maintenance.");
                 return;
             }
         }
@@ -263,7 +275,7 @@ function MaintenanceHome() {
                 (nextStatus === "CANCELLED" && record.status === "IN_PROGRESS")) &&
             !completionCondition
         ) {
-            setError("Select the asset condition after maintenance before closing this task.");
+            setStatusActionError("Select the asset condition after maintenance before closing this task.");
             return;
         }
 
@@ -294,7 +306,7 @@ function MaintenanceHome() {
             maintenanceSaved = true;
 
             const updatedItem = {
-                ...normalizeMaintenanceRecord(response.data),
+                ...normalizeMaintenanceRecord(response.data, userOptions),
                 completionCondition:
                     completionCondition || record.completionCondition,
             };
@@ -326,9 +338,10 @@ function MaintenanceHome() {
             );
             setSelectedRecord(updatedItem);
             setError("");
+            setStatusActionError("");
         } catch (err) {
             console.error("Failed to update maintenance status:", err);
-            setError(
+            setStatusActionError(
                 maintenanceSaved
                     ? "The maintenance record was updated, but the asset status or condition could not be updated. Refresh and reconcile the asset before continuing."
                     : err.response?.data?.message || "Failed to update maintenance status in the backend."
@@ -341,7 +354,7 @@ function MaintenanceHome() {
         setTaskForm({
             ...emptyTaskForm,
             assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
-            staffId: staffOptions[0]?.id ? String(staffOptions[0].id) : "",
+            userId: userOptions[0]?.id ? String(userOptions[0].id) : "",
         });
         setTaskModal({ mode: "add" });
     };
@@ -352,9 +365,7 @@ function MaintenanceHome() {
             assetId: task.asset?.id ? String(task.asset.id) : "",
             assetName: task.asset?.name || "",
             assetTag: task.asset?.assetTag || "",
-            staffId: task.assignedTo?.id ? String(task.assignedTo.id) : "",
-            technicianName: task.assignedTo?.name || "",
-            department: task.assignedTo?.department || "IT Support",
+            userId: task.assignedTo?.id ? String(task.assignedTo.id) : "",
             maintenanceType: task.maintenanceType,
             scheduledDate: task.scheduledDate,
             completedDate: task.completedDate || "",
@@ -391,8 +402,8 @@ function MaintenanceHome() {
         event.preventDefault();
         if (taskModal?.mode === "edit" ? !canEdit : !canCreate) return;
 
-        if (!taskForm.assetId || !taskForm.staffId) {
-            setError("Please select both an asset and a staff member.");
+        if (!taskForm.assetId || !taskForm.userId) {
+            setError("Please select both an asset and an assigned user.");
             return;
         }
 
@@ -415,7 +426,7 @@ function MaintenanceHome() {
 
         const payload = {
             asset: { id: Number(taskForm.assetId) },
-            assignedTo: { id: Number(taskForm.staffId) },
+            assignedTo: { id: Number(taskForm.userId) },
             maintenanceType: taskForm.maintenanceType,
             scheduledDate: taskForm.scheduledDate || new Date().toISOString().slice(0, 10),
             completedDate: taskForm.completedDate || null,
@@ -430,7 +441,7 @@ function MaintenanceHome() {
         try {
             if (taskModal?.mode === "edit") {
                 const response = await MaintenanceService.update(taskModal.id, payload);
-                const updatedRecord = normalizeMaintenanceRecord(response.data);
+                const updatedRecord = normalizeMaintenanceRecord(response.data, userOptions);
 
                 setMaintenanceList((prev) =>
                     prev.map((item) => (item.id === updatedRecord.id ? updatedRecord : item))
@@ -438,7 +449,7 @@ function MaintenanceHome() {
                 setSelectedRecord(updatedRecord);
             } else {
                 const response = await MaintenanceService.create(payload);
-                const createdRecord = normalizeMaintenanceRecord(response.data);
+                const createdRecord = normalizeMaintenanceRecord(response.data, userOptions);
 
                 setMaintenanceList((prev) => [createdRecord, ...prev]);
                 setSelectedRecord(createdRecord);
@@ -534,7 +545,7 @@ function MaintenanceHome() {
                                 <tr>
                                     <th>ID</th>
                                     <th>Asset Details</th>
-                                    <th>Assigned To</th>
+                                    <th>Assigned User</th>
                                     <th>Type</th>
                                     <th>Scheduled</th>
                                     <th>Completed</th>
@@ -555,10 +566,21 @@ function MaintenanceHome() {
                                                 </div>
                                             </td>
                                             <td>
-                                                {item.assignedTo ? (
-                                                    <div className="user-cell">
-                                                        <strong>{item.assignedTo.name}</strong>
-                                                        <span>{item.assignedTo.department}</span>
+                                                {item.assignedTo?.name !== "Unassigned" ? (
+                                                    <div className="maintenance-assignee">
+                                                        <span className="maintenance-assignee-avatar" aria-hidden="true">
+                                                            {(item.assignedTo?.name || "U")
+                                                                .split(/\s+/)
+                                                                .filter(Boolean)
+                                                                .slice(0, 2)
+                                                                .map((part) => part[0])
+                                                                .join("")
+                                                                .toUpperCase()}
+                                                        </span>
+                                                        <span className="maintenance-assignee-copy">
+                                                            <strong>{item.assignedTo?.name}</strong>
+                                                            {item.assignedTo?.detail && <small>{item.assignedTo.detail}</small>}
+                                                        </span>
                                                     </div>
                                                 ) : (
                                                     <span className="unassigned">Unassigned</span>
@@ -614,10 +636,14 @@ function MaintenanceHome() {
                 {selectedRecord && (
                     <DetailModal
                         record={selectedRecord}
-                        onClose={() => setSelectedRecord(null)}
+                        onClose={() => {
+                            setSelectedRecord(null);
+                            setStatusActionError("");
+                        }}
                         onStatusUpdate={updateStatus}
                         onEdit={openEditTaskModal}
                         canEdit={canEdit}
+                        statusActionError={statusActionError}
                     />
                 )}
 
@@ -626,7 +652,7 @@ function MaintenanceHome() {
                         mode={taskModal.mode}
                         form={taskForm}
                         assetOptions={assetOptions}
-                        staffOptions={staffOptions}
+                        userOptions={userOptions}
                         onClose={() => {
                             setTaskModal(null);
                             setTaskForm(emptyTaskForm);
@@ -653,7 +679,14 @@ function StatCard({ label, value, desc, icon, theme }) {
     );
 }
 
-function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
+function DetailModal({
+    record,
+    onClose,
+    onStatusUpdate,
+    onEdit,
+    canEdit,
+    statusActionError,
+}) {
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
     const canAdvance = nextStatus !== record.status;
@@ -729,7 +762,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
                 <div className="modal-body">
                     <div className="detail-grid">
                         <DetailField icon={<Wrench size={14} />} label="Asset" value={`${record.asset.name} (${record.asset.assetTag})`} />
-                        <DetailField icon={<User size={14} />} label="Assigned Staff" value={record.assignedTo?.name || "N/A"} />
+                        <DetailField icon={<User size={14} />} label="Assigned User" value={record.assignedTo?.name || "N/A"} />
                         <DetailField icon={<FileText size={14} />} label="Type" value={record.maintenanceType} />
                         <DetailField icon={<DollarSign size={14} />} label="Cost" value={`$${Number(record.cost).toFixed(2)}`} />
                         <DetailField icon={<Calendar size={14} />} label="Scheduled Date" value={record.scheduledDate} />
@@ -801,6 +834,13 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
                             </div>}
                         </div>
 
+                        {statusActionError && (
+                            <div className="maintenance-action-error" role="alert">
+                                <AlertCircle size={16} />
+                                <span>{statusActionError}</span>
+                            </div>
+                        )}
+
                         <div className="progress-track">
                             <span style={{ width: `${progress}%` }} />
                         </div>
@@ -849,7 +889,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
     );
 }
 
-function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, onSubmit }) {
+function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, onSubmit }) {
     const title = mode === "edit" ? "Edit Maintenance Task" : "Add Maintenance Task";
 
     return (
@@ -869,7 +909,7 @@ function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, 
                     <section className="task-form-section">
                         <div className="task-form-section-heading">
                             <h4>Task details</h4>
-                            <p>Choose the asset, technician, and service type.</p>
+                            <p>Choose the asset, responsible user, and service type.</p>
                         </div>
                         <div className="task-form-grid">
                             <label className="form-field">
@@ -889,15 +929,16 @@ function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, 
                             </label>
 
                             <label className="form-field">
-                                <span>Assigned staff</span>
+                                <span>Assigned user</span>
                                 <select
-                                    value={form.staffId || ""}
-                                    onChange={(event) => onChange("staffId", event.target.value)}
+                                    value={form.userId || ""}
+                                    onChange={(event) => onChange("userId", event.target.value)}
                                 >
-                                    <option value="">Select staff</option>
-                                    {staffOptions.map((staff) => (
-                                        <option key={staff.id} value={staff.id}>
-                                            {staff.fullName || staff.name} ({staff.position || staff.department || "Staff"})
+                                    <option value="">Select user</option>
+                                    {userOptions.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.fullName || user.username || `User #${user.id}`}
+                                            {user.role?.name ? ` (${user.role.name})` : ""}
                                         </option>
                                     ))}
                                 </select>
