@@ -1098,3 +1098,163 @@
   }
 
 }
+
+html[data-theme="dark"] .history-page {
+  background: #0c1422;
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-page-header {
+  background: linear-gradient(135deg, #17263a, #131f30);
+  border: 1px solid #28384d;
+  border-radius: 16px;
+  padding: 22px 24px;
+}
+
+html[data-theme="dark"] .history-page-header h1,
+html[data-theme="dark"] .history-page-header p {
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-page-header p {
+  color: #9aabc0;
+}
+
+html[data-theme="dark"] .history-card,
+html[data-theme="dark"] .history-filter-panel {
+  background: #131f30;
+  border-color: #28384d;
+}
+
+html[data-theme="dark"] .history-toolbar {
+  background: #131f30;
+  border-color: #28384d;
+}
+
+html[data-theme="dark"] .history-search-box,
+html[data-theme="dark"] .history-filter-select {
+  background: #0c1726;
+  border-color: #30425a;
+  color: #c4d2e3;
+}
+
+html[data-theme="dark"] .history-search-box input {
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-search-box input::placeholder {
+  color: #8294aa;
+}
+
+html[data-theme="dark"] .history-filter-select:hover,
+html[data-theme="dark"] .history-search-box:focus-within {
+  background: #142238;
+  border-color: #3c78bb;
+}
+
+html[data-theme="dark"] .history-dropdown,
+html[data-theme="dark"] .history-export-menu {
+  background: #17263a;
+  border-color: #35485f;
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-dropdown button {
+  color: #c4d2e3;
+}
+
+html[data-theme="dark"] .history-dropdown button:hover,
+html[data-theme="dark"] .history-dropdown button.selected {
+  background: #223b58;
+  color: #9dd5ff;
+}
+
+html[data-theme="dark"] .history-menu-title {
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-menu-text {
+  color: #9aabc0;
+}
+
+html[data-theme="dark"] .history-outline-btn,
+html[data-theme="dark"] .history-reset-btn,
+html[data-theme="dark"] .history-close-btn {
+  background: #1b2a3d;
+  border-color: #35485f;
+  color: #d7e3f2;
+}
+
+html[data-theme="dark"] .history-outline-btn:hover,
+html[data-theme="dark"] .history-reset-btn:hover,
+html[data-theme="dark"] .history-close-btn:hover {
+  background: #263a53;
+  border-color: #47617f;
+}
+
+html[data-theme="dark"] .history-table thead th {
+  background: #101b2a;
+  border-color: #28384d;
+  color: #a9bad0;
+}
+
+html[data-theme="dark"] .history-table tbody tr {
+  background: #131f30;
+  border-color: #28384d;
+}
+
+html[data-theme="dark"] .history-table tbody tr:hover {
+  background: #1a2a3e;
+}
+
+html[data-theme="dark"] .history-table td,
+html[data-theme="dark"] .history-asset-name,
+html[data-theme="dark"] .action-maintenance {
+  color: #d0dceb;
+}
+
+html[data-theme="dark"] .history-day {
+  color: #e5edf7;
+}
+
+html[data-theme="dark"] .history-month,
+html[data-theme="dark"] .history-year,
+html[data-theme="dark"] .status-arrow {
+  color: #94a8bf;
+}
+
+html[data-theme="dark"] .history-description,
+html[data-theme="dark"] .history-record-count,
+html[data-theme="dark"] .pagination-dots {
+  color: #a9bad0;
+}
+
+html[data-theme="dark"] .history-table-footer {
+  background: #101b2a;
+  border-color: #28384d;
+}
+
+html[data-theme="dark"] .pagination-page,
+html[data-theme="dark"] .pagination-arrow {
+  color: #c4d2e3;
+}
+
+html[data-theme="dark"] .pagination-page:hover,
+html[data-theme="dark"] .pagination-arrow:hover:not(.disabled) {
+  background: #22334b;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .pagination-page.active {
+  background: #1b3c5a;
+  border-color: #3979a8;
+  color: #b7e2ff;
+}
+
+html[data-theme="dark"] .history-table-wrapper::-webkit-scrollbar-track {
+  background: #101b2a;
+}
+
+html[data-theme="dark"] .history-table-wrapper::-webkit-scrollbar-thumb {
+  background: #35485f;
+}

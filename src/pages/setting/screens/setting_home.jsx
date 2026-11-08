@@ -17,6 +17,7 @@ import MainLayout from "../../../layouts/MainLayout";
 import LoginService from "../../auth/services/LoginService";
 import UserService from "../../auth/services/UserService";
 import { hasPermission } from "../../../utils/permissions";
+import { useTheme } from "../../../context/useTheme";
 import {
     AUTO_LOCK_OPTIONS,
     getAutoLockMinutes,
@@ -85,11 +86,11 @@ const defaultProfile = {
 };
 
 const initialPreferences = {
-    theme: "Light mode",
     language: "English",
 };
 
 function SettingHome() {
+    const { theme, setTheme } = useTheme();
     const canEdit = hasPermission(getCurrentUser(), "settings", "edit");
     const [profile, setProfile] = useState(() =>
         getProfileFromUser(getCurrentUser()) || defaultProfile
@@ -394,7 +395,7 @@ function SettingHome() {
                     }}
                 >
                 <div className="settings-grid">
-                    <section className="settings-card settings-card-wide">
+                    <section className="settings-card settings-card-wide profile-settings-card">
                         <div className="profile-summary">
                             <div className="profile-summary-top">
                                 <div className="profile-summary-person">
@@ -461,20 +462,14 @@ function SettingHome() {
                             <label className="settings-option-item">
                                 <span>Theme</span>
                                 <select
-                                    value={preferences.theme}
+                                    value={theme === "dark" ? "Dark mode" : "Light mode"}
                                     onChange={(event) =>
-                                        handlePreferenceChange(
-                                            "theme",
-                                            event.target.value
-                                        )
+                                        setTheme(event.target.value === "Dark mode" ? "dark" : "light")
                                     }
                                 >
                                     <option value="Light mode">Light mode</option>
-                                    <option value="Dark mode" disabled>
+                                    <option value="Dark mode">
                                         Dark mode
-                                    </option>
-                                    <option value="System default" disabled>
-                                        System default
                                     </option>
                                 </select>
                             </label>

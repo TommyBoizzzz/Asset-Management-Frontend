@@ -56,6 +56,31 @@
     gap: 12px;
 }
 
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 36px;
+    margin-left: auto;
+    padding: 0 12px;
+    border: 1px solid #d9e0e7;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #526274;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: #edf2f6;
+    border-color: #c7d2df;
+    color: #263445;
+}
+
 .main-header h1 {
     margin: 0;
 

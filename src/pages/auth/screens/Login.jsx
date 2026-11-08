@@ -9,9 +9,12 @@ import {
   ArrowRight,
   ShieldCheck,
   Boxes,
+  Moon,
+  Sun,
 } from "lucide-react";
 import LoginService from "../services/LoginService";
 import { getLandingPath } from "../../../utils/permissions";
+import { useTheme } from "../../../context/useTheme";
 import "../css/Login.css";
 
 const getErrorMessage = (error, fallback) => {
@@ -54,6 +57,7 @@ const MINIMUM_LOGIN_LOADING_MS = 2000;
 
 export default function Login() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,6 +154,16 @@ export default function Login() {
 
   return (
     <main className="login-page">
+      <button
+        type="button"
+        className="login-theme-toggle"
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      >
+        {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+        <span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
+      </button>
+
       {/* Background */}
       <div className="login-background">
         <div className="login-orb orb-one" />
