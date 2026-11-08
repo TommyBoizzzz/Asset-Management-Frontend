@@ -447,3 +447,109 @@ html[data-theme="dark"] .input-wrapper input {
         padding: 0 10px;
     }
 }
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.page-icon, .page-title-icon, .support-icon, .tab-icon) {
+    background: #1b2c43;
+    color: #9dcaff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .stat-icon.blue {
+    background: #1b3555;
+    color: #8dc4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .stat-icon.green {
+    background: #153b34;
+    color: #71e0b3;
+}
+
+html[data-theme="dark"] .main-layout .main-content .stat-icon.purple {
+    background: #30264f;
+    color: #c2a8ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .stat-icon.orange {
+    background: #49341f;
+    color: #ffc078;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.support-badge, .history-empty, .text-box) {
+    background: #101b2a;
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.dashboard-error, .history-error, .staff-page-error, .staff-submit-error, .password-modal-error) {
+    background: #351e29;
+    border-color: #6a3545;
+    color: #ffb4bc;
+}
+
+html[data-theme="dark"] .access-denied {
+    background: var(--theme-page);
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .access-denied h1 {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .status,
+html[data-theme="dark"] .main-layout .main-content .status-pill,
+html[data-theme="dark"] .main-layout .main-content .status-badge,
+html[data-theme="dark"] .main-layout .main-content .mini-status {
+    border-color: #35485f;
+    background: #24354b;
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.status.available, .status.active, .status-badge.active, .status-available, .status-pill.completed, .mini-status.active) {
+    border-color: #245649;
+    background: #153b34;
+    color: #71e0b3;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.status.assigned, .status.returned, .status-pill.in-progress) {
+    border-color: #35485f;
+    background: #24354b;
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.status.maintenance, .status.under-maintenance, .status-pill.scheduled, .status-badge.pending, .status-maintenance) {
+    border-color: #66502e;
+    background: #49341f;
+    color: #ffc078;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.status.inactive, .status.damaged, .status.retired, .status.overdue, .status-badge.inactive, .status-badge.suspended, .mini-status.inactive) {
+    border-color: #653846;
+    background: #3b2631;
+    color: #ffabb7;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.table-btn, .category-action, .icon-action, .staff-edit-btn) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #c4d2e3;
+}
+
+html[data-theme="dark"] .main-layout .main-content
+    :is(.table-btn, .category-action, .icon-action, .staff-edit-btn):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .action-pill {
+    border: 1px solid #35485f;
+    background: #24354b;
+    color: #c4d2e3;
+}
