@@ -56,6 +56,7 @@ function getStatusLabel(status) {
 
 function getNextStatus(currentStatus) {
     const index = statusOrder.indexOf(currentStatus);
+    if (index < 0) return currentStatus;
     return statusOrder[index + 1] || currentStatus;
 }
 
@@ -656,6 +657,48 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
     const canAdvance = nextStatus !== record.status;
+    const currentStep = statusOrder.indexOf(record.status);
+    const timelineDetails = {
+        SCHEDULED: {
+            inProgress: "Work has not started yet",
+            completed: "Awaiting completion",
+        },
+        IN_PROGRESS: {
+            inProgress: "Technician is working on this task",
+            completed: "Awaiting completion",
+        },
+        COMPLETED: {
+            inProgress: "Service work finished",
+            completed: record.completedDate
+                ? `Service completed on ${record.completedDate}`
+                : "Service work finished",
+        },
+        CANCELLED: {
+            inProgress: "Task stopped before completion",
+            completed: "Task was cancelled",
+        },
+    }[record.status] || {
+        inProgress: "No work status available",
+        completed: "No completion status available",
+    };
+    const timelineSteps = [
+        {
+            label: "Scheduled",
+            detail: record.scheduledDate
+                ? `Service scheduled for ${record.scheduledDate}`
+                : "Maintenance task created",
+        },
+        {
+            label: "In progress",
+            detail: timelineDetails.inProgress,
+        },
+        {
+            label: "Completed",
+            detail: record.completedDate
+                ? `Service completed on ${record.completedDate}`
+                : timelineDetails.completed,
+        },
+    ];
     const [completionCondition, setCompletionCondition] = useState(
         record.completionCondition || "GOOD"
     );
@@ -743,7 +786,7 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
                                 {["SCHEDULED", "IN_PROGRESS"].includes(record.status) && (
                                     <button
                                         type="button"
-                                        className="status-action-btn"
+                                        className="status-action-btn is-cancel"
                                         onClick={() =>
                                             onStatusUpdate(
                                                 record.id,
@@ -762,20 +805,34 @@ function DetailModal({ record, onClose, onStatusUpdate, onEdit, canEdit }) {
                             <span style={{ width: `${progress}%` }} />
                         </div>
 
-                        <div className="tracking-list">
-                            {(record.tracking || []).map((step, index) => (
-                                <div key={`${step.label}-${index}`} className="tracking-item">
-                                    <span className="tracking-dot" />
-                                    <div className="tracking-copy">
-                                        <div className="tracking-topline">
+                        <ol className="maintenance-timeline" aria-label="Maintenance workflow">
+                            {timelineSteps.map((step, index) => {
+                                const isComplete = currentStep >= 0 && index < currentStep;
+                                const isCurrent = currentStep === index;
+
+                                return (
+                                    <li
+                                        key={step.label}
+                                        className={`maintenance-timeline-step${isComplete ? " is-complete" : ""}${isCurrent ? " is-current" : ""}`}
+                                        aria-current={isCurrent ? "step" : undefined}
+                                    >
+                                        <span className="maintenance-timeline-marker">
+                                            {isComplete ? <CheckCircle2 size={15} /> : index + 1}
+                                        </span>
+                                        <div className="maintenance-timeline-copy">
                                             <strong>{step.label}</strong>
-                                            <span>{step.date}</span>
+                                            <span>{step.detail}</span>
                                         </div>
-                                        <p>{step.note}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                        {record.status === "CANCELLED" && (
+                            <div className="maintenance-cancelled-note">
+                                <AlertCircle size={15} />
+                                This maintenance task was cancelled.
+                            </div>
+                        )}
                     </div>
 
                     <DetailBlock label="Problem Description" content={record.problemDescription} />
@@ -809,114 +866,136 @@ function TaskModal({ mode, form, assetOptions, staffOptions, onClose, onChange, 
                 </div>
 
                 <form className="task-form" onSubmit={onSubmit}>
-                    <div className="task-form-grid">
-                        <label className="form-field">
-                            <span>Asset</span>
-                            <select
-                                value={form.assetId || ""}
-                                disabled={form.status !== "SCHEDULED"}
-                                onChange={(event) => onChange("assetId", event.target.value)}
-                            >
-                                <option value="">Select asset</option>
-                                {assetOptions.map((asset) => (
-                                    <option key={asset.id} value={asset.id}>
-                                        {asset.name} ({asset.assetCode || asset.assetTag || `#${asset.id}`})
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                    <section className="task-form-section">
+                        <div className="task-form-section-heading">
+                            <h4>Task details</h4>
+                            <p>Choose the asset, technician, and service type.</p>
+                        </div>
+                        <div className="task-form-grid">
+                            <label className="form-field">
+                                <span>Asset</span>
+                                <select
+                                    value={form.assetId || ""}
+                                    disabled={form.status !== "SCHEDULED"}
+                                    onChange={(event) => onChange("assetId", event.target.value)}
+                                >
+                                    <option value="">Select asset</option>
+                                    {assetOptions.map((asset) => (
+                                        <option key={asset.id} value={asset.id}>
+                                            {asset.name} ({asset.assetCode || asset.assetTag || `#${asset.id}`})
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
 
-                        <label className="form-field">
-                            <span>Assigned staff</span>
-                            <select
-                                value={form.staffId || ""}
-                                onChange={(event) => onChange("staffId", event.target.value)}
-                            >
-                                <option value="">Select staff</option>
-                                {staffOptions.map((staff) => (
-                                    <option key={staff.id} value={staff.id}>
-                                        {staff.fullName || staff.name} ({staff.position || staff.department || "Staff"})
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                            <label className="form-field">
+                                <span>Assigned staff</span>
+                                <select
+                                    value={form.staffId || ""}
+                                    onChange={(event) => onChange("staffId", event.target.value)}
+                                >
+                                    <option value="">Select staff</option>
+                                    {staffOptions.map((staff) => (
+                                        <option key={staff.id} value={staff.id}>
+                                            {staff.fullName || staff.name} ({staff.position || staff.department || "Staff"})
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
 
-                        <label className="form-field">
-                            <span>Maintenance type</span>
-                            <select
-                                value={form.maintenanceType}
-                                onChange={(event) => onChange("maintenanceType", event.target.value)}
-                            >
-                                <option value="REPAIR">REPAIR</option>
-                                <option value="PREVENTIVE">PREVENTIVE</option>
-                                <option value="INSPECTION">INSPECTION</option>
-                            </select>
-                        </label>
+                            <label className="form-field form-field-full">
+                                <span>Maintenance type</span>
+                                <select
+                                    value={form.maintenanceType}
+                                    onChange={(event) => onChange("maintenanceType", event.target.value)}
+                                >
+                                    <option value="REPAIR">REPAIR</option>
+                                    <option value="PREVENTIVE">PREVENTIVE</option>
+                                    <option value="INSPECTION">INSPECTION</option>
+                                </select>
+                            </label>
+                        </div>
+                    </section>
 
-                        <label className="form-field">
-                            <span>Scheduled date</span>
-                            <input
-                                type="date"
-                                value={form.scheduledDate}
-                                onChange={(event) => onChange("scheduledDate", event.target.value)}
-                            />
-                        </label>
+                    <section className="task-form-section">
+                        <div className="task-form-section-heading">
+                            <h4>Schedule &amp; cost</h4>
+                            <p>Keep service dates and the maintenance cost up to date.</p>
+                        </div>
+                        <div className="task-form-grid">
+                            <label className="form-field">
+                                <span>Scheduled date</span>
+                                <input
+                                    type="date"
+                                    value={form.scheduledDate}
+                                    onChange={(event) => onChange("scheduledDate", event.target.value)}
+                                />
+                            </label>
 
-                        <label className="form-field">
-                            <span>Completed date</span>
-                            <input
-                                type="date"
-                                value={form.completedDate}
-                                onChange={(event) => onChange("completedDate", event.target.value)}
-                            />
-                        </label>
+                            <label className="form-field">
+                                <span>Completed date</span>
+                                <input
+                                    type="date"
+                                    value={form.completedDate}
+                                    onChange={(event) => onChange("completedDate", event.target.value)}
+                                />
+                            </label>
 
-                        <label className="form-field">
-                            <span>Next service</span>
-                            <input
-                                type="date"
-                                value={form.nextMaintenanceDate}
-                                onChange={(event) => onChange("nextMaintenanceDate", event.target.value)}
-                            />
-                        </label>
+                            <label className="form-field">
+                                <span>Next service</span>
+                                <input
+                                    type="date"
+                                    value={form.nextMaintenanceDate}
+                                    onChange={(event) => onChange("nextMaintenanceDate", event.target.value)}
+                                />
+                            </label>
 
-                        <label className="form-field">
-                            <span>Cost</span>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={form.cost}
-                                onChange={(event) => onChange("cost", event.target.value)}
-                            />
-                        </label>
+                            <label className="form-field">
+                                <span>Cost</span>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={form.cost}
+                                    onChange={(event) => onChange("cost", event.target.value)}
+                                />
+                            </label>
+                        </div>
+                    </section>
 
-                        <label className="form-field form-field-full">
-                            <span>Problem description</span>
-                            <textarea
-                                rows="3"
-                                value={form.problemDescription}
-                                onChange={(event) => onChange("problemDescription", event.target.value)}
-                            />
-                        </label>
+                    <section className="task-form-section">
+                        <div className="task-form-section-heading">
+                            <h4>Work notes</h4>
+                            <p>Document the issue, work performed, and any extra details.</p>
+                        </div>
+                        <div className="task-form-grid">
+                            <label className="form-field form-field-full">
+                                <span>Problem description</span>
+                                <textarea
+                                    rows="3"
+                                    value={form.problemDescription}
+                                    onChange={(event) => onChange("problemDescription", event.target.value)}
+                                />
+                            </label>
 
-                        <label className="form-field form-field-full">
-                            <span>Action taken</span>
-                            <textarea
-                                rows="3"
-                                value={form.actionTaken}
-                                onChange={(event) => onChange("actionTaken", event.target.value)}
-                            />
-                        </label>
+                            <label className="form-field form-field-full">
+                                <span>Action taken</span>
+                                <textarea
+                                    rows="3"
+                                    value={form.actionTaken}
+                                    onChange={(event) => onChange("actionTaken", event.target.value)}
+                                />
+                            </label>
 
-                        <label className="form-field form-field-full">
-                            <span>Notes</span>
-                            <textarea
-                                rows="3"
-                                value={form.notes}
-                                onChange={(event) => onChange("notes", event.target.value)}
-                            />
-                        </label>
-                    </div>
+                            <label className="form-field form-field-full">
+                                <span>Notes</span>
+                                <textarea
+                                    rows="3"
+                                    value={form.notes}
+                                    onChange={(event) => onChange("notes", event.target.value)}
+                                />
+                            </label>
+                        </div>
+                    </section>
 
                     <div className="task-form-actions">
                         <button type="button" className="secondary-btn" onClick={onClose}>

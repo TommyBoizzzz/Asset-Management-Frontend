@@ -514,6 +514,150 @@ html[data-theme="dark"] .login-page .password-toggle:hover {
     color: #c4d2e3;
 }
 
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .tracking-modal,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .task-modal-content {
+    border-color: #30445c;
+    background:
+        radial-gradient(ellipse at 92% 0%, rgb(61 111 180 / 10%), transparent 36%),
+        linear-gradient(155deg, #17263a 0%, #111c2c 62%, #101a29 100%);
+    box-shadow: 0 30px 84px rgb(0 0 0 / 48%), inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .modal-subtitle {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none;
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    :is(.tracking-modal, .task-modal-content) .modal-header {
+    border-color: #2a3d53;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .detail-item {
+    border-color: #2a3d53;
+    background: #142337;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .tracking-panel {
+    border-color: #2a3d53;
+    background: linear-gradient(145deg, #142337, #101d2d);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .progress-track {
+    background: #263a52;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-step:not(:last-child)::after {
+    background: #344a63;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-step.is-complete:not(:last-child)::after {
+    background: #4a75b5;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-marker {
+    border-color: #3a506b;
+    background: #1a2b40;
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    :is(.maintenance-timeline-step.is-complete, .maintenance-timeline-step.is-current) .maintenance-timeline-marker {
+    border-color: #5685d8;
+    background: #3266bd;
+    color: #f4f8ff;
+    box-shadow: 0 0 0 4px rgb(86 133 216 / 14%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-copy strong {
+    color: #d3deec;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-step.is-current .maintenance-timeline-copy strong {
+    color: #9dcaff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-timeline-copy span {
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .maintenance-cancelled-note {
+    border-color: #633b49;
+    background: #351f2a;
+    color: #ffb4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .status-action-btn.is-cancel {
+    border-color: #633b49;
+    background: #351f2a;
+    color: #ffb4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-form-section {
+    border-color: #2a3d53;
+    background: rgb(13 25 40 / 58%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-form-section-heading h4 {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-form-section-heading p {
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .task-form-actions {
+    border-color: #2a3d53;
+    background: linear-gradient(180deg, rgb(20 32 49 / 96%), #111c2c 30%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field input,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field select,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field textarea {
+    border-color: #35485f;
+    background: #0e1928;
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field input:focus,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field select:focus,
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .task-modal-content .form-field textarea:focus {
+    border-color: #5685b8;
+    background: #111f31;
+    box-shadow: 0 0 0 3px rgb(86 133 184 / 17%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page
+    .tracking-modal .status-pill.cancelled {
+    border: 1px solid #633b49;
+    background: #351f2a;
+    color: #ffb4bc;
+}
+
 .login-theme-toggle {
     position: absolute;
     top: 22px;
