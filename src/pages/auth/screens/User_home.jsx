@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 
 import {
@@ -19,6 +19,7 @@ import {
 
 import UserService from "../services/UserService";
 import RoleService from "../services/RoleService";
+import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 import {
     ALL_PERMISSION_KEYS,
     APP_PERMISSION_PAGES,
@@ -163,30 +164,35 @@ function UserHome() {
        FETCH USERS
     ===================================================== */
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (background = false) => {
 
         try {
-            setLoadingUsers(true);
-            setUserError("");
+            if (!background) {
+                setLoadingUsers(true);
+                setUserError("");
+            }
 
             const response = await UserService.getAll();
 
             const data = getResponseData(response);
 
-            console.log("Users from API:", data);
+            if (!background) console.log("Users from API:", data);
 
             setUsers(data);
+            if (background) setUserError("");
 
         } catch (error) {
 
             console.error("Failed to fetch users:", error);
 
-            setUserError(
-                getErrorMessage(error, "Failed to load users.")
-            );
+            if (!background) {
+                setUserError(
+                    getErrorMessage(error, "Failed to load users.")
+                );
+            }
 
         } finally {
-            setLoadingUsers(false);
+            if (!background) setLoadingUsers(false);
         }
     };
 
@@ -195,30 +201,35 @@ function UserHome() {
        FETCH ROLES
     ===================================================== */
 
-    const fetchRoles = async () => {
+    const fetchRoles = async (background = false) => {
 
         try {
-            setLoadingRoles(true);
-            setRoleError("");
+            if (!background) {
+                setLoadingRoles(true);
+                setRoleError("");
+            }
 
             const response = await RoleService.getAll();
 
             const data = getResponseData(response);
 
-            console.log("Roles from API:", data);
+            if (!background) console.log("Roles from API:", data);
 
             setRoles(data);
+            if (background) setRoleError("");
 
         } catch (error) {
 
             console.error("Failed to fetch roles:", error);
 
-            setRoleError(
-                getErrorMessage(error, "Failed to load roles.")
-            );
+            if (!background) {
+                setRoleError(
+                    getErrorMessage(error, "Failed to load roles.")
+                );
+            }
 
         } finally {
-            setLoadingRoles(false);
+            if (!background) setLoadingRoles(false);
         }
     };
 
@@ -227,10 +238,15 @@ function UserHome() {
        INITIAL LOAD
     ===================================================== */
 
-    useEffect(() => {
-        fetchUsers();
-        fetchRoles();
-    }, []);
+    useIntervalRefresh(
+        (background) =>
+            Promise.all([
+                fetchUsers(background),
+                fetchRoles(background),
+            ]),
+        60_000,
+        true
+    );
 
 
     /* =====================================================

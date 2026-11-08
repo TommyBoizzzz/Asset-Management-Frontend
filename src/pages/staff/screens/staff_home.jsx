@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
     CheckCircle2,
@@ -15,6 +15,7 @@ import StaffService from "../services/staff_home";
 import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
 import { isActiveAssignment } from "../../../utils/assetLifecycle";
 import { getStoredUser, hasPermission } from "../../../utils/permissions";
+import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 import "../css/staff_home.css";
 
 const emptyStaffForm = {
@@ -52,13 +53,11 @@ function StaffHome() {
     const [pageError, setPageError] = useState("");
     const [submitError, setSubmitError] = useState("");
 
-    useEffect(() => {
-        loadStaff();
-    }, []);
-
-    const loadStaff = async () => {
-        setLoading(true);
-        setPageError("");
+    const loadStaff = async (background = false) => {
+        if (!background) {
+            setLoading(true);
+            setPageError("");
+        }
 
         try {
             const response = await StaffService.getAll();
@@ -76,18 +75,27 @@ function StaffHome() {
                     : [];
 
             setStaffList(records);
+            if (background) setPageError("");
         } catch (error) {
             console.error("Load staff error:", error);
-            setPageError(
-                error.response?.data?.message ||
-                error.response?.data?.detail ||
-                error.message ||
-                "Unable to load staff. Check your backend connection."
-            );
+            if (!background) {
+                setPageError(
+                    error.response?.data?.message ||
+                    error.response?.data?.detail ||
+                    error.message ||
+                    "Unable to load staff. Check your backend connection."
+                );
+            }
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     };
+
+    useIntervalRefresh(
+        (background) => loadStaff(background),
+        60_000,
+        true
+    );
 
     const filteredStaff = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
     ClipboardList,
@@ -25,6 +25,7 @@ import {
     isAssetAvailable,
 } from "../../../utils/assetLifecycle";
 import { getStoredUser, hasPermission } from "../../../utils/permissions";
+import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 
 function AssignAssets() {
     const user = getStoredUser();
@@ -83,11 +84,11 @@ function AssignAssets() {
        LOAD DATA
     ========================================================= */
 
-    const loadAll = async () => {
+    const loadAll = async (background = false) => {
 
         try {
 
-            setLoading(true);
+            if (!background) setLoading(true);
 
             const [assignmentRes, assetRes, staffRes] =
                 await Promise.all([
@@ -104,23 +105,25 @@ function AssignAssets() {
 
             console.error("Failed to load assignments:", error);
 
-            alert(
-                error.response?.data?.message ||
-                "Failed to load asset assignments."
-            );
+            if (!background) {
+                alert(
+                    error.response?.data?.message ||
+                    "Failed to load asset assignments."
+                );
+            }
 
         } finally {
 
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     };
 
 
-    useEffect(() => {
-
-        loadAll();
-
-    }, []);
+    useIntervalRefresh(
+        (background) => loadAll(background),
+        60_000,
+        true
+    );
 
 
     /* =========================================================

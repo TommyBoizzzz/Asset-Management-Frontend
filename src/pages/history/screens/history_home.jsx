@@ -156,8 +156,12 @@ function History() {
 
   useEffect(() => {
     let active = true;
+    let isLoading = false;
 
-    const loadHistory = async () => {
+    const loadHistory = async (background = false) => {
+      if (isLoading) return;
+      isLoading = true;
+
       try {
         const [assetResponse, assignmentResponse, maintenanceResponse] =
           await Promise.all([
@@ -186,7 +190,7 @@ function History() {
         }
       } catch (error) {
         console.error("Failed to load asset history:", error);
-        if (active) {
+        if (active && !background) {
           setHistoryError(
             error.response?.data?.message ||
               error.message ||
@@ -194,13 +198,23 @@ function History() {
           );
         }
       } finally {
-        if (active) setHistoryLoading(false);
+        if (active && !background) setHistoryLoading(false);
+        isLoading = false;
       }
     };
 
     loadHistory();
+    const intervalId = window.setInterval(
+      () => {
+        if (document.visibilityState === "visible") {
+          loadHistory(true);
+        }
+      },
+      60_000
+    );
     return () => {
       active = false;
+      window.clearInterval(intervalId);
     };
   }, []);
 

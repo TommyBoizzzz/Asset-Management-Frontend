@@ -67,8 +67,13 @@ function Dashboard() {
 
     useEffect(() => {
         let isMounted = true;
+        let isLoading = false;
 
-        const loadDashboardData = async () => {
+        const loadDashboardData = async (background = false) => {
+            if (background && document.visibilityState !== "visible") return;
+            if (isLoading) return;
+            isLoading = true;
+
             try {
                 const [assetResponse, assignmentResponse, maintenanceResponse] =
                     await Promise.all([
@@ -89,10 +94,11 @@ function Dashboard() {
                     setAssets(assetResponse.data);
                     setAssignments(assignmentResponse.data);
                     setMaintenanceRecords(maintenanceResponse.data);
+                    setErrorMessage("");
                 }
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
-                if (isMounted) {
+                if (isMounted && !background) {
                     setErrorMessage(
                         error.response?.data?.message ||
                         error.message ||
@@ -100,16 +106,22 @@ function Dashboard() {
                     );
                 }
             } finally {
-                if (isMounted) {
+                if (isMounted && !background) {
                     setLoading(false);
                 }
+                isLoading = false;
             }
         };
 
         loadDashboardData();
+        const intervalId = window.setInterval(
+            () => loadDashboardData(true),
+            60_000
+        );
 
         return () => {
             isMounted = false;
+            window.clearInterval(intervalId);
         };
     }, []);
 

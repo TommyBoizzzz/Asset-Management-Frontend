@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
     Wrench,
@@ -26,6 +26,7 @@ import {
     normalizeAssetStatus,
 } from "../../../utils/assetLifecycle";
 import { getStoredUser, hasPermission } from "../../../utils/permissions";
+import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 import "../css/Maintenace.css";
 
 const FILTER_TABS = [
@@ -151,43 +152,48 @@ function MaintenanceHome() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
+    const fetchData = async (background = false) => {
+        try {
+            if (!background) {
                 setLoading(true);
                 setError("");
+            }
 
-                const [maintenanceResponse, assetResponse, assignmentResponse, staffResponse] = await Promise.all([
-                    MaintenanceService.getAll(),
-                    AssetService.getAll(),
-                    AssetAssignmentService.getAll(),
-                    StaffService.getAll(),
-                ]);
+            const [maintenanceResponse, assetResponse, assignmentResponse, staffResponse] = await Promise.all([
+                MaintenanceService.getAll(),
+                AssetService.getAll(),
+                AssetAssignmentService.getAll(),
+                StaffService.getAll(),
+            ]);
 
-                const normalized = (maintenanceResponse.data || []).map(normalizeMaintenanceRecord);
-                const assets = assetResponse.data || [];
-                const staff = staffResponse.data || [];
+            const normalized = (maintenanceResponse.data || []).map(normalizeMaintenanceRecord);
+            const assets = assetResponse.data || [];
+            const staff = staffResponse.data || [];
 
-                setMaintenanceList(normalized);
-                setAssetOptions(assets);
-                setAssignments(assignmentResponse.data || []);
-                setStaffOptions(staff);
-                setSelectedRecord(null);
-            } catch (err) {
-                console.error("Failed to load maintenance records:", err);
+            setMaintenanceList(normalized);
+            setAssetOptions(assets);
+            setAssignments(assignmentResponse.data || []);
+            setStaffOptions(staff);
+            setError("");
+        } catch (err) {
+            console.error("Failed to load maintenance records:", err);
+            if (!background) {
                 setError("Unable to load maintenance records from the backend.");
                 setMaintenanceList([]);
                 setAssetOptions([]);
                 setAssignments([]);
                 setStaffOptions([]);
-                setSelectedRecord(null);
-            } finally {
-                setLoading(false);
             }
-        };
+        } finally {
+            if (!background) setLoading(false);
+        }
+    };
 
-        fetchData();
-    }, []);
+    useIntervalRefresh(
+        (background) => fetchData(background),
+        60_000,
+        true
+    );
 
     const filteredList = useMemo(() => {
         const query = searchTerm.toLowerCase();

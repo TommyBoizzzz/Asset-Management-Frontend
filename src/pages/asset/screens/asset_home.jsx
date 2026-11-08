@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
     Package,
@@ -27,6 +27,7 @@ import AssetService from "../services/AssetService";
 import AssetCategoryService from "../services/AssetCategoryService";
 import { normalizeAssetStatus } from "../../../utils/assetLifecycle";
 import { getStoredUser, hasPermission } from "../../../utils/permissions";
+import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 
 
 function Assets() {
@@ -113,11 +114,11 @@ function Assets() {
        LOAD ASSETS
     ========================================================= */
 
-    const loadAssets = async () => {
+    const loadAssets = async (background = false) => {
 
         try {
 
-            setLoadingAssets(true);
+            if (!background) setLoadingAssets(true);
 
             const response = await AssetService.getAll();
 
@@ -127,14 +128,16 @@ function Assets() {
 
             console.error("Failed to load assets:", error);
 
-            alert(
-                error.response?.data?.message ||
-                "Failed to load assets."
-            );
+            if (!background) {
+                alert(
+                    error.response?.data?.message ||
+                    "Failed to load assets."
+                );
+            }
 
         } finally {
 
-            setLoadingAssets(false);
+            if (!background) setLoadingAssets(false);
 
         }
     };
@@ -144,11 +147,11 @@ function Assets() {
        LOAD CATEGORIES
     ========================================================= */
 
-    const loadCategories = async () => {
+    const loadCategories = async (background = false) => {
 
         try {
 
-            setLoadingCategories(true);
+            if (!background) setLoadingCategories(true);
 
             const response =
                 await AssetCategoryService.getAll();
@@ -162,14 +165,16 @@ function Assets() {
                 error
             );
 
-            alert(
-                error.response?.data?.message ||
-                "Failed to load categories."
-            );
+            if (!background) {
+                alert(
+                    error.response?.data?.message ||
+                    "Failed to load categories."
+                );
+            }
 
         } finally {
 
-            setLoadingCategories(false);
+            if (!background) setLoadingCategories(false);
 
         }
     };
@@ -179,12 +184,14 @@ function Assets() {
        INITIAL LOAD
     ========================================================= */
 
-    useEffect(() => {
-
-        loadAssets();
-        loadCategories();
-
-    }, []);
+    useIntervalRefresh((background) =>
+        Promise.all([
+            loadAssets(background),
+            loadCategories(background),
+        ]),
+        60_000,
+        true
+    );
 
 
     /* =========================================================
