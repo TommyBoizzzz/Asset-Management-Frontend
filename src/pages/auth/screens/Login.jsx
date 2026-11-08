@@ -50,6 +50,8 @@ const extractLoginPayload = (response) => {
   return payload;
 };
 
+const MINIMUM_LOGIN_LOADING_MS = 2000;
+
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +77,9 @@ export default function Login() {
     e.preventDefault();
 
     if (loading) return;
+
+    const loadingStartedAt = Date.now();
+    let landingPath;
 
     setLoading(true);
     setErrorMessage("");
@@ -123,14 +128,23 @@ export default function Login() {
 
       activeStorage.setItem("isLoggedIn", "true");
 
-      navigate(getLandingPath(user), { replace: true });
+      landingPath = getLandingPath(user);
     } catch (error) {
       console.error("Login failed:", error);
       setErrorMessage(
         getErrorMessage(error, "Unable to sign in. Please try again.")
       );
     } finally {
+      const remainingLoadingTime = Math.max(
+        0,
+        MINIMUM_LOGIN_LOADING_MS - (Date.now() - loadingStartedAt)
+      );
+      await new Promise((resolve) => window.setTimeout(resolve, remainingLoadingTime));
       setLoading(false);
+    }
+
+    if (landingPath) {
+      navigate(landingPath, { replace: true });
     }
   };
 
