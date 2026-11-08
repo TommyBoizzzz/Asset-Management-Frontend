@@ -344,28 +344,79 @@ html[data-theme="dark"] .main-content :is(th, td) {
 
 html[data-theme="dark"] .loading-overlay {
     background:
-        radial-gradient(ellipse at 50% 42%, rgb(35 67 108 / 35%), transparent 58%),
-        rgb(7 13 22 / 72%);
+        radial-gradient(ellipse at 50% 44%, rgb(42 82 132 / 26%), transparent 54%),
+        radial-gradient(ellipse at 50% 100%, rgb(12 27 46 / 42%), transparent 62%),
+        rgb(5 10 18 / 76%);
+    backdrop-filter: blur(14px) saturate(120%);
 }
 
 html[data-theme="dark"] .loading-overlay-card {
-    background: linear-gradient(145deg, #1a2a3f, #121e2e);
-    border-color: #30425a;
+    position: relative;
+    overflow: hidden;
+    border-color: rgb(143 180 224 / 19%);
+    background:
+        radial-gradient(ellipse at 0% 0%, rgb(54 106 164 / 16%), transparent 58%),
+        linear-gradient(145deg, rgb(24 39 59 / 97%), rgb(14 25 40 / 97%));
+    box-shadow:
+        0 28px 80px rgb(0 0 0 / 42%),
+        0 8px 24px rgb(0 0 0 / 20%),
+        inset 0 1px 0 rgb(255 255 255 / 5%);
     color: var(--theme-text);
+}
+
+html[data-theme="dark"] .loading-overlay-card::before {
+    position: absolute;
+    top: 0;
+    left: 28px;
+    width: 72px;
+    height: 2px;
+    background: linear-gradient(90deg, #58a6ff, rgb(88 166 255 / 0%));
+    content: "";
 }
 
 html[data-theme="dark"] .loading-overlay-message {
-    color: var(--theme-text);
+    color: #edf4ff;
 }
 
-html[data-theme="dark"] .loading-overlay-eyebrow,
+html[data-theme="dark"] .loading-overlay-eyebrow {
+    color: #89bfff;
+}
+
 html[data-theme="dark"] .loading-overlay-detail {
-    color: var(--theme-muted);
+    color: #91a4bc;
 }
 
 html[data-theme="dark"] .loading-overlay-spinner {
-    background: #1d314b;
-    border-color: #304966;
+    border-color: rgb(141 184 234 / 22%);
+    background: linear-gradient(145deg, #1c3450, #14253a);
+    box-shadow:
+        0 0 24px rgb(67 143 224 / 12%),
+        inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+html[data-theme="dark"] .loading-overlay-spinner::before {
+    border-top-color: #76b7ff;
+    border-right-color: #76b7ff;
+    filter: drop-shadow(0 0 4px rgb(89 166 255 / 60%));
+}
+
+html[data-theme="dark"] .loading-overlay-spinner span {
+    background: #a7d2ff;
+    box-shadow: 0 0 14px rgb(89 166 255 / 85%);
+    animation: loading-overlay-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes loading-overlay-pulse {
+    50% {
+        opacity: 0.55;
+        transform: scale(0.72);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-theme="dark"] .loading-overlay-spinner span {
+        animation: none;
+    }
 }
 
 html[data-theme="dark"] .login-container {
