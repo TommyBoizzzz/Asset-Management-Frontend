@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 import "./MainLayout.css";
 
@@ -52,6 +53,7 @@ function MainLayout({
                 {/* Content */}
 
                 <main className="main-content">
+                    <LoadingOverlay />
                     {children}
                 </main>
 
