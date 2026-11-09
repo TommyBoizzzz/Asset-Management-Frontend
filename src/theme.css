@@ -1753,3 +1753,25 @@ html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn:
     background: var(--theme-surface);
     color: #74849a;
 }
+
+html[data-theme] .main-layout .main-content .assets-page
+    .modal .modal-footer > .primary-modal-btn {
+    border: 1px solid #2563eb !important;
+    background: #2563eb !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+html[data-theme] .main-layout .main-content .assets-page
+    .modal .modal-footer > .primary-modal-btn:hover:not(:disabled) {
+    border-color: #1d4ed8 !important;
+    background: #1d4ed8 !important;
+}
+
+html[data-theme] .main-layout .main-content .assets-page
+    .modal .modal-footer > .primary-modal-btn:disabled {
+    border-color: #6090ed !important;
+    background: #6090ed !important;
+    color: #ffffff !important;
+    cursor: wait;
+}

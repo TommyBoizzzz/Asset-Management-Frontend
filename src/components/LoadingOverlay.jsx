@@ -34,7 +34,10 @@ function LoadingOverlay() {
         };
 
         const requestInterceptor = axios.interceptors.request.use((config) => {
-            if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())) {
+            if (
+                !config.__skipGlobalLoading &&
+                ["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())
+            ) {
                 config.__globalLoading = true;
                 config.__globalLoadingStartedAt = Date.now();
                 setPendingChanges((count) => count + 1);

@@ -52,6 +52,7 @@ function Assets() {
 
     const [loadingAssets, setLoadingAssets] = useState(true);
     const [loadingCategories, setLoadingCategories] = useState(true);
+    const [savingCategory, setSavingCategory] = useState(false);
 
     const [assetSearch, setAssetSearch] = useState("");
     const [categorySearch, setCategorySearch] = useState("");
@@ -962,6 +963,7 @@ function Assets() {
 
 
         try {
+            setSavingCategory(true);
 
             /* ================================================
                REQUIRED CATEGORY FIELD
@@ -1050,6 +1052,8 @@ function Assets() {
                 error.response?.data?.message ||
                 "Failed to save category."
             );
+        } finally {
+            setSavingCategory(false);
         }
     };
 
@@ -2437,7 +2441,9 @@ function Assets() {
 
                     <div
                         className="modal-overlay"
-                        onClick={closeCategoryModal}
+                        onClick={
+                            savingCategory ? undefined : closeCategoryModal
+                        }
                     >
 
                         <div
@@ -2482,6 +2488,7 @@ function Assets() {
                                     type="button"
                                     className="close-modal"
                                     onClick={closeCategoryModal}
+                                    disabled={savingCategory}
                                 >
                                     <X size={19} />
                                 </button>
@@ -2611,6 +2618,7 @@ function Assets() {
                                         type="button"
                                         className="secondary-btn"
                                         onClick={closeCategoryModal}
+                                        disabled={savingCategory}
                                     >
                                         Cancel
                                     </button>
@@ -2618,14 +2626,22 @@ function Assets() {
 
                                     <button
                                         type="submit"
-                                        className="primary-modal-btn purple-btn"
+                                        className="primary-modal-btn"
+                                        disabled={savingCategory}
                                     >
-
-                                        {
-                                            editingCategory
+                                        {savingCategory && (
+                                            <span
+                                                className="button-spinner"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        {savingCategory
+                                            ? editingCategory
+                                                ? "Updating..."
+                                                : "Creating..."
+                                            : editingCategory
                                                 ? "Update Category"
-                                                : "Create Category"
-                                        }
+                                                : "Create Category"}
 
                                     </button>
 

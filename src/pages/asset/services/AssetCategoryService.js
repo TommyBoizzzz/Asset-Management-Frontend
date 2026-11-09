@@ -13,11 +13,15 @@ const AssetCategoryService = {
     },
 
     create: (category) => {
-        return axios.post(CATEGORY_API_URL, category);
+        return axios.post(CATEGORY_API_URL, category, {
+            __skipGlobalLoading: true,
+        });
     },
 
     update: (id, category) => {
-        return axios.put(`${CATEGORY_API_URL}/${id}`, category);
+        return axios.put(`${CATEGORY_API_URL}/${id}`, category, {
+            __skipGlobalLoading: true,
+        });
     },
 
     delete: (id) => {

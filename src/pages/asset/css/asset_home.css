@@ -2542,6 +2542,32 @@
 
 }
 
+.button-spinner {
+
+    width: 13px;
+
+    height: 13px;
+
+    border: 2px solid rgba(255, 255, 255, 0.45);
+
+    border-top-color: #ffffff;
+
+    border-radius: 50%;
+
+    animation: button-spin 0.7s linear infinite;
+
+}
+
+@keyframes button-spin {
+
+    to {
+
+        transform: rotate(360deg);
+
+    }
+
+}
+
 /* =========================================================
 
    VIEW CONTENT
