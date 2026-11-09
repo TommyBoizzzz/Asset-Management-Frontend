@@ -225,10 +225,46 @@ html[data-theme="dark"] .main-layout .main-content
 
 html[data-theme="dark"] .main-layout .main-content
     :is(.search-box, .search-field, .category-filter, .history-search) input,
-html[data-theme="dark"] .main-layout .main-content
-    :is(.search-box, .category-filter) select {
+html[data-theme="dark"] .main-layout .main-content .search-box select {
     background: transparent;
     color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .category-filter-trigger {
+    border: 0;
+    background: transparent;
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    .category-filter-trigger > svg {
+    color: #91a9c5;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .category-filter-menu {
+    border-color: var(--theme-border);
+    background: #101b2a;
+    box-shadow: 0 14px 32px rgb(0 0 0 / 38%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .category-filter-option {
+    border: 0;
+    background: transparent;
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    .category-filter-option:hover,
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    .category-filter-option:focus-visible {
+    background: #1b2c43;
+    color: #dceaff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    .category-filter-option.selected {
+    background: rgb(37 99 235 / 20%);
+    color: #9dc0ff;
 }
 
 html[data-theme="dark"] .main-layout .main-content

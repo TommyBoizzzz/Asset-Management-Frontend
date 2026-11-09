@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
     Package,
@@ -59,6 +59,31 @@ function Assets() {
 
     const [activeCategory, setActiveCategory] = useState("All");
     const [assetPage, setAssetPage] = useState(1);
+    const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+    const categoryFilterRef = useRef(null);
+
+    useEffect(() => {
+        if (!categoryFilterOpen) return undefined;
+
+        const handlePointerDown = (event) => {
+            if (!categoryFilterRef.current?.contains(event.target)) {
+                setCategoryFilterOpen(false);
+            }
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setCategoryFilterOpen(false);
+            }
+        };
+
+        document.addEventListener("pointerdown", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [categoryFilterOpen]);
 
 
     /* =========================================================
@@ -1394,7 +1419,9 @@ function Assets() {
                         ASSETS
                     ================================================= */}
 
-                    {canViewAssets && <section className="management-card assets-card">
+                    {canViewAssets && <section
+                        className={`management-card assets-card${categoryFilterOpen ? " category-filter-open" : ""}`}
+                    >
 
                         <div className="card-header">
 
@@ -1472,51 +1499,82 @@ function Assets() {
                             </div>
 
 
-                            <div className="category-filter">
-
-                                <Tag size={15} />
-
-                                <select
-                                    value={
-                                        activeCategory
-                                    }
-                                    onChange={(e) =>
-                                        {
-                                            setActiveCategory(e.target.value);
-                                            setAssetPage(1);
-                                        }
+                            <div
+                                className={`category-filter${categoryFilterOpen ? " is-open" : ""}`}
+                                ref={categoryFilterRef}
+                            >
+                                <button
+                                    type="button"
+                                    className="category-filter-trigger"
+                                    aria-haspopup="menu"
+                                    aria-expanded={categoryFilterOpen}
+                                    aria-label={`Filter assets by category: ${activeCategory === "All" ? "All Categories" : activeCategory}`}
+                                    onClick={() =>
+                                        setCategoryFilterOpen((isOpen) => !isOpen)
                                     }
                                 >
+                                    <Tag size={15} aria-hidden="true" />
+                                    <span>
+                                        {activeCategory === "All"
+                                            ? "All Categories"
+                                            : activeCategory}
+                                    </span>
+                                    <ChevronDown
+                                        className="category-filter-chevron"
+                                        size={14}
+                                        aria-hidden="true"
+                                    />
+                                </button>
 
-                                    <option value="All">
-                                        All Categories
-                                    </option>
+                                {categoryFilterOpen && (
+                                    <div
+                                        className="category-filter-menu"
+                                        role="menu"
+                                        aria-label="Asset categories"
+                                    >
+                                        <button
+                                            type="button"
+                                            className={`category-filter-option${activeCategory === "All" ? " selected" : ""}`}
+                                            role="menuitemradio"
+                                            aria-checked={activeCategory === "All"}
+                                            onClick={() => {
+                                                setActiveCategory("All");
+                                                setAssetPage(1);
+                                                setCategoryFilterOpen(false);
+                                            }}
+                                        >
+                                            <span>All Categories</span>
+                                            {activeCategory === "All" && (
+                                                <CheckCircle size={14} aria-hidden="true" />
+                                            )}
+                                        </button>
 
-                                    {categories.map(
-                                        (category) => (
+                                        {categories.map((category) => {
+                                            const isSelected =
+                                                activeCategory === category.name;
 
-                                            <option
-                                                key={
-                                                    category.id
-                                                }
-                                                value={
-                                                    category.name
-                                                }
-                                            >
-                                                {
-                                                    category.name
-                                                }
-                                            </option>
-
-                                        )
-                                    )}
-
-                                </select>
-
-                                <ChevronDown
-                                    size={14}
-                                />
-
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    className={`category-filter-option${isSelected ? " selected" : ""}`}
+                                                    role="menuitemradio"
+                                                    aria-checked={isSelected}
+                                                    key={category.id}
+                                                    onClick={() => {
+                                                        setActiveCategory(category.name);
+                                                        setAssetPage(1);
+                                                        setCategoryFilterOpen(false);
+                                                    }}
+                                                >
+                                                    <span>{category.name}</span>
+                                                    {isSelected && (
+                                                        <CheckCircle size={14} aria-hidden="true" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
 
                         </div>
