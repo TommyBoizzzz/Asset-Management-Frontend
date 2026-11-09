@@ -1644,3 +1644,112 @@ html[data-theme="dark"] .main-layout .main-content .role-dialog .user-error-mess
     background: #351e29;
     color: #ffb4bc;
 }
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card,
+html[data-theme="dark"] .main-layout .main-content .assets-page .categories-card .category-row {
+    border-color: var(--theme-border);
+    background: linear-gradient(160deg, var(--theme-surface-raised), var(--theme-surface));
+    box-shadow: 0 3px 10px rgb(0 0 0 / 12%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card:hover,
+html[data-theme="dark"] .main-layout .main-content .assets-page .categories-card .category-row:hover {
+    border-color: #3979e8;
+    background: #1b2c43;
+    box-shadow: 0 9px 20px rgb(0 0 0 / 20%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-card-top, .asset-grid-card-info, .asset-grid-card-details, .asset-grid-card-actions) {
+    background: transparent;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-card-info h4, .asset-grid-card-details strong, .asset-grid-card-details strong.value, .categories-card .category-text strong, .categories-card .asset-count strong) {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-code, .asset-grid-category-name, .asset-grid-card-details span, .categories-card .category-text span, .categories-card .asset-count span) {
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-card-details, .categories-card .category-right) {
+    border-color: var(--theme-border);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-category-icon, .categories-card .category-large-icon) {
+    border: 1px solid rgb(91 147 255 / 20%);
+    background: rgb(53 106 230 / 15%);
+    color: #8db5ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card .status.available,
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card .status.active {
+    background: rgb(34 197 94 / 13%);
+    color: #86efac;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card .status.maintenance,
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card .status.under-maintenance {
+    background: rgb(245 158 11 / 14%);
+    color: #fcd34d;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    .asset-grid-card .status:is(.inactive, .damaged, .retired) {
+    background: rgb(239 68 68 / 14%);
+    color: #fca5a5;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-card .status.assigned {
+    background: rgb(139 92 246 / 16%);
+    color: #c4b5fd;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.asset-grid-message, .asset-grid-message strong, .categories-card .category-empty) {
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-grid-message-icon {
+    border: 1px solid rgb(91 147 255 / 20%);
+    background: rgb(53 106 230 / 15%);
+    color: #8db5ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .categories-card .category-empty {
+    border-color: var(--theme-border);
+    background: var(--theme-surface-raised);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.card-footer, .category-footer) {
+    border-color: var(--theme-border);
+    background: var(--theme-surface);
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page
+    :is(.card-footer strong, .category-footer strong) {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn {
+    border-color: var(--theme-border);
+    background: var(--theme-surface-raised);
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn:hover:not(:disabled) {
+    border-color: #3979e8;
+    background: #1b2c43;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn:disabled {
+    border-color: var(--theme-border);
+    background: var(--theme-surface);
+    color: #74849a;
+}

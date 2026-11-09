@@ -18,6 +18,8 @@ import {
     Boxes,
     Tag,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 
 import MainLayout from "../../../layouts/MainLayout";
@@ -55,6 +57,7 @@ function Assets() {
     const [categorySearch, setCategorySearch] = useState("");
 
     const [activeCategory, setActiveCategory] = useState("All");
+    const [assetPage, setAssetPage] = useState(1);
 
 
     /* =========================================================
@@ -363,6 +366,14 @@ function Assets() {
         activeCategory,
     ]);
 
+    const assetsPerPage = 6;
+    const totalPages = Math.ceil(filteredAssets.length / assetsPerPage);
+    const currentPage = Math.min(assetPage, Math.max(totalPages, 1));
+    const displayedAssets = filteredAssets.slice(
+        (currentPage - 1) * assetsPerPage,
+        currentPage * assetsPerPage
+    );
+
 
     /* =========================================================
        FILTER CATEGORIES
@@ -494,6 +505,8 @@ function Assets() {
     ========================================================= */
 
     const handleAssetSubmit = async (e) => {
+
+        e.preventDefault();
 
         if (editingAsset ? !canEdit : !canCreate) return;
 
@@ -1433,17 +1446,19 @@ function Assets() {
                                         assetSearch
                                     }
                                     onChange={(e) =>
-                                        setAssetSearch(
-                                            e.target.value
-                                        )
+                                        {
+                                            setAssetSearch(e.target.value);
+                                            setAssetPage(1);
+                                        }
                                     }
                                 />
 
                                 {assetSearch && (
                                     <button
-                                        onClick={() =>
+                                        onClick={() => {
                                             setAssetSearch("")
-                                        }
+                                            setAssetPage(1)
+                                        }}
                                     >
                                         <X size={14} />
                                     </button>
@@ -1462,9 +1477,10 @@ function Assets() {
                                         activeCategory
                                     }
                                     onChange={(e) =>
-                                        setActiveCategory(
-                                            e.target.value
-                                        )
+                                        {
+                                            setActiveCategory(e.target.value);
+                                            setAssetPage(1);
+                                        }
                                     }
                                 >
 
@@ -1502,263 +1518,116 @@ function Assets() {
                         </div>
 
 
-                        {/* TABLE */}
+                        <div className="asset-grid">
 
-                        <div className="asset-table-wrapper">
+                            {loadingAssets ? (
+                                <div className="asset-grid-message">
+                                    <div className="asset-grid-message-icon">
+                                        <Package size={22} />
+                                    </div>
+                                    <strong>Loading assets...</strong>
+                                </div>
+                            ) : filteredAssets.length === 0 ? (
+                                <div className="asset-grid-message">
+                                    <div className="asset-grid-message-icon">
+                                        <Package size={22} />
+                                    </div>
+                                    <strong>No assets found</strong>
+                                    <span>Try another search or category.</span>
+                                </div>
+                            ) : (
+                                displayedAssets.map((asset) => {
+                                    const categoryName =
+                                        getAssetCategoryName(asset);
+                                    const assetStatus =
+                                        normalizeAssetStatus(asset.status);
 
-                            <table className="management-table">
-
-                                <thead>
-
-                                    <tr>
-
-                                        <th>
-                                            Asset
-                                        </th>
-
-                                        <th>
-                                            Category
-                                        </th>
-
-                                        <th>
-                                            Location
-                                        </th>
-
-                                        <th>
-                                            Status
-                                        </th>
-
-                                        <th>
-                                            Value
-                                        </th>
-
-                                        <th>
-                                            Action
-                                        </th>
-
-                                    </tr>
-
-                                </thead>
-
-
-                                <tbody>
-
-                                    {loadingAssets ? (
-
-                                        <tr>
-
-                                            <td
-                                                colSpan="6"
-                                                className="empty-cell"
-                                            >
-                                                Loading assets...
-                                            </td>
-
-                                        </tr>
-
-                                    ) : filteredAssets.length === 0 ? (
-
-                                        <tr>
-
-                                            <td
-                                                colSpan="6"
-                                                className="empty-cell"
-                                            >
-
-                                                <div className="empty-content">
-
-                                                    <div>
-                                                        <Package size={25} />
-                                                    </div>
-
-                                                    <strong>
-                                                        No assets found
-                                                    </strong>
-
-                                                    <span>
-                                                        Try another search or category.
-                                                    </span>
-
+                                    return (
+                                        <article className="asset-grid-card" key={asset.id}>
+                                            <div className="asset-grid-card-top">
+                                                <div
+                                                    className={`asset-grid-category-icon ${getCategoryClass(categoryName)}`}
+                                                >
+                                                    {getCategoryIcon(categoryName)}
                                                 </div>
+                                                <span
+                                                    className={`status ${assetStatus
+                                                        .toLowerCase()
+                                                        .replaceAll(" ", "-")}`}
+                                                >
+                                                    <i />
+                                                    {assetStatus}
+                                                </span>
+                                            </div>
 
-                                            </td>
+                                            <div className="asset-grid-card-info">
+                                                <span className="asset-grid-code">
+                                                    {asset.assetCode || "No asset code"}
+                                                </span>
+                                                <h4 title={asset.name}>
+                                                    {asset.name || "Unnamed asset"}
+                                                </h4>
+                                                <span className="asset-grid-category-name">
+                                                    {categoryName}
+                                                </span>
+                                            </div>
 
-                                        </tr>
+                                            <div className="asset-grid-card-details">
+                                                <div>
+                                                    <span>Location</span>
+                                                    <strong title={asset.location || "Not set"}>
+                                                        {asset.location || "Not set"}
+                                                    </strong>
+                                                </div>
+                                                <div>
+                                                    <span>Value</span>
+                                                    <strong className="value">
+                                                        ${Number(
+                                                            asset.purchasePrice || 0
+                                                        ).toLocaleString()}
+                                                    </strong>
+                                                </div>
+                                            </div>
 
-                                    ) : (
-
-                                        filteredAssets.map(
-                                            (asset) => {
-
-                                                const categoryName =
-                                                    getAssetCategoryName(
-                                                        asset
-                                                    );
-
-                                                return (
-
-                                                    <tr
-                                                        key={
-                                                            asset.id
-                                                        }
+                                            <div className="asset-grid-card-actions">
+                                                <div className="table-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="table-btn view"
+                                                        title="View"
+                                                        aria-label={`View ${asset.name}`}
+                                                        onClick={() => handleViewAsset(asset)}
                                                     >
-
-                                                        <td>
-
-                                                            <div className="asset-cell">
-
-                                                                <div>
-
-                                                                    <strong>
-                                                                        {
-                                                                            asset.name
-                                                                        }
-                                                                    </strong>
-
-                                                                    <span>
-                                                                        {
-                                                                            asset.assetCode
-                                                                        }
-                                                                    </span>
-
-                                                                </div>
-
-                                                            </div>
-
-                                                        </td>
-
-
-                                                        <td>
-
-                                                            <div className="table-category">
-
-                                                                <div
-                                                                    className={`category-icon ${getCategoryClass(
-                                                                        categoryName
-                                                                    )}`}
-                                                                >
-                                                                    {
-                                                                        getCategoryIcon(
-                                                                            categoryName
-                                                                        )
-                                                                    }
-                                                                </div>
-
-                                                                <span>
-                                                                    {
-                                                                        categoryName
-                                                                    }
-                                                                </span>
-
-                                                            </div>
-
-                                                        </td>
-
-
-                                                        <td>
-
-                                                            <span className="location">
-
-                                                                {
-                                                                    asset.location ||
-                                                                    "-"
-                                                                }
-
-                                                            </span>
-
-                                                        </td>
-
-
-                                                        <td>
-
-                                                            <span
-                                                                className={`status ${normalizeAssetStatus(asset.status)
-                                                                    .toLowerCase()
-                                                                    .replaceAll(" ", "-")}`}
-                                                            >
-
-                                                                <i />
-
-                                                                {
-                                                                    normalizeAssetStatus(asset.status)
-                                                                }
-
-                                                            </span>
-
-                                                        </td>
-
-
-                                                        <td>
-
-                                                            <strong className="value">
-
-                                                                $
-                                                                {Number(
-                                                                    asset.purchasePrice || 0
-                                                                ).toLocaleString()}
-
-                                                            </strong>
-
-                                                        </td>
-
-
-                                                        <td>
-
-                                                            <div className="table-actions">
-
-                                                                <button
-                                                                    className="table-btn view"
-                                                                    title="View"
-                                                                    onClick={() =>
-                                                                        handleViewAsset(
-                                                                            asset
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Eye size={15} />
-                                                                </button>
-
-
-                                                                {canEdit && <button
-                                                                    className="table-btn edit"
-                                                                    title="Edit"
-                                                                    onClick={() =>
-                                                                        handleEditAsset(
-                                                                            asset
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Pencil size={15} />
-                                                                </button>}
-
-
-                                                                {canDelete && <button
-                                                                    className="table-btn delete"
-                                                                    title="Retire"
-                                                                    onClick={() =>
-                                                                        handleRetireAsset(
-                                                                            asset.id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Trash2 size={15} />
-                                                                </button>}
-
-                                                            </div>
-
-                                                        </td>
-
-                                                    </tr>
-
-                                                );
-                                            }
-                                        )
-
-                                    )}
-
-                                </tbody>
-
-                            </table>
+                                                        <Eye size={15} />
+                                                    </button>
+                                                    {canEdit && (
+                                                        <button
+                                                            type="button"
+                                                            className="table-btn edit"
+                                                            title="Edit"
+                                                            aria-label={`Edit ${asset.name}`}
+                                                            onClick={() => handleEditAsset(asset)}
+                                                        >
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button
+                                                            type="button"
+                                                            className="table-btn delete"
+                                                            title="Retire"
+                                                            aria-label={`Retire ${asset.name}`}
+                                                            onClick={() => handleRetireAsset(asset.id)}
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </article>
+                                    );
+                                })
+                            )}
 
                         </div>
 
@@ -1766,20 +1635,51 @@ function Assets() {
                         <div className="card-footer">
 
                             Showing{" "}
-
                             <strong>
-                                {
+                                {filteredAssets.length === 0
+                                    ? 0
+                                    : (currentPage - 1) * assetsPerPage + 1}
+                                {"-"}
+                                {Math.min(
+                                    currentPage * assetsPerPage,
                                     filteredAssets.length
-                                }
+                                )}
                             </strong>
-
                             {" "}of{" "}
-
-                            <strong>
-                                {assets.length}
-                            </strong>
-
+                            <strong>{filteredAssets.length}</strong>
                             {" "}assets
+
+                            {totalPages > 1 && (
+                                <div className="asset-pagination">
+                                    <button
+                                        type="button"
+                                        className="pagination-btn"
+                                        aria-label="Previous asset page"
+                                        disabled={currentPage === 1}
+                                        onClick={() =>
+                                            setAssetPage(currentPage - 1)
+                                        }
+                                    >
+                                        <ChevronLeft size={14} />
+                                        Previous
+                                    </button>
+                                    <span>
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="pagination-btn"
+                                        aria-label="Next asset page"
+                                        disabled={currentPage === totalPages}
+                                        onClick={() =>
+                                            setAssetPage(currentPage + 1)
+                                        }
+                                    >
+                                        Next
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            )}
 
                         </div>
 
