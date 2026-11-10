@@ -59,6 +59,7 @@ function Assets() {
 
     const [activeCategory, setActiveCategory] = useState("All");
     const [assetPage, setAssetPage] = useState(1);
+    const [categoryPage, setCategoryPage] = useState(1);
     const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
     const categoryFilterRef = useRef(null);
 
@@ -393,13 +394,12 @@ function Assets() {
     ]);
 
     const assetsPerPage = 6;
-    const totalPages = Math.ceil(filteredAssets.length / assetsPerPage);
-    const currentPage = Math.min(assetPage, Math.max(totalPages, 1));
+    const totalPages = Math.max(1, Math.ceil(filteredAssets.length / assetsPerPage));
+    const currentPage = Math.min(assetPage, totalPages);
     const displayedAssets = filteredAssets.slice(
         (currentPage - 1) * assetsPerPage,
         currentPage * assetsPerPage
     );
-
 
     /* =========================================================
        FILTER CATEGORIES
@@ -415,6 +415,17 @@ function Assets() {
                         .trim()
                 )
         );
+
+    const categoriesPerPage = 6;
+    const categoryTotalPages = Math.max(
+        1,
+        Math.ceil(filteredCategories.length / categoriesPerPage)
+    );
+    const currentCategoryPage = Math.min(categoryPage, categoryTotalPages);
+    const displayedCategories = filteredCategories.slice(
+        (currentCategoryPage - 1) * categoriesPerPage,
+        currentCategoryPage * categoriesPerPage
+    );
 
 
     /* =========================================================
@@ -1694,55 +1705,51 @@ function Assets() {
                         </div>
 
 
-                        <div className="card-footer">
-
-                            Showing{" "}
-                            <strong>
-                                {filteredAssets.length === 0
-                                    ? 0
-                                    : (currentPage - 1) * assetsPerPage + 1}
-                                {"-"}
-                                {Math.min(
-                                    currentPage * assetsPerPage,
-                                    filteredAssets.length
-                                )}
-                            </strong>
-                            {" "}of{" "}
-                            <strong>{filteredAssets.length}</strong>
-                            {" "}assets
-
-                            {totalPages > 1 && (
-                                <div className="asset-pagination">
-                                    <button
-                                        type="button"
-                                        className="pagination-btn"
-                                        aria-label="Previous asset page"
-                                        disabled={currentPage === 1}
-                                        onClick={() =>
-                                            setAssetPage(currentPage - 1)
-                                        }
-                                    >
-                                        <ChevronLeft size={14} />
-                                        Previous
-                                    </button>
-                                    <span>
-                                        Page {currentPage} of {totalPages}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className="pagination-btn"
-                                        aria-label="Next asset page"
-                                        disabled={currentPage === totalPages}
-                                        onClick={() =>
-                                            setAssetPage(currentPage + 1)
-                                        }
-                                    >
-                                        Next
-                                        <ChevronRight size={14} />
-                                    </button>
-                                </div>
-                            )}
-
+                        <div className="card-footer asset-card-footer">
+                            <span>
+                                Showing{" "}
+                                <strong>
+                                    {filteredAssets.length === 0
+                                        ? 0
+                                        : (currentPage - 1) * assetsPerPage + 1}
+                                    –{Math.min(
+                                        currentPage * assetsPerPage,
+                                        filteredAssets.length
+                                    )}
+                                </strong>
+                                {" "}of <strong>{filteredAssets.length}</strong> assets
+                            </span>
+                            <nav className="asset-pagination" aria-label="Asset pages">
+                                <button
+                                    type="button"
+                                    className="asset-page-nav-button"
+                                    aria-label="Previous asset page"
+                                    disabled={currentPage <= 1}
+                                    onClick={() => setAssetPage(currentPage - 1)}
+                                >
+                                    <ChevronLeft size={16} aria-hidden="true" />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="asset-page-number is-current"
+                                    aria-current="page"
+                                    aria-label={`Page ${currentPage} of ${totalPages}`}
+                                >
+                                    {currentPage}
+                                </button>
+                                <span className="asset-pagination-total">
+                                    <span>of</span> {totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="asset-page-nav-button"
+                                    aria-label="Next asset page"
+                                    disabled={currentPage >= totalPages}
+                                    onClick={() => setAssetPage(currentPage + 1)}
+                                >
+                                    <ChevronRight size={16} aria-hidden="true" />
+                                </button>
+                            </nav>
                         </div>
 
                     </section>}
@@ -1805,11 +1812,12 @@ function Assets() {
                                     value={
                                         categorySearch
                                     }
-                                    onChange={(e) =>
+                                    onChange={(e) => {
+                                        setCategoryPage(1);
                                         setCategorySearch(
                                             e.target.value
-                                        )
-                                    }
+                                        );
+                                    }}
                                 />
 
                             </div>
@@ -1849,7 +1857,7 @@ function Assets() {
 
                             ) : (
 
-                                filteredCategories.map(
+                                displayedCategories.map(
                                     (category) => (
 
                                         <div
@@ -1968,30 +1976,53 @@ function Assets() {
 
 
                         <div className="category-footer">
-
                             <span>
-
+                                Showing{" "}
                                 <strong>
-                                    {
-                                        categories.length
-                                    }
+                                    {filteredCategories.length === 0
+                                        ? 0
+                                        : (currentCategoryPage - 1) * categoriesPerPage + 1}
+                                    –{Math.min(
+                                        currentCategoryPage * categoriesPerPage,
+                                        filteredCategories.length
+                                    )}
                                 </strong>
-
-                                {" "}categories
-
+                                {" "}of <strong>{filteredCategories.length}</strong> categories
                             </span>
-
-
                             <span>
-
-                                {
-                                    assets.length
-                                }
-
-                                {" "}total assets
-
+                                <strong>{assets.length}</strong> total assets
                             </span>
-
+                            <nav className="asset-pagination" aria-label="Category pages">
+                                <button
+                                    type="button"
+                                    className="asset-page-nav-button"
+                                    aria-label="Previous category page"
+                                    disabled={currentCategoryPage <= 1}
+                                    onClick={() => setCategoryPage(currentCategoryPage - 1)}
+                                >
+                                    <ChevronLeft size={16} aria-hidden="true" />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="asset-page-number is-current"
+                                    aria-current="page"
+                                    aria-label={`Page ${currentCategoryPage} of ${categoryTotalPages}`}
+                                >
+                                    {currentCategoryPage}
+                                </button>
+                                <span className="asset-pagination-total">
+                                    <span>of</span> {categoryTotalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="asset-page-nav-button"
+                                    aria-label="Next category page"
+                                    disabled={currentCategoryPage >= categoryTotalPages}
+                                    onClick={() => setCategoryPage(currentCategoryPage + 1)}
+                                >
+                                    <ChevronRight size={16} aria-hidden="true" />
+                                </button>
+                            </nav>
                         </div>
 
                     </section>}

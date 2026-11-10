@@ -15,6 +15,8 @@ import {
     FileText,
     X,
     ArrowRight,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import MaintenanceService from "../services/MaintenanceService";
 import AssetService from "../../asset/services/AssetService";
@@ -38,6 +40,7 @@ const FILTER_TABS = [
 ];
 
 const statusOrder = ["SCHEDULED", "IN_PROGRESS", "COMPLETED"];
+const MAINTENANCE_PAGE_SIZE = 5;
 
 const formatStatus = (status) => (status || "").replaceAll("_", " ");
 
@@ -150,6 +153,7 @@ function MaintenanceHome() {
     const [maintenanceList, setMaintenanceList] = useState([]);
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [taskModal, setTaskModal] = useState(null);
     const [taskForm, setTaskForm] = useState(emptyTaskForm);
@@ -208,7 +212,7 @@ function MaintenanceHome() {
     );
 
     const filteredList = useMemo(() => {
-        const query = searchTerm.toLowerCase();
+        const query = searchTerm.toLowerCase().trim();
 
         return maintenanceList.filter((item) => {
             const matchesStatus =
@@ -223,6 +227,17 @@ function MaintenanceHome() {
             return matchesStatus && matchesSearch;
         });
     }, [filterStatus, maintenanceList, searchTerm]);
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredList.length / MAINTENANCE_PAGE_SIZE)
+    );
+    const activePage = Math.min(currentPage, totalPages);
+    const firstItem = filteredList.length
+        ? (activePage - 1) * MAINTENANCE_PAGE_SIZE + 1
+        : 0;
+    const lastItem = Math.min(activePage * MAINTENANCE_PAGE_SIZE, filteredList.length);
+    const visibleList = filteredList.slice(firstItem - 1, lastItem);
 
     const stats = useMemo(() => ({
         total: maintenanceList.length,
@@ -521,7 +536,10 @@ function MaintenanceHome() {
                                 type="text"
                                 placeholder="Search tasks, assets, or staff..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setCurrentPage(1);
+                                    setSearchTerm(e.target.value);
+                                }}
                             />
                         </div>
 
@@ -531,7 +549,10 @@ function MaintenanceHome() {
                                     key={tab.key}
                                     type="button"
                                     className={`filter-btn ${filterStatus === tab.key ? "active" : ""}`}
-                                    onClick={() => setFilterStatus(tab.key)}
+                                    onClick={() => {
+                                        setCurrentPage(1);
+                                        setFilterStatus(tab.key);
+                                    }}
                                 >
                                     {tab.label}
                                 </button>
@@ -555,8 +576,8 @@ function MaintenanceHome() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredList.length > 0 ? (
-                                    filteredList.map((item) => (
+                                {visibleList.length > 0 ? (
+                                    visibleList.map((item) => (
                                         <tr key={item.id}>
                                             <td className="log-id">#{item.id}</td>
                                             <td>
@@ -631,6 +652,43 @@ function MaintenanceHome() {
                             </tbody>
                         </table>
                     </div>
+                    {!loading && filteredList.length > 0 && (
+                        <div className="maintenance-table-footer">
+                            <span>
+                                Showing <strong>{firstItem}–{lastItem}</strong>
+                                {" "}of <strong>{filteredList.length}</strong> maintenance tasks
+                            </span>
+                            <nav className="maintenance-pagination" aria-label="Maintenance pages">
+                                <button
+                                    type="button"
+                                    aria-label="Previous page"
+                                    disabled={activePage <= 1}
+                                    onClick={() => setCurrentPage(activePage - 1)}
+                                >
+                                    <ChevronLeft size={16} aria-hidden="true" />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="maintenance-page-number is-current"
+                                    aria-current="page"
+                                    aria-label={`Page ${activePage} of ${totalPages}`}
+                                >
+                                    {activePage}
+                                </button>
+                                <span className="maintenance-pagination-total">
+                                    <span>of</span> {totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    aria-label="Next page"
+                                    disabled={activePage >= totalPages}
+                                    onClick={() => setCurrentPage(activePage + 1)}
+                                >
+                                    <ChevronRight size={16} aria-hidden="true" />
+                                </button>
+                            </nav>
+                        </div>
+                    )}
                 </section>
 
                 {selectedRecord && (

@@ -225,7 +225,7 @@ function History() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
-  const recordsPerPage = 4;
+  const recordsPerPage = 5;
 
   /* =======================================================
      SEARCH
@@ -331,15 +331,14 @@ function History() {
     [allHistoryData]
   );
   const totalPages = Math.max(1, Math.ceil(filteredData.length / recordsPerPage));
+  const activePage = Math.min(currentPage, totalPages);
 
 
   /* =======================================================
      CURRENT PAGE DATA
   ======================================================= */
 
-  const startIndex =
-    (currentPage - 1) *
-    recordsPerPage;
+  const startIndex = (activePage - 1) * recordsPerPage;
 
 
   const currentRecords =
@@ -1119,70 +1118,42 @@ function History() {
 
             {/* PAGINATION */}
 
-            <div className="history-pagination">
-
-
-              {/* PREVIOUS */}
-
-              <button
-                className={`pagination-arrow ${
-                  currentPage === 1
-                    ? "disabled"
-                    : ""
-                }`}
-                disabled={
-                  currentPage === 1
-                }
-                onClick={() =>
-                  goToPage(
-                    currentPage - 1
-                  )
-                }
-              >
-
-                <ChevronLeft
-                  size={20}
-                />
-
-              </button>
-
-
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+            {filteredData.length > 0 && (
+              <div className="history-pagination">
                 <button
-                  key={page}
-                  className={`pagination-page ${currentPage === page ? "active" : ""}`}
-                  onClick={() => goToPage(page)}
+                  type="button"
+                  className="history-pagination-control"
+                  aria-label="Previous page"
+                  disabled={activePage <= 1}
+                  onClick={() => goToPage(activePage - 1)}
                 >
-                  {page}
+                  <ChevronLeft size={16} aria-hidden="true" />
                 </button>
-              ))}
 
+                <button
+                  type="button"
+                  className="history-page-number is-current"
+                  aria-current="page"
+                  aria-label={`Page ${activePage} of ${totalPages}`}
+                >
+                  {activePage}
+                </button>
 
-              {/* NEXT */}
+                <span className="history-pagination-total">
+                  <span>of</span> {totalPages}
+                </span>
 
-              <button
-                className={`pagination-arrow ${
-                  currentPage === totalPages
-                    ? "disabled"
-                    : ""
-                }`}
-                disabled={
-                  currentPage === totalPages
-                }
-                onClick={() =>
-                  goToPage(
-                    currentPage + 1
-                  )
-                }
-              >
-
-                <ChevronRight
-                  size={20}
-                />
-
-              </button>
-
-            </div>
+                <button
+                  type="button"
+                  className="history-pagination-control"
+                  aria-label="Next page"
+                  disabled={activePage >= totalPages}
+                  onClick={() => goToPage(activePage + 1)}
+                >
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              </div>
+            )}
 
           </div>
 

@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import {
     ClipboardList,
     CheckCircle,
+    ChevronLeft,
+    ChevronRight,
     RotateCcw,
     AlertTriangle,
     Search,
@@ -45,6 +47,8 @@ function AssignAssets() {
 
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 5;
 
 
     /* =========================================================
@@ -218,6 +222,20 @@ function AssignAssets() {
         });
 
     }, [assignments, search, statusFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredAssignments.length / pageSize));
+    const activePage = Math.min(currentPage, totalPages);
+    const firstAssignmentIndex = (activePage - 1) * pageSize;
+    const displayedAssignments = filteredAssignments.slice(
+        firstAssignmentIndex,
+        firstAssignmentIndex + pageSize
+    );
+    const firstDisplayedAssignment =
+        filteredAssignments.length === 0 ? 0 : firstAssignmentIndex + 1;
+    const lastDisplayedAssignment = Math.min(
+        firstAssignmentIndex + pageSize,
+        filteredAssignments.length
+    );
 
 
     /* =========================================================
@@ -620,9 +638,10 @@ function AssignAssets() {
                                 type="text"
                                 placeholder="Search by asset or staff..."
                                 value={search}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                     setSearch(e.target.value)
-                                }
+                                    setCurrentPage(1);
+                                }}
                             />
 
                             {search && (
@@ -638,9 +657,10 @@ function AssignAssets() {
 
                             <select
                                 value={statusFilter}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                     setStatusFilter(e.target.value)
-                                }
+                                    setCurrentPage(1);
+                                }}
                             >
                                 <option value="All">All Status</option>
                                 <option value="ACTIVE">Active</option>
@@ -698,7 +718,7 @@ function AssignAssets() {
 
                                 ) : (
 
-                                    filteredAssignments.map((assignment) => {
+                                    displayedAssignments.map((assignment) => {
 
                                         const overdue =
                                             isOverdue(assignment);
@@ -792,9 +812,46 @@ function AssignAssets() {
                     </div>
 
 
-                    <div className="card-footer">
-                        Showing <strong>{filteredAssignments.length}</strong>{" "}
-                        of <strong>{assignments.length}</strong> assignments
+                    <div className="card-footer assign-card-footer">
+                        <span>
+                            Showing <strong>{firstDisplayedAssignment}–{lastDisplayedAssignment}</strong>
+                            {" "}of <strong>{filteredAssignments.length}</strong> assignments
+                        </span>
+
+                        <nav className="assign-pagination" aria-label="Assignment pages">
+                            <button
+                                type="button"
+                                className="assign-page-nav-button"
+                                aria-label="Previous page"
+                                disabled={activePage <= 1}
+                                onClick={() => setCurrentPage(activePage - 1)}
+                            >
+                                <ChevronLeft size={16} aria-hidden="true" />
+                            </button>
+
+                            <button
+                                type="button"
+                                className="assign-page-number is-current"
+                                aria-current="page"
+                                aria-label={`Page ${activePage} of ${totalPages}`}
+                            >
+                                {activePage}
+                            </button>
+
+                            <span className="assign-pagination-total">
+                                <span>of</span> {totalPages}
+                            </span>
+
+                            <button
+                                type="button"
+                                className="assign-page-nav-button"
+                                aria-label="Next page"
+                                disabled={activePage >= totalPages}
+                                onClick={() => setCurrentPage(activePage + 1)}
+                            >
+                                <ChevronRight size={16} aria-hidden="true" />
+                            </button>
+                        </nav>
                     </div>
 
                 </section>

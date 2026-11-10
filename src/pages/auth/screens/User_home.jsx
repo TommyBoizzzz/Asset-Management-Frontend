@@ -15,6 +15,8 @@ import {
     Mail,
     Phone,
     User,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 
 import UserService from "../services/UserService";
@@ -35,6 +37,8 @@ import "../css/UserHome.css";
 /* =========================================================
    HELPERS
 ========================================================= */
+
+const LIST_PAGE_SIZE = 5;
 
 const getResponseData = (response) => {
     const data = response?.data;
@@ -81,6 +85,44 @@ const getInitials = (user) => {
         .join("")
         .toUpperCase() || "U";
 };
+
+
+function ListPagination({ page, totalPages, onPageChange, label }) {
+    return (
+        <nav className="management-pagination" aria-label={label}>
+            <button
+                type="button"
+                aria-label="Previous page"
+                disabled={page <= 1}
+                onClick={() => onPageChange(page - 1)}
+            >
+                <ChevronLeft size={16} aria-hidden="true" />
+            </button>
+
+            <button
+                type="button"
+                className="management-page-number is-current"
+                aria-current="page"
+                aria-label={`Page ${page} of ${totalPages}`}
+            >
+                {page}
+            </button>
+
+            <span className="management-pagination-total">
+                <span>of</span> {totalPages}
+            </span>
+
+            <button
+                type="button"
+                aria-label="Next page"
+                disabled={page >= totalPages}
+                onClick={() => onPageChange(page + 1)}
+            >
+                <ChevronRight size={16} aria-hidden="true" />
+            </button>
+        </nav>
+    );
+}
 
 const normalizeGender = (value) => {
     if (value === null || value === undefined || value === "") {
@@ -955,6 +997,12 @@ function UserList({
     canEdit,
     canDelete,
 }) {
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.max(1, Math.ceil(users.length / LIST_PAGE_SIZE));
+    const activePage = Math.min(currentPage, totalPages);
+    const firstItem = users.length ? (activePage - 1) * LIST_PAGE_SIZE + 1 : 0;
+    const lastItem = Math.min(activePage * LIST_PAGE_SIZE, users.length);
+    const visibleUsers = users.slice(firstItem - 1, lastItem);
 
     return (
 
@@ -999,9 +1047,10 @@ function UserList({
                     <input
                         type="text"
                         value={searchUser}
-                        onChange={(e) =>
-                            setSearchUser(e.target.value)
-                        }
+                        onChange={(e) => {
+                            setCurrentPage(1);
+                            setSearchUser(e.target.value);
+                        }}
                         placeholder="Search users..."
                     />
 
@@ -1010,7 +1059,10 @@ function UserList({
                         <button
                             type="button"
                             className="search-clear"
-                            onClick={() => setSearchUser("")}
+                            onClick={() => {
+                                setCurrentPage(1);
+                                setSearchUser("");
+                            }}
                             title="Clear search"
                         >
                             <X size={15} />
@@ -1122,7 +1174,7 @@ function UserList({
 
                         <tbody>
 
-                            {users.map((user) => (
+                            {visibleUsers.map((user) => (
 
                                 <tr key={user.id}>
 
@@ -1268,6 +1320,21 @@ function UserList({
 
             </div>
 
+            {!loading && users.length > 0 && (
+                <div className="management-pagination-footer">
+                    <span>
+                        Showing <strong>{firstItem}–{lastItem}</strong>
+                        {" "}of <strong>{users.length}</strong> users
+                    </span>
+                    <ListPagination
+                        page={activePage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        label="User pages"
+                    />
+                </div>
+            )}
+
         </div>
 
     );
@@ -1290,6 +1357,12 @@ function RoleList({
     canEdit,
     canDelete,
 }) {
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.max(1, Math.ceil(roles.length / LIST_PAGE_SIZE));
+    const activePage = Math.min(currentPage, totalPages);
+    const firstItem = roles.length ? (activePage - 1) * LIST_PAGE_SIZE + 1 : 0;
+    const lastItem = Math.min(activePage * LIST_PAGE_SIZE, roles.length);
+    const visibleRoles = roles.slice(firstItem - 1, lastItem);
 
     return (
 
@@ -1365,7 +1438,7 @@ function RoleList({
 
                 <div className="role-list">
 
-                    {roles.map((role) => (
+                    {visibleRoles.map((role) => (
 
                         <div
                             className="role-card"
@@ -1446,6 +1519,21 @@ function RoleList({
 
                 </div>
 
+            )}
+
+            {!loading && roles.length > 0 && (
+                <div className="management-pagination-footer">
+                    <span>
+                        Showing <strong>{firstItem}–{lastItem}</strong>
+                        {" "}of <strong>{roles.length}</strong> roles
+                    </span>
+                    <ListPagination
+                        page={activePage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        label="Role pages"
+                    />
+                </div>
             )}
 
 

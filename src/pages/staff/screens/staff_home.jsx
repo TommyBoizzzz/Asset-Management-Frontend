@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Clock3,
     Edit3,
     Eye,
@@ -618,36 +620,40 @@ function StaffHome() {
                             {" "}of <strong>{filteredStaff.length}</strong> staff
                         </span>
 
-                        <div className="pagination">
+                        <nav className="staff-pagination" aria-label="Staff pages">
                             <button
                                 type="button"
+                                className="staff-page-nav-button"
                                 aria-label="Previous page"
                                 disabled={activePage <= 1}
                                 onClick={() => setCurrentPage(activePage - 1)}
                             >
-                                ‹
+                                <ChevronLeft size={16} aria-hidden="true" />
                             </button>
 
                             <button
                                 type="button"
-                                className="current"
+                                className="staff-page-number is-current"
                                 aria-current="page"
                                 aria-label={`Page ${activePage} of ${totalPages}`}
                             >
                                 {activePage}
                             </button>
 
-                            <span className="pagination-total">of {totalPages}</span>
+                            <span className="staff-pagination-total">
+                                <span>of</span> {totalPages}
+                            </span>
 
                             <button
                                 type="button"
+                                className="staff-page-nav-button"
                                 aria-label="Next page"
                                 disabled={activePage >= totalPages}
                                 onClick={() => setCurrentPage(activePage + 1)}
                             >
-                                ›
+                                <ChevronRight size={16} aria-hidden="true" />
                             </button>
-                        </div>
+                        </nav>
                     </div>
                 </section>
 

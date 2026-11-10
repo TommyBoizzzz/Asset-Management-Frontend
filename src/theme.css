@@ -979,23 +979,99 @@ html[data-theme="dark"] .main-layout .main-content .staff-page .staff-delete-btn
     color: #ffd2d8;
 }
 
-html[data-theme="dark"] .main-layout .main-content .staff-page .pagination button.current {
-    border-color: #356ae6;
-    background: #356ae6;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination {
+    border-color: #2d4057;
+    background: #101b2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 15%);
 }
 
-html[data-theme] .main-layout .main-content .staff-page .pagination > button.current,
-html[data-theme] .main-layout .main-content .staff-page .pagination > button.current:hover,
-html[data-theme] .main-layout .main-content .staff-page .pagination > button.current:disabled {
-    border: 1px solid var(--staff-primary) !important;
-    background: var(--staff-primary) !important;
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination > button:not(.is-current) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination > button:not(.is-current):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination > button:disabled:not(.is-current) {
+    border-color: #2a394c;
+    background: #172333;
+    color: #65768c;
+}
+
+html[data-theme] .main-layout .main-content .staff-page .staff-pagination > .staff-page-number.is-current,
+html[data-theme] .main-layout .main-content .staff-page .staff-pagination > .staff-page-number.is-current:hover {
+    border: 1px solid #356ae6 !important;
+    background: #356ae6 !important;
     background-image: none !important;
     color: #ffffff !important;
-    opacity: 1 !important;
-    box-shadow: 0 4px 12px rgb(53 106 230 / 24%) !important;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
     cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination-total {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-pagination-total > span {
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination-footer {
+    border-color: var(--theme-border);
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination-footer strong {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination {
+    border-color: #2d4057;
+    background: #101b2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination > button:not(.is-current) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination > button:not(.is-current):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination > button:disabled:not(.is-current) {
+    border-color: #2a394c;
+    background: #172333;
+    color: #65768c;
+}
+
+html[data-theme] .main-layout .main-content .user-management-page .management-pagination > .management-page-number.is-current,
+html[data-theme] .main-layout .main-content .user-management-page .management-pagination > .management-page-number.is-current:hover {
+    border: 1px solid #356ae6 !important;
+    background: #356ae6 !important;
+    background-image: none !important;
+    color: #fff !important;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+    cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination-total {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .management-pagination-total > span {
+    color: #91a4bc;
 }
 
 html[data-theme="dark"] .main-layout .main-content .staff-details-modal .staff-details-grid > div {
@@ -1906,6 +1982,49 @@ html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn:
     color: #74849a;
 }
 
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination {
+    border-color: #2d4057;
+    background: #101b2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination > button:not(.is-current) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination > button:not(.is-current):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination > button:disabled:not(.is-current) {
+    border-color: #2a394c;
+    background: #172333;
+    color: #65768c;
+}
+
+html[data-theme] .main-layout .main-content .assets-page .asset-pagination > .asset-page-number.is-current,
+html[data-theme] .main-layout .main-content .assets-page .asset-pagination > .asset-page-number.is-current:hover {
+    border: 1px solid #356ae6 !important;
+    background: #356ae6 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+    cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination-total {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assets-page .asset-pagination-total > span {
+    color: #91a4bc;
+}
+
 html[data-theme] .main-layout .main-content .assets-page
     .modal .modal-footer > .primary-modal-btn {
     border: 1px solid #2563eb !important;
@@ -2041,4 +2160,108 @@ html[data-theme] .main-layout .main-content
         padding: 13px;
         font-size: 12px;
     }
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-card-footer {
+    border-color: var(--theme-border);
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-card-footer strong {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination {
+    border-color: #2d4057;
+    background: #101b2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination > button:not(.is-current) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination > button:not(.is-current):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination > button:disabled:not(.is-current) {
+    border-color: #2a394c;
+    background: #172333;
+    color: #65768c;
+}
+
+html[data-theme] .main-layout .main-content .assign-page .assign-pagination > .assign-page-number.is-current,
+html[data-theme] .main-layout .main-content .assign-page .assign-pagination > .assign-page-number.is-current:hover {
+    border: 1px solid #356ae6 !important;
+    background: #356ae6 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+    cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination-total {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .assign-page .assign-pagination-total > span {
+    color: #91a4bc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-table-footer {
+    border-color: var(--theme-border);
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-table-footer strong {
+    color: var(--theme-text);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination {
+    border-color: #2d4057;
+    background: #101b2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination > button:not(.is-current) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination > button:not(.is-current):hover:not(:disabled) {
+    border-color: #47617f;
+    background: #263a53;
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination > button:disabled:not(.is-current) {
+    border-color: #2a394c;
+    background: #172333;
+    color: #65768c;
+}
+
+html[data-theme] .main-layout .main-content .maintenance-page .maintenance-pagination > .maintenance-page-number.is-current,
+html[data-theme] .main-layout .main-content .maintenance-page .maintenance-pagination > .maintenance-page-number.is-current:hover {
+    border: 1px solid #356ae6 !important;
+    background: #356ae6 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    opacity: 1;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+    cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination-total {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .maintenance-page .maintenance-pagination-total > span {
+    color: #91a4bc;
 }
