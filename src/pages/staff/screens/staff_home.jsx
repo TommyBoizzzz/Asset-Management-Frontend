@@ -4,9 +4,11 @@ import {
     CheckCircle2,
     Clock3,
     Edit3,
+    Eye,
     Filter,
     Plus,
     Search,
+    Trash2,
     UserX,
     Users,
     X
@@ -35,13 +37,21 @@ const statusOptions = [
 
 function StaffHome() {
     const user = getStoredUser();
+    const canView = hasPermission(user, "staff", "view");
     const canCreate = hasPermission(user, "staff", "create");
     const canEdit = hasPermission(user, "staff", "edit");
+    const canDelete = hasPermission(user, "staff", "delete");
 
     const [staffList, setStaffList] = useState([]);
+    const [selectedStaff, setSelectedStaff] = useState(null);
+    const [staffToDelete, setStaffToDelete] = useState(null);
+    const [deleteError, setDeleteError] = useState("");
+    const [deleting, setDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const [currentPage, setCurrentPage] = useState(1);
     const [showFilter, setShowFilter] = useState(false);
+    const pageSize = 5;
 
     const [dialogMode, setDialogMode] = useState(null);
     const [selectedStaffId, setSelectedStaffId] = useState(null);
@@ -122,8 +132,24 @@ function StaffHome() {
                 query === "" || searchableContent.includes(query);
 
             return matchesStatus && matchesSearch;
-        });
+        }).sort((first, second) =>
+            String(first.staffCode || "").localeCompare(
+                String(second.staffCode || ""),
+                undefined,
+                { numeric: true, sensitivity: "base" }
+            )
+        );
     }, [staffList, searchTerm, statusFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredStaff.length / pageSize));
+    const activePage = Math.min(currentPage, totalPages);
+    const firstStaffIndex = (activePage - 1) * pageSize;
+    const displayedStaff = filteredStaff.slice(
+        firstStaffIndex,
+        firstStaffIndex + pageSize
+    );
+    const firstDisplayedStaff = filteredStaff.length === 0 ? 0 : firstStaffIndex + 1;
+    const lastDisplayedStaff = Math.min(firstStaffIndex + pageSize, filteredStaff.length);
 
     const stats = useMemo(() => {
         return {
@@ -180,6 +206,63 @@ function StaffHome() {
         setFormData(emptyStaffForm);
         setFormErrors({});
         setSubmitError("");
+    };
+
+    const openDeleteDialog = (staff) => {
+        if (!canDelete) return;
+        setStaffToDelete(staff);
+        setDeleteError("");
+    };
+
+    const closeDeleteDialog = () => {
+        if (deleting) return;
+        setStaffToDelete(null);
+        setDeleteError("");
+    };
+
+    const handleDeleteStaff = async () => {
+        if (!canDelete || !staffToDelete || deleting) return;
+
+        setDeleting(true);
+        setDeleteError("");
+
+        try {
+            const assignmentResponse = await AssetAssignmentService.getByStaff(
+                staffToDelete.id
+            );
+            const assignments = Array.isArray(assignmentResponse.data)
+                ? assignmentResponse.data
+                : assignmentResponse.data?.content;
+
+            if (!Array.isArray(assignments)) {
+                throw new Error("The server returned invalid staff assignment data.");
+            }
+
+            if (assignments.some(isActiveAssignment)) {
+                setDeleteError(
+                    "Return or transfer this staff member's assigned assets before deleting them."
+                );
+                return;
+            }
+
+            await StaffService.delete(staffToDelete.id);
+            setStaffList((current) =>
+                current.filter(
+                    (staff) => String(staff.id) !== String(staffToDelete.id)
+                )
+            );
+            setStaffToDelete(null);
+        } catch (error) {
+            console.error("Delete staff error:", error);
+            setDeleteError(
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.message ||
+                "Unable to delete staff."
+            );
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handleInputChange = (event) => {
@@ -405,9 +488,10 @@ function StaffHome() {
                                     type="text"
                                     placeholder="Search staff..."
                                     value={searchTerm}
-                                    onChange={(event) =>
-                                        setSearchTerm(event.target.value)
-                                    }
+                                    onChange={(event) => {
+                                        setSearchTerm(event.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 />
                             </div>
 
@@ -438,6 +522,7 @@ function StaffHome() {
                                             }
                                             onClick={() => {
                                                 setStatusFilter("ALL");
+                                                setCurrentPage(1);
                                                 setShowFilter(false);
                                             }}
                                         />
@@ -454,6 +539,7 @@ function StaffHome() {
                                                     setStatusFilter(
                                                         option.value
                                                     );
+                                                    setCurrentPage(1);
                                                     setShowFilter(false);
                                                 }}
                                             />
@@ -496,13 +582,19 @@ function StaffHome() {
                                 {loading ? (
                                     <TableLoading />
                                 ) : filteredStaff.length > 0 ? (
-                                    filteredStaff.map((staff, index) => (
+                                    displayedStaff.map((staff, index) => (
                                         <StaffRow
                                             key={staff.id}
                                             staff={staff}
-                                            index={index}
+                                            index={firstStaffIndex + index}
                                             onEdit={canEdit
                                                 ? () => openUpdateDialog(staff)
+                                                : undefined}
+                                            onView={canView
+                                                ? () => setSelectedStaff(staff)
+                                                : undefined}
+                                            onDelete={canDelete
+                                                ? openDeleteDialog
                                                 : undefined}
                                         />
                                     ))
@@ -522,29 +614,59 @@ function StaffHome() {
 
                     <div className="staff-table-footer">
                         <span>
-                            Showing{" "}
-                            <strong>{filteredStaff.length}</strong> of{" "}
-                            <strong>{staffList.length}</strong> staff
+                            Showing <strong>{firstDisplayedStaff}–{lastDisplayedStaff}</strong>
+                            {" "}of <strong>{filteredStaff.length}</strong> staff
                         </span>
 
                         <div className="pagination">
-                            <button type="button" disabled>
+                            <button
+                                type="button"
+                                aria-label="Previous page"
+                                disabled={activePage <= 1}
+                                onClick={() => setCurrentPage(activePage - 1)}
+                            >
                                 ‹
                             </button>
 
                             <button
                                 type="button"
                                 className="current"
+                                aria-current="page"
+                                aria-label={`Page ${activePage} of ${totalPages}`}
                             >
-                                1
+                                {activePage}
                             </button>
 
-                            <button type="button" disabled>
+                            <span className="pagination-total">of {totalPages}</span>
+
+                            <button
+                                type="button"
+                                aria-label="Next page"
+                                disabled={activePage >= totalPages}
+                                onClick={() => setCurrentPage(activePage + 1)}
+                            >
                                 ›
                             </button>
                         </div>
                     </div>
                 </section>
+
+                {selectedStaff && (
+                    <StaffDetailsDialog
+                        staff={selectedStaff}
+                        onClose={() => setSelectedStaff(null)}
+                    />
+                )}
+
+                {staffToDelete && (
+                    <StaffDeleteDialog
+                        staff={staffToDelete}
+                        error={deleteError}
+                        deleting={deleting}
+                        onClose={closeDeleteDialog}
+                        onConfirm={handleDeleteStaff}
+                    />
+                )}
 
                 {dialogMode && (
                     <StaffDialog
@@ -563,7 +685,7 @@ function StaffHome() {
     );
 }
 
-function StaffRow({ staff, index, onEdit }) {
+function StaffRow({ staff, index, onEdit, onView, onDelete }) {
     const avatarThemes = [
         "avatar-blue",
         "avatar-purple",
@@ -621,17 +743,153 @@ function StaffRow({ staff, index, onEdit }) {
             </td>
 
             <td className="staff-action-column">
-                {onEdit && <button
-                    type="button"
-                    className="staff-edit-btn"
-                    title="Update staff"
-                    aria-label={`Update ${staff.fullName}`}
-                    onClick={onEdit}
-                >
-                    <Edit3 size={15} />
-                </button>}
+                <div className="staff-row-actions">
+                    {onView && (
+                        <button
+                            type="button"
+                            className="staff-view-btn"
+                            title="View staff details"
+                            aria-label={`View ${staff.fullName}`}
+                            onClick={onView}
+                        >
+                            <Eye size={15} />
+                        </button>
+                    )}
+                    {onEdit && (
+                        <button
+                            type="button"
+                            className="staff-edit-btn"
+                            title="Update staff"
+                            aria-label={`Update ${staff.fullName}`}
+                            onClick={onEdit}
+                        >
+                            <Edit3 size={15} />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            type="button"
+                            className="staff-delete-btn"
+                            title="Delete staff"
+                            aria-label={`Delete ${staff.fullName}`}
+                            onClick={() => onDelete(staff)}
+                        >
+                            <Trash2 size={15} />
+                        </button>
+                    )}
+                </div>
             </td>
         </tr>
+    );
+}
+
+function StaffDetailsDialog({ staff, onClose }) {
+    const details = [
+        ["Staff code", staff.staffCode],
+        ["Full name", staff.fullName],
+        ["Email", staff.email],
+        ["Phone", staff.phone],
+        ["Position", staff.position],
+        ["Status", formatStatus(staff.status || "INACTIVE")]
+    ];
+
+    return (
+        <div className="staff-modal-overlay" onMouseDown={onClose}>
+            <section
+                className="staff-modal-content staff-details-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="staff-details-title"
+                onMouseDown={(event) => event.stopPropagation()}
+            >
+                <div className="staff-modal-header">
+                    <div>
+                        <h3 id="staff-details-title">Staff Details</h3>
+                        <p>Information for {staff.fullName || "this staff member"}.</p>
+                    </div>
+                    <button
+                        type="button"
+                        className="staff-close-btn"
+                        aria-label="Close staff details"
+                        onClick={onClose}
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+                <dl className="staff-details-grid">
+                    {details.map(([label, value]) => (
+                        <div key={label}>
+                            <dt>{label}</dt>
+                            <dd>{value || "—"}</dd>
+                        </div>
+                    ))}
+                </dl>
+                <div className="staff-modal-footer staff-details-footer">
+                    <button type="button" className="staff-cancel-btn" onClick={onClose}>
+                        Close
+                    </button>
+                </div>
+            </section>
+        </div>
+    );
+}
+
+function StaffDeleteDialog({ staff, error, deleting, onClose, onConfirm }) {
+    return (
+        <div className="staff-modal-overlay" onMouseDown={onClose}>
+            <section
+                className="staff-modal-content staff-delete-modal"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="staff-delete-title"
+                onMouseDown={(event) => event.stopPropagation()}
+            >
+                <div className="staff-modal-header">
+                    <div>
+                        <h3 id="staff-delete-title">Delete Staff Member?</h3>
+                        <p>This action cannot be undone.</p>
+                    </div>
+                    <button
+                        type="button"
+                        className="staff-close-btn"
+                        aria-label="Close delete confirmation"
+                        disabled={deleting}
+                        onClick={onClose}
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+                <div className="staff-delete-content">
+                    <p>
+                        Delete <strong>{staff.fullName}</strong>
+                        {staff.staffCode ? ` (${staff.staffCode})` : ""}?
+                    </p>
+                    {error && (
+                        <div className="staff-submit-error" role="alert">
+                            {error}
+                        </div>
+                    )}
+                </div>
+                <div className="staff-modal-footer staff-delete-footer">
+                    <button
+                        type="button"
+                        className="staff-cancel-btn"
+                        disabled={deleting}
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="staff-confirm-delete-btn"
+                        disabled={deleting}
+                        onClick={onConfirm}
+                    >
+                        {deleting ? "Deleting..." : "Delete Staff"}
+                    </button>
+                </div>
+            </section>
+        </div>
     );
 }
 

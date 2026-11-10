@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, Package } from "lucide-react";
 import MainLayout from "../../../layouts/MainLayout";
 import AssetService from "../../asset/services/AssetService";
 import AssetAssignmentService from "../../assign_asset/services/Assetassignmentservice";
@@ -267,10 +268,15 @@ function Dashboard() {
 
                 <div className="dashboard-content">
                     <section className="dashboard-card assets-card">
-                        <div className="card-header">
-                            <div>
+                        <div className="card-header recent-assets-header">
+                            <div className="recent-assets-heading">
+                                <span className="recent-assets-icon" aria-hidden="true">
+                                    <Package size={19} />
+                                </span>
+                                <div>
                                 <h3>Recent Assets</h3>
                                 <p>Recently added or updated assets</p>
+                                </div>
                             </div>
                             {canViewAssets && <button
                                 type="button"
@@ -278,11 +284,12 @@ function Dashboard() {
                                 onClick={() => navigate("/assets")}
                             >
                                 View All
+                                <ArrowRight size={15} aria-hidden="true" />
                             </button>}
                         </div>
 
                         <div className="table-container">
-                            <table className="assets-table">
+                            <table className="assets-table recent-assets-table">
                                 <thead>
                                     <tr>
                                         <th>Asset</th>

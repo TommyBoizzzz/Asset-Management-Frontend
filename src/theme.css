@@ -6,6 +6,14 @@ html[data-theme="dark"] {
     --theme-border: #28384d;
     --theme-text: #e5edf7;
     --theme-muted: #9aabc0;
+    --record-surface: #111c2c;
+    --record-header: #101b2a;
+    --record-row: #131f30;
+    --record-row-hover: #1a2a3e;
+    --record-border: #28384d;
+    --record-heading: #edf4ff;
+    --record-text: #a9bfd9;
+    --record-muted: #91a9c5;
     --modal-backdrop: rgb(4 9 17 / 76%);
     --modal-surface:
         radial-gradient(ellipse at 0% 0%, rgb(54 106 164 / 10%), transparent 58%),
@@ -20,6 +28,14 @@ html[data-theme="dark"] {
 
 html[data-theme="light"] {
     color-scheme: light;
+    --record-surface: #ffffff;
+    --record-header: #f3f7fc;
+    --record-row: #ffffff;
+    --record-row-hover: #f5f9ff;
+    --record-border: #e1e9f3;
+    --record-heading: #1d2b3e;
+    --record-text: #52647a;
+    --record-muted: #71849c;
     --modal-backdrop: rgb(15 23 42 / 48%);
     --modal-surface: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
     --modal-border: #e4e9f0;
@@ -932,6 +948,71 @@ html[data-theme="dark"] .main-layout .main-content .staff-page .staff-table .sta
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
 }
 
+html[data-theme="dark"] .main-layout .main-content .staff-page
+    :is(.staff-view-btn, .staff-edit-btn) {
+    border-color: #35485f;
+    background: #1b2a3d;
+    color: #b7c9df;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-view-btn:hover {
+    border-color: #3b668a;
+    background: #203850;
+    color: #9dcaff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-edit-btn:hover {
+    border-color: #47617f;
+    background: #263a53;
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-delete-btn {
+    border-color: #653846;
+    background: #3b2631;
+    color: #ffabb7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .staff-delete-btn:hover {
+    border-color: #8c4b5a;
+    background: #4a2d39;
+    color: #ffd2d8;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-page .pagination button.current {
+    border-color: #356ae6;
+    background: #356ae6;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 32%);
+}
+
+html[data-theme] .main-layout .main-content .staff-page .pagination > button.current,
+html[data-theme] .main-layout .main-content .staff-page .pagination > button.current:hover,
+html[data-theme] .main-layout .main-content .staff-page .pagination > button.current:disabled {
+    border: 1px solid var(--staff-primary) !important;
+    background: var(--staff-primary) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    box-shadow: 0 4px 12px rgb(53 106 230 / 24%) !important;
+    cursor: default !important;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-details-modal .staff-details-grid > div {
+    border-color: var(--theme-border);
+    background: #101b2a;
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-details-modal .staff-details-grid dt {
+    color: var(--theme-muted);
+}
+
+html[data-theme="dark"] .main-layout .main-content .staff-details-modal .staff-details-grid dd,
+html[data-theme="dark"] .main-layout .main-content .staff-delete-modal .staff-delete-content,
+html[data-theme="dark"] .main-layout .main-content .staff-delete-modal .staff-delete-content strong {
+    color: var(--theme-text);
+}
+
 html[data-theme="dark"] .main-content
     :is(.modal-overlay, .dialog-overlay, .settings-modal-overlay, .staff-modal-overlay) {
     background: rgb(4 9 17 / 76%);
@@ -1773,6 +1854,41 @@ html[data-theme="dark"] .main-layout .main-content .assets-page
     color: var(--theme-text);
 }
 
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .assets-card .recent-assets-header {
+    background:
+        radial-gradient(ellipse at 0% 50%, rgb(53 106 230 / 12%), transparent 300px),
+        linear-gradient(110deg, #142238 0%, #111c2c 76%);
+    border-color: var(--theme-border);
+}
+
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .recent-assets-icon {
+    border-color: #304a6b;
+    background: linear-gradient(145deg, #203b5c, #1a304a);
+    color: #9dcaff;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .recent-assets-heading h3 {
+    color: #edf4ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .recent-assets-heading p {
+    color: #9bb5d3;
+}
+
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .assets-card .recent-assets-header .view-all-btn {
+    border-color: #354c67;
+    background: #1b2c43;
+    color: #b7d8f8;
+    box-shadow: 0 3px 9px rgb(0 0 0 / 14%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .dashboard-page .assets-card .recent-assets-header .view-all-btn:hover {
+    border-color: #52749b;
+    background: #243b57;
+    color: #e4f1ff;
+}
+
 html[data-theme="dark"] .main-layout .main-content .assets-page .pagination-btn {
     border-color: var(--theme-border);
     background: var(--theme-surface-raised);
@@ -1810,4 +1926,119 @@ html[data-theme] .main-layout .main-content .assets-page
     background: #6090ed !important;
     color: #ffffff !important;
     cursor: wait;
+}
+
+html[data-theme] .main-layout .main-content table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    color: var(--record-text);
+}
+
+html[data-theme] .main-layout .main-content table thead {
+    background: var(--record-header);
+}
+
+html[data-theme] .main-layout .main-content table thead th {
+    height: 48px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--record-border);
+    background: var(--record-header);
+    color: var(--record-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+html[data-theme] .main-layout .main-content .dashboard-page .recent-assets-table thead th:first-child {
+    text-align: left;
+}
+
+html[data-theme] .main-layout .main-content table tbody tr {
+    background: var(--record-row);
+    transition: background-color 0.18s ease;
+}
+
+html[data-theme] .main-layout .main-content table tbody td {
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--record-border);
+    background: var(--record-row);
+    color: var(--record-text);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+    vertical-align: middle;
+}
+
+html[data-theme] .main-layout .main-content table tbody tr:hover,
+html[data-theme] .main-layout .main-content table tbody tr:hover td {
+    background: var(--record-row-hover);
+}
+
+html[data-theme] .main-layout .main-content table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+html[data-theme] .main-layout .main-content table tbody td:first-child {
+    text-align: left;
+}
+
+html[data-theme] .main-layout .main-content table tbody td:first-child > * {
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: left;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.table-container, .staff-table-wrapper, .assign-table-wrapper, .users-table-wrapper, .table-responsive, .history-table-wrapper) {
+    background: var(--record-surface);
+    scrollbar-color: var(--record-border) transparent;
+}
+
+html[data-theme] .main-layout .main-content .dashboard-page .assets-table {
+    min-width: 620px;
+}
+
+html[data-theme] .main-layout .main-content .assign-page .management-table {
+    min-width: 760px;
+}
+
+html[data-theme] .main-layout .main-content .maintenance-page .assets-table {
+    min-width: 1000px;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.dashboard-page .asset-details, .staff-page .staff-user, .user-management-page .user-cell, .maintenance-page .user-cell, .maintenance-page .maintenance-assignee)
+    :is(strong, span) {
+    text-align: inherit;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.dashboard-page .asset-details, .staff-page .staff-user, .user-management-page .user-cell, .maintenance-page .user-cell, .maintenance-page .maintenance-assignee)
+    strong {
+    color: var(--record-heading);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+html[data-theme] .main-layout .main-content
+    :is(.dashboard-page .asset-details, .staff-page .staff-user, .user-management-page .user-cell)
+    span {
+    color: var(--record-muted);
+}
+
+@media (max-width: 600px) {
+    html[data-theme] .main-layout .main-content table thead th {
+        height: 44px;
+        padding: 0 13px;
+        font-size: 10px;
+    }
+
+    html[data-theme] .main-layout .main-content table tbody td {
+        padding: 13px;
+        font-size: 12px;
+    }
 }
