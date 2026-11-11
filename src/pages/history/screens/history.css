@@ -793,6 +793,11 @@
   background: #dff5ed;
 }
 
+.status-scheduled {
+  color: #fff;
+  background: #00805f;
+}
+
 .status-maintenance {
   color: #dc9212;
   background: #fff0d7;

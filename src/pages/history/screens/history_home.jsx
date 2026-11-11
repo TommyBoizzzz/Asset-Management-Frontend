@@ -520,7 +520,15 @@ function History() {
 
   const statusClass = (status) => {
 
-    if (status === "Available" || status === "AVAILABLE" || status === "Registered") {
+    if (status === "Scheduled") {
+      return "status-pill status-scheduled";
+    }
+
+    if (
+      status === "Available" ||
+      status === "AVAILABLE" ||
+      status === "Registered"
+    ) {
       return "status-pill status-available";
     }
 
@@ -1008,7 +1016,8 @@ function History() {
 
                           <div className="status-change">
 
-                            {item.newStatus === "Registered" ? (
+                            {item.newStatus === "Registered" ||
+                            item.newStatus === "Scheduled" ? (
                               <span
                                 className={statusClass(item.newStatus)}
                               >
