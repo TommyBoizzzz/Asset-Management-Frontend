@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 import {
     Wrench,
@@ -281,19 +281,6 @@ function MaintenanceHome() {
             return;
         }
 
-        if (nextStatus === "IN_PROGRESS") {
-            const hasActiveAssignment = assignments.some(
-                (assignment) =>
-                    isActiveAssignment(assignment) &&
-                    String(assignment.asset?.id) === String(asset.id)
-            );
-
-            if (hasActiveAssignment) {
-                setStatusActionError("This asset is currently assigned to a staff member. Return it before starting maintenance.");
-                return;
-            }
-        }
-
         if (
             (nextStatus === "COMPLETED" ||
                 (nextStatus === "CANCELLED" && record.status === "IN_PROGRESS")) &&
@@ -318,19 +305,37 @@ function MaintenanceHome() {
         };
 
         let maintenanceSaved = false;
+        let statusSaved = false;
+        const hasActiveAssignment = assignments.some(
+            (assignment) =>
+                isActiveAssignment(assignment) &&
+                String(assignment.asset?.id) === String(asset.id)
+        );
+        const statusAfterMaintenance = hasActiveAssignment
+            ? "Assigned"
+            : getStatusAfterInspection(completionCondition);
 
         try {
             let response;
 
             if (nextStatus === "COMPLETED") {
+                await MaintenanceService.update(id, {
+                    ...payload,
+                    status: record.status,
+                    completedDate: record.completedDate || null,
+                });
+                maintenanceSaved = true;
                 response = await MaintenanceService.complete(id, payload);
             } else {
                 response = await MaintenanceService.update(id, payload);
+                maintenanceSaved = true;
             }
-            maintenanceSaved = true;
+            statusSaved = true;
 
             const updatedItem = {
                 ...normalizeMaintenanceRecord(response.data, userOptions),
+                asset: record.asset,
+                assignedTo: record.assignedTo,
                 completionCondition:
                     completionCondition || record.completionCondition,
             };
@@ -344,7 +349,7 @@ function MaintenanceHome() {
                 await AssetService.update(asset.id, {
                     ...asset,
                     condition: completionCondition,
-                    status: getStatusAfterInspection(completionCondition),
+                    status: statusAfterMaintenance,
                 });
             } else if (
                 nextStatus === "CANCELLED" &&
@@ -353,7 +358,7 @@ function MaintenanceHome() {
                 await AssetService.update(asset.id, {
                     ...asset,
                     condition: completionCondition,
-                    status: getStatusAfterInspection(completionCondition),
+                    status: statusAfterMaintenance,
                 });
             }
 
@@ -366,7 +371,9 @@ function MaintenanceHome() {
         } catch (err) {
             console.error("Failed to update maintenance status:", err);
             setStatusActionError(
-                maintenanceSaved
+                maintenanceSaved && !statusSaved
+                    ? "The selected asset and assigned user were saved, but the task could not be marked completed. Try again."
+                    : maintenanceSaved
                     ? "The maintenance record was updated, but the asset status or condition could not be updated. Refresh and reconcile the asset before continuing."
                     : err.response?.data?.message || "Failed to update maintenance status in the backend."
             );
@@ -976,12 +983,41 @@ function DetailModal({
 
 function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, onSubmit }) {
     const title = mode === "edit" ? "Edit Maintenance Task" : "Add Maintenance Task";
+    const [assetSearch, setAssetSearch] = useState("");
+    const [showAssetOptions, setShowAssetOptions] = useState(false);
+    const assetPickerRef = useRef(null);
     const selectedUser = userOptions.find((user) => String(user.id) === String(form.userId));
     const assignableUsers = userOptions.filter(canAssignMaintenanceUser);
     const dropdownUsers =
         selectedUser && !assignableUsers.some((user) => String(user.id) === String(selectedUser.id))
             ? [selectedUser, ...assignableUsers]
             : assignableUsers;
+    const selectedAsset = assetOptions.find(
+        (asset) => String(asset.id) === String(form.assetId)
+    );
+    const assetQuery = assetSearch.trim().toLowerCase();
+    const matchingAssets = assetOptions.filter((asset) =>
+        `${asset.name || ""} ${asset.assetCode || asset.assetTag || ""}`
+            .toLowerCase()
+            .includes(assetQuery)
+    );
+    const visibleAssets = matchingAssets.slice(0, 20);
+    const assetLabel = (asset) =>
+        `${asset.name} (${asset.assetCode || asset.assetTag || `#${asset.id}`})`;
+
+    useEffect(() => {
+        if (!showAssetOptions) return undefined;
+
+        const closeOnOutsideClick = (event) => {
+            if (!assetPickerRef.current?.contains(event.target)) {
+                setShowAssetOptions(false);
+                setAssetSearch("");
+            }
+        };
+
+        document.addEventListener("mousedown", closeOnOutsideClick);
+        return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+    }, [showAssetOptions]);
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -1003,21 +1039,77 @@ function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, o
                             <p>Choose the asset, responsible user, and service type.</p>
                         </div>
                         <div className="task-form-grid">
-                            <label className="form-field">
+                            <div className="form-field">
                                 <span>Asset</span>
-                                <select
-                                    value={form.assetId || ""}
-                                    disabled={form.status !== "SCHEDULED"}
-                                    onChange={(event) => onChange("assetId", event.target.value)}
-                                >
-                                    <option value="">Select asset</option>
-                                    {assetOptions.map((asset) => (
-                                        <option key={asset.id} value={asset.id}>
-                                            {asset.name} ({asset.assetCode || asset.assetTag || `#${asset.id}`})
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                                <div className="maintenance-asset-picker" ref={assetPickerRef}>
+                                    <input
+                                        type="search"
+                                        role="combobox"
+                                        aria-label="Search and select asset"
+                                        aria-autocomplete="list"
+                                        aria-expanded={showAssetOptions}
+                                        aria-controls="maintenance-asset-options"
+                                        placeholder="Search assets by name or code..."
+                                        value={
+                                            showAssetOptions
+                                                ? assetSearch
+                                                : selectedAsset
+                                                    ? assetLabel(selectedAsset)
+                                                    : ""
+                                        }
+                                        disabled={form.status !== "SCHEDULED"}
+                                        onFocus={() => {
+                                            setAssetSearch("");
+                                            setShowAssetOptions(true);
+                                        }}
+                                        onChange={(event) => {
+                                            setAssetSearch(event.target.value);
+                                            setShowAssetOptions(true);
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Escape") {
+                                                setShowAssetOptions(false);
+                                                setAssetSearch("");
+                                            }
+                                        }}
+                                    />
+                                    {showAssetOptions && (
+                                        <div
+                                            className="maintenance-asset-options"
+                                            id="maintenance-asset-options"
+                                            role="listbox"
+                                        >
+                                            {visibleAssets.length > 0 ? (
+                                                visibleAssets.map((asset) => (
+                                                    <button
+                                                        className="maintenance-asset-option"
+                                                        type="button"
+                                                        key={asset.id}
+                                                        role="option"
+                                                        aria-selected={String(asset.id) === String(form.assetId)}
+                                                        onClick={() => {
+                                                            onChange("assetId", String(asset.id));
+                                                            setShowAssetOptions(false);
+                                                            setAssetSearch("");
+                                                        }}
+                                                    >
+                                                        {assetLabel(asset)}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="maintenance-asset-empty">
+                                                    No matching assets.
+                                                </p>
+                                            )}
+                                            {matchingAssets.length > visibleAssets.length && (
+                                                <p className="maintenance-asset-limit">
+                                                    Showing 20 of {matchingAssets.length} matches. Type to narrow results.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             <label className="form-field">
                                 <span>Assigned user</span>
