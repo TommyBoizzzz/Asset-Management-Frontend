@@ -858,6 +858,18 @@ html[data-theme="dark"] .main-layout .main-content
     color: #e5edf7;
 }
 
+html[data-theme="dark"] .main-layout .main-content .user-management-page .icon-action.more {
+    border-color: #3b5f9a;
+    background: rgb(53 106 230 / 16%);
+    color: #8db5ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-management-page .icon-action.more:hover:not(:disabled) {
+    border-color: #5685d6;
+    background: rgb(53 106 230 / 28%);
+    color: #b6d0ff;
+}
+
 html[data-theme="dark"] .main-layout .main-content .action-pill {
     border: 1px solid #35485f;
     background: #24354b;
@@ -1698,6 +1710,68 @@ html[data-theme="dark"] .main-layout .main-content
     border-color: #526b88;
     background: #22354c;
     color: #f0f5fc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-profile-header {
+    border-color: #35527a;
+    background: linear-gradient(135deg, #1a2e49 0%, #17263a 100%);
+    box-shadow: 0 12px 24px rgb(3 10 20 / 18%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-avatar {
+    background: linear-gradient(135deg, #dceaff, #bcd5ff);
+    color: #2457c5;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-profile-info h4 {
+    color: #f0f5fc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-profile-info p {
+    color: #a9bfd9;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-item {
+    border-color: #314d72;
+    background: linear-gradient(145deg, #1a2c44 0%, #152338 100%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-item label {
+    color: #8db5ff;
+}
+
+html[data-theme="dark"] .main-layout .main-content .user-detail-dialog .detail-item span {
+    color: #e5edf7;
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-card {
+    border-color: #35527a;
+    background: linear-gradient(135deg, #1a2e49 0%, #17263a 100%);
+    box-shadow: 0 10px 24px rgb(3 10 20 / 18%);
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-avatar {
+    background: linear-gradient(135deg, #dceaff, #bcd5ff);
+    color: #2457c5;
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-role .role-avatar {
+    background: linear-gradient(135deg, #e8ddff, #d8c8ff);
+    color: #6848d8;
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-info h4 {
+    color: #f0f5fc;
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-info p {
+    color: #a9bfd9;
+}
+
+html[data-theme="dark"] .main-layout .main-content .delete-dialog .delete-summary-meta > span:not(.mini-status) {
+    border: 1px solid #3b5f9a;
+    background: rgb(53 106 230 / 20%);
+    color: #a9c5ff;
 }
 
 html[data-theme="dark"] .main-layout .main-content

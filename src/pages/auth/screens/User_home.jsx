@@ -2539,11 +2539,13 @@ function DeleteDialog({
                 onMouseDown={(e) => e.stopPropagation()}
             >
 
-                <div className="delete-icon">
-                    <Trash2 size={23} />
-                </div>
+                <div className="delete-title-row">
+                    <div className="delete-icon">
+                        <Trash2 size={23} />
+                    </div>
 
-                <h3>{title}</h3>
+                    <h3>{title}</h3>
+                </div>
 
                 {summary}
 
