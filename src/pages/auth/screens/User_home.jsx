@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import MainLayout from "../../../layouts/MainLayout";
 
 import {
@@ -25,7 +25,9 @@ import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 import {
     ALL_PERMISSION_KEYS,
     APP_PERMISSION_PAGES,
+    MAINTENANCE_ASSIGNMENT_PERMISSION,
     PERMISSION_ACTIONS,
+    canAssignMaintenanceUser,
     getStoredUser,
     hasPermission,
     updateStoredUser,
@@ -463,7 +465,16 @@ function UserHome() {
 
                 description: formData.description.trim(),
 
-                permissions: formData.permissions,
+                permissions: [
+                    ...formData.permissions.filter(
+                        (permission) => permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                    ),
+                    ...(formData.canAssignMaintenance
+                        ? [MAINTENANCE_ASSIGNMENT_PERMISSION]
+                        : []),
+                ],
+
+                permissionsConfigured: true,
 
             };
 
@@ -548,7 +559,6 @@ function UserHome() {
             setSavingRole(false);
         }
     };
-
 
     /* =====================================================
        DELETE USER / ROLE
@@ -1465,16 +1475,31 @@ function RoleList({
 
                                     {Array.isArray(role.permissions) && (
                                         <div className="permission-preview">
-                                            {role.permissions.length === 0 ? (
+                                            {role.permissions.filter(
+                                                (permission) =>
+                                                    permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                                            ).length === 0 ? (
                                                 <span>No permissions</span>
                                             ) : (
-                                                role.permissions.slice(0, 4).map((permission) => (
-                                                    <span key={permission}>{permission}</span>
-                                                ))
+                                                role.permissions
+                                                    .filter(
+                                                        (permission) =>
+                                                            permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                                                    )
+                                                    .slice(0, 4)
+                                                    .map((permission) => (
+                                                        <span key={permission}>{permission}</span>
+                                                    ))
                                             )}
-                                            {role.permissions.length > 4 && (
+                                            {role.permissions.filter(
+                                                (permission) =>
+                                                    permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                                            ).length > 4 && (
                                                 <span className="more-permissions">
-                                                    +{role.permissions.length - 4} more
+                                                    +{role.permissions.filter(
+                                                        (permission) =>
+                                                            permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                                                    ).length - 4} more
                                                 </span>
                                             )}
                                         </div>
@@ -2207,9 +2232,17 @@ function RoleDialog({
     const [permissions, setPermissions] = useState(
         role
             ? role.permissionsConfigured === true && Array.isArray(role.permissions)
-                ? role.permissions
+                ? role.permissions.filter(
+                    (permission) => permission !== MAINTENANCE_ASSIGNMENT_PERMISSION
+                )
                 : ALL_PERMISSION_KEYS
             : []
+    );
+
+    const [canAssignMaintenance, setCanAssignMaintenance] = useState(
+        role
+            ? canAssignMaintenanceUser({ role })
+            : false
     );
 
     const [error, setError] = useState("");
@@ -2251,6 +2284,8 @@ function RoleDialog({
             description: description.trim(),
 
             permissions,
+
+            canAssignMaintenance,
 
         });
 
@@ -2395,20 +2430,38 @@ function RoleDialog({
                                                 const checked = permissions.includes(permissionKey);
 
                                                 return (
-                                                    <label
-                                                        className={`permission-checkbox ${checked ? "checked" : ""}`}
-                                                        key={permissionKey}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={checked}
-                                                            onChange={() => togglePermission(permissionKey)}
-                                                        />
-                                                        <span className="checkbox-ui">
-                                                            {checked ? "✓" : ""}
-                                                        </span>
-                                                        {label}
-                                                    </label>
+                                                    <Fragment key={permissionKey}>
+                                                        <label
+                                                            className={`permission-checkbox ${checked ? "checked" : ""}`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={() => togglePermission(permissionKey)}
+                                                            />
+                                                            <span className="checkbox-ui">
+                                                                {checked ? "✓" : ""}
+                                                            </span>
+                                                            {label}
+                                                        </label>
+                                                        {page.key === "maintenance" && action === "delete" && (
+                                                            <label
+                                                                className={`permission-checkbox maintenance-assignment-permission ${canAssignMaintenance ? "checked" : ""}`}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={canAssignMaintenance}
+                                                                    onChange={(event) =>
+                                                                        setCanAssignMaintenance(event.target.checked)
+                                                                    }
+                                                                />
+                                                                <span className="checkbox-ui">
+                                                                    {canAssignMaintenance ? "✓" : ""}
+                                                                </span>
+                                                                Assign users in Maintenance
+                                                            </label>
+                                                        )}
+                                                    </Fragment>
                                                 );
                                             })}
                                         </div>
@@ -2424,7 +2477,7 @@ function RoleDialog({
                     <div className="dialog-footer">
 
                         <span className="selected-permissions">
-                            {permissions.length} permissions selected
+                            {permissions.length + Number(canAssignMaintenance)} permissions selected
                         </span>
 
                         <button

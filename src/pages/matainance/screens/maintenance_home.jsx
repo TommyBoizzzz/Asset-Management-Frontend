@@ -27,7 +27,11 @@ import {
     isActiveAssignment,
     normalizeAssetStatus,
 } from "../../../utils/assetLifecycle";
-import { getStoredUser, hasPermission } from "../../../utils/permissions";
+import {
+    canAssignMaintenanceUser,
+    getStoredUser,
+    hasPermission,
+} from "../../../utils/permissions";
 import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
 import "../css/Maintenace.css";
 
@@ -163,6 +167,11 @@ function MaintenanceHome() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [statusActionError, setStatusActionError] = useState("");
+
+    const assignableUsers = useMemo(
+        () => userOptions.filter(canAssignMaintenanceUser),
+        [userOptions]
+    );
 
     const fetchData = async (background = false) => {
         try {
@@ -369,7 +378,7 @@ function MaintenanceHome() {
         setTaskForm({
             ...emptyTaskForm,
             assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
-            userId: userOptions[0]?.id ? String(userOptions[0].id) : "",
+            userId: assignableUsers[0]?.id ? String(assignableUsers[0].id) : "",
         });
         setTaskModal({ mode: "add" });
     };
@@ -419,6 +428,24 @@ function MaintenanceHome() {
 
         if (!taskForm.assetId || !taskForm.userId) {
             setError("Please select both an asset and an assigned user.");
+            return;
+        }
+
+        const selectedUser = userOptions.find(
+            (item) => String(item.id) === String(taskForm.userId)
+        );
+        const currentTask = taskModal?.mode === "edit"
+            ? maintenanceList.find((item) => String(item.id) === String(taskModal.id))
+            : null;
+        const keepingExistingAssignee =
+            currentTask &&
+            String(currentTask.assignedTo?.id) === String(taskForm.userId);
+
+        if (
+            !selectedUser ||
+            (!canAssignMaintenanceUser(selectedUser) && !keepingExistingAssignee)
+        ) {
+            setError("Choose a user whose role is enabled for maintenance assignment.");
             return;
         }
 
@@ -949,6 +976,12 @@ function DetailModal({
 
 function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, onSubmit }) {
     const title = mode === "edit" ? "Edit Maintenance Task" : "Add Maintenance Task";
+    const selectedUser = userOptions.find((user) => String(user.id) === String(form.userId));
+    const assignableUsers = userOptions.filter(canAssignMaintenanceUser);
+    const dropdownUsers =
+        selectedUser && !assignableUsers.some((user) => String(user.id) === String(selectedUser.id))
+            ? [selectedUser, ...assignableUsers]
+            : assignableUsers;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -993,12 +1026,20 @@ function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, o
                                     onChange={(event) => onChange("userId", event.target.value)}
                                 >
                                     <option value="">Select user</option>
-                                    {userOptions.map((user) => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.fullName || user.username || `User #${user.id}`}
-                                            {user.role?.name ? ` (${user.role.name})` : ""}
-                                        </option>
-                                    ))}
+                                    {dropdownUsers.map((user) => {
+                                        const roleCanAssign = canAssignMaintenanceUser(user);
+                                        return (
+                                            <option
+                                                key={user.id}
+                                                value={user.id}
+                                                disabled={!roleCanAssign}
+                                            >
+                                                {user.fullName || user.username || `User #${user.id}`}
+                                                {user.role?.name ? ` (${user.role.name})` : ""}
+                                                {!roleCanAssign ? " (role not enabled)" : ""}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </label>
 

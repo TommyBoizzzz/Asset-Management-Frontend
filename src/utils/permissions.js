@@ -23,6 +23,19 @@ export const ALL_PERMISSION_KEYS = APP_PERMISSION_PAGES.flatMap((page) =>
     PERMISSION_ACTIONS.map(({ key: action }) => `${page.key}:${action}`)
 );
 
+export const MAINTENANCE_ASSIGNMENT_PERMISSION = "maintenance-assignment:assign";
+
+export const canAssignMaintenanceUser = (user) => {
+    const role = user?.role;
+    const permissions = role?.permissions;
+
+    if (role?.permissionsConfigured !== true || !Array.isArray(permissions)) {
+        return true;
+    }
+
+    return permissions.includes(MAINTENANCE_ASSIGNMENT_PERMISSION);
+};
+
 export const getStoredUser = () => {
     const storedUser =
         localStorage.getItem("user") || sessionStorage.getItem("user");
