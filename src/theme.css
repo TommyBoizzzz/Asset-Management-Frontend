@@ -301,7 +301,7 @@ html[data-theme="dark"] .main-layout .main-content
 }
 
 html[data-theme="dark"] .main-layout .main-content
-    :is(.add-maintenance-btn, .secondary-button, .view-all-btn, .profile-edit-button, .password-modal-cancel, .icon-action, .table-btn, .category-action, .filter-btn.active) {
+    :is(.secondary-button, .view-all-btn, .profile-edit-button, .password-modal-cancel, .icon-action, .table-btn, .category-action, .filter-btn.active) {
     background: #1b2a3d;
     border-color: #35485f;
     color: var(--theme-text);

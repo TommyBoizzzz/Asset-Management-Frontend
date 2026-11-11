@@ -515,7 +515,7 @@ function MaintenanceHome() {
                         <p>Manage and track scheduled service records.</p>
                     </div>
 
-                    {canCreate && <button type="button" className="add-maintenance-btn" onClick={openAddTaskModal}>
+                    {canCreate && <button type="button" className="add-maintenance-btn maintenance-primary-action" onClick={openAddTaskModal}>
                         <Plus size={16} />
                         <span>Add Task</span>
                     </button>}
