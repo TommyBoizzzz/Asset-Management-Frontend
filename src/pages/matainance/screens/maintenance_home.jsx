@@ -407,7 +407,7 @@ function MaintenanceHome() {
         }
     };
 
-    const canManageTask = (task) => canEdit || isUserAssignedToMaintenanceTask(user, task);
+    const canManageTask = () => canEdit;
 
     const openAddTaskModal = () => {
         if (!canCreate) return;
@@ -887,7 +887,7 @@ function DetailModal({
                         <span className="modal-subtitle">Tracking and issue details</span>
                     </div>
                     <div className="modal-actions">
-                        {(canEdit || isAssignedUser) && (
+                        {canEdit && (
                             <button type="button" className="edit-inline-btn" onClick={() => onEdit(record)}>
                                 <Pencil size={14} />
                                 Edit
