@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
     ClipboardList,
@@ -58,6 +58,9 @@ function AssignAssets() {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showReturnModal, setShowReturnModal] = useState(false);
+    const [assetSearch, setAssetSearch] = useState("");
+    const [showAssetOptions, setShowAssetOptions] = useState(false);
+    const assetPickerRef = useRef(null);
 
     const [selectedAssignment, setSelectedAssignment] = useState(null);
 
@@ -163,6 +166,31 @@ function AssignAssets() {
 
     }, [assets, assignments]);
 
+    const assetQuery = assetSearch.trim().toLowerCase();
+    const matchingAssets = assignableAssets.filter((asset) =>
+        `${asset.name || ""} ${asset.assetCode || asset.assetTag || ""}`
+            .toLowerCase()
+            .includes(assetQuery)
+    );
+    const visibleAssets = matchingAssets.slice(0, 20);
+    const selectedAsset = assignableAssets.find(
+        (asset) => String(asset.id) === String(form.assetId)
+    );
+
+    useEffect(() => {
+        if (!showAssetOptions) return undefined;
+
+        const closeOnOutsideClick = (event) => {
+            if (!assetPickerRef.current?.contains(event.target)) {
+                setShowAssetOptions(false);
+                setAssetSearch("");
+            }
+        };
+
+        document.addEventListener("mousedown", closeOnOutsideClick);
+        return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+    }, [showAssetOptions]);
+
     const isOverdue = (assignment) => {
 
         if (!isActiveAssignment(assignment)) return false;
@@ -246,6 +274,8 @@ function AssignAssets() {
         if (!canCreate) return;
 
         setForm(emptyForm);
+        setAssetSearch("");
+        setShowAssetOptions(false);
         setShowAssignModal(true);
     };
 
@@ -912,36 +942,80 @@ function AssignAssets() {
                                             Asset <span className="required">*</span>
                                         </label>
 
-                                        <div className="select-container">
-
-                                            <select
-                                                name="assetId"
-                                                value={form.assetId}
-                                                onChange={handleFormChange}
-                                                required
-                                            >
-                                                <option value="">
-                                                    Select Asset
-                                                </option>
-
-                                                {assignableAssets.length === 0 ? (
-                                                    <option value="" disabled>
-                                                        No active assets available
-                                                    </option>
-                                                ) : (
-                                                    assignableAssets.map((asset) => (
-                                                        <option
-                                                            key={asset.id}
-                                                            value={asset.id}
-                                                        >
-                                                            {getAssetLabel(asset)}
-                                                        </option>
-                                                    ))
-                                                )}
-                                            </select>
-
-                                            <ChevronDown size={16} />
-
+                                        <div className="assign-asset-picker" ref={assetPickerRef}>
+                                            <input
+                                                type="search"
+                                                role="combobox"
+                                                aria-label="Search and select available asset"
+                                                aria-autocomplete="list"
+                                                aria-expanded={showAssetOptions}
+                                                aria-controls="assign-asset-options"
+                                                placeholder={
+                                                    assignableAssets.length === 0
+                                                        ? "No active assets available"
+                                                        : "Search assets by name or code..."
+                                                }
+                                                value={
+                                                    showAssetOptions
+                                                        ? assetSearch
+                                                        : selectedAsset
+                                                            ? getAssetLabel(selectedAsset)
+                                                            : ""
+                                                }
+                                                disabled={assignableAssets.length === 0}
+                                                onFocus={() => {
+                                                    setAssetSearch("");
+                                                    setShowAssetOptions(true);
+                                                }}
+                                                onChange={(event) => {
+                                                    setAssetSearch(event.target.value);
+                                                    setShowAssetOptions(true);
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Escape") {
+                                                        setShowAssetOptions(false);
+                                                        setAssetSearch("");
+                                                    }
+                                                }}
+                                            />
+                                            {showAssetOptions && assignableAssets.length > 0 && (
+                                                <div
+                                                    className="assign-asset-options"
+                                                    id="assign-asset-options"
+                                                    role="listbox"
+                                                >
+                                                    {visibleAssets.length > 0 ? (
+                                                        visibleAssets.map((asset) => (
+                                                            <button
+                                                                className="assign-asset-option"
+                                                                type="button"
+                                                                key={asset.id}
+                                                                role="option"
+                                                                aria-selected={String(asset.id) === String(form.assetId)}
+                                                                onClick={() => {
+                                                                    setForm((prev) => ({
+                                                                        ...prev,
+                                                                        assetId: String(asset.id),
+                                                                    }));
+                                                                    setShowAssetOptions(false);
+                                                                    setAssetSearch("");
+                                                                }}
+                                                            >
+                                                                {getAssetLabel(asset)}
+                                                            </button>
+                                                        ))
+                                                    ) : (
+                                                        <p className="assign-asset-empty">
+                                                            No matching available assets.
+                                                        </p>
+                                                    )}
+                                                    {matchingAssets.length > visibleAssets.length && (
+                                                        <p className="assign-asset-limit">
+                                                            Showing 20 of {matchingAssets.length} matches. Type to narrow results.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <span className="field-hint">

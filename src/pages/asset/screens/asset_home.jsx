@@ -52,7 +52,10 @@ function Assets() {
 
     const [loadingAssets, setLoadingAssets] = useState(true);
     const [loadingCategories, setLoadingCategories] = useState(true);
+    const [savingAsset, setSavingAsset] = useState(false);
+    const [retiringAssetId, setRetiringAssetId] = useState(null);
     const [savingCategory, setSavingCategory] = useState(false);
+    const [deletingCategoryId, setDeletingCategoryId] = useState(null);
 
     const [assetSearch, setAssetSearch] = useState("");
     const [categorySearch, setCategorySearch] = useState("");
@@ -545,7 +548,7 @@ function Assets() {
 
         e.preventDefault();
 
-        if (editingAsset ? !canEdit : !canCreate) return;
+        if (savingAsset || (editingAsset ? !canEdit : !canCreate)) return;
 
 
         const assetCode =
@@ -625,6 +628,7 @@ function Assets() {
 
 
         try {
+            setSavingAsset(true);
 
             /* =================================================
                REQUIRED FIELDS
@@ -798,6 +802,8 @@ function Assets() {
                 error.response?.data?.message ||
                 "Failed to save asset."
             );
+        } finally {
+            setSavingAsset(false);
         }
     };
 
@@ -807,7 +813,7 @@ function Assets() {
     ========================================================= */
 
     const handleRetireAsset = async (id) => {
-        if (!canDelete) return;
+        if (!canDelete || retiringAssetId !== null) return;
 
         const asset =
             assets.find(
@@ -835,6 +841,7 @@ function Assets() {
 
 
         try {
+            setRetiringAssetId(id);
 
             await AssetService.update(id, {
                 ...asset,
@@ -856,6 +863,8 @@ function Assets() {
                 error.response?.data?.message ||
                 "Failed to retire asset."
             );
+        } finally {
+            setRetiringAssetId(null);
         }
     };
 
@@ -956,7 +965,7 @@ function Assets() {
     const handleCategorySubmit = async (e) => {
 
         e.preventDefault();
-        if (editingCategory ? !canEditCategory : !canCreateCategory) return;
+        if (savingCategory || (editingCategory ? !canEditCategory : !canCreateCategory)) return;
 
 
         const name =
@@ -1101,7 +1110,7 @@ function Assets() {
     const handleDeleteCategory = async (
         category
     ) => {
-        if (!canDeleteCategory) return;
+        if (!canDeleteCategory || deletingCategoryId !== null) return;
 
         const usedCount =
             getCategoryCount(
@@ -1129,6 +1138,7 @@ function Assets() {
 
 
         try {
+            setDeletingCategoryId(category.id);
 
             await AssetCategoryService.delete(
                 category.id
@@ -1151,6 +1161,8 @@ function Assets() {
                 error.response?.data?.message ||
                 "Failed to delete category."
             );
+        } finally {
+            setDeletingCategoryId(null);
         }
     };
 
@@ -1194,6 +1206,7 @@ function Assets() {
     ========================================================= */
 
     const closeAssetModal = () => {
+        if (savingAsset) return;
 
         setShowAssetModal(false);
 
@@ -1688,11 +1701,16 @@ function Assets() {
                                                         <button
                                                             type="button"
                                                             className="table-btn delete"
-                                                            title="Retire"
+                                                            title={retiringAssetId === asset.id ? "Retiring..." : "Retire"}
                                                             aria-label={`Retire ${asset.name}`}
+                                                            disabled={retiringAssetId !== null}
                                                             onClick={() => handleRetireAsset(asset.id)}
                                                         >
-                                                            <Trash2 size={15} />
+                                                            {retiringAssetId === asset.id ? (
+                                                                <span className="button-spinner" aria-hidden="true" />
+                                                            ) : (
+                                                                <Trash2 size={15} />
+                                                            )}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1951,14 +1969,19 @@ function Assets() {
 
                                                     {canDeleteCategory && <button
                                                         className="category-action delete"
-                                                        title="Delete"
+                                                        title={deletingCategoryId === category.id ? "Deleting..." : "Delete"}
+                                                        disabled={deletingCategoryId !== null}
                                                         onClick={() =>
                                                             handleDeleteCategory(
                                                                 category
                                                             )
                                                         }
                                                     >
-                                                        <Trash2 size={15} />
+                                                        {deletingCategoryId === category.id ? (
+                                                            <span className="button-spinner" aria-hidden="true" />
+                                                        ) : (
+                                                            <Trash2 size={15} />
+                                                        )}
                                                     </button>}
 
                                                 </div>
@@ -2083,6 +2106,7 @@ function Assets() {
                                     type="button"
                                     className="close-modal"
                                     onClick={closeAssetModal}
+                                    disabled={savingAsset}
                                 >
                                     <X size={19} />
                                 </button>
@@ -2493,6 +2517,7 @@ function Assets() {
                                         type="button"
                                         className="secondary-btn"
                                         onClick={closeAssetModal}
+                                        disabled={savingAsset}
                                     >
                                         Cancel
                                     </button>
@@ -2501,14 +2526,21 @@ function Assets() {
                                     <button
                                         type="submit"
                                         className="primary-modal-btn"
+                                        disabled={savingAsset}
                                     >
-
-                                        {
-                                            editingAsset
+                                        {savingAsset && (
+                                            <span
+                                                className="button-spinner"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        {savingAsset
+                                            ? editingAsset
+                                                ? "Updating..."
+                                                : "Creating..."
+                                            : editingAsset
                                                 ? "Update Asset"
-                                                : "Create Asset"
-                                        }
-
+                                                : "Create Asset"}
                                     </button>
 
                                 </div>
