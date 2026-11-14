@@ -25,6 +25,7 @@ import {
     getStatusAfterInspection,
     isActiveAssignment,
     isAssetAvailable,
+    normalizeAssetStatus,
 } from "../../../utils/assetLifecycle";
 import { getStoredUser, hasPermission } from "../../../utils/permissions";
 import useIntervalRefresh from "../../../hooks/useIntervalRefresh";
@@ -238,13 +239,21 @@ function AssignAssets() {
                 assignment.staff
             ).toLowerCase();
 
+            const isUnderMaintenance =
+                normalizeAssetStatus(assignment.asset?.status) === "Under Maintenance";
+            const normalizedStatus = isUnderMaintenance
+                ? "UNDER_MAINTENANCE"
+                : String(assignment.status || "").toUpperCase() === "RETURNED"
+                    ? "RETURNED"
+                    : "ACTIVE";
+
             const matchesSearch =
                 assetLabel.includes(term) ||
                 staffLabel.includes(term);
 
             const matchesStatus =
                 statusFilter === "All" ||
-                assignment.status === statusFilter;
+                normalizedStatus === statusFilter;
 
             return matchesSearch && matchesStatus;
         });
@@ -694,6 +703,7 @@ function AssignAssets() {
                             >
                                 <option value="All">All Status</option>
                                 <option value="ACTIVE">Active</option>
+                                <option value="UNDER_MAINTENANCE">Under Maintenance</option>
                                 <option value="RETURNED">Returned</option>
                             </select>
 
@@ -752,18 +762,24 @@ function AssignAssets() {
 
                                         const overdue =
                                             isOverdue(assignment);
+                                        const isUnderMaintenance =
+                                            normalizeAssetStatus(assignment.asset?.status) === "Under Maintenance";
 
                                         const statusLabel = overdue
                                             ? "Overdue"
                                             : String(assignment.status || "").toUpperCase() === "RETURNED"
                                                 ? "Returned"
-                                                : "Active";
+                                                : isUnderMaintenance
+                                                    ? "Under Maintenance"
+                                                    : "Active";
 
                                         const statusClass = overdue
                                             ? "overdue"
                                             : String(assignment.status || "").toUpperCase() === "RETURNED"
                                                 ? "returned"
-                                                : "active";
+                                                : isUnderMaintenance
+                                                    ? "maintenance"
+                                                    : "active";
 
                                         return (
 

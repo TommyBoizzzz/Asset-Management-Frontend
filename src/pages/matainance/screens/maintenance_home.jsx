@@ -67,6 +67,33 @@ function getNextStatus(currentStatus) {
     return statusOrder[index + 1] || currentStatus;
 }
 
+function isUserAssignedToMaintenanceTask(user, task) {
+    if (!user || !task) return false;
+
+    const normalize = (value) =>
+        value == null ? "" : String(value).trim().toLowerCase();
+
+    const assignedValues = [
+        task.assignedTo?.id,
+        task.assignedTo?.userId,
+        task.assignedTo?.user?.id,
+        task.assignedTo?.fullName,
+        task.assignedTo?.name,
+        task.assignedTo?.username,
+    ].map(normalize).filter(Boolean);
+
+    const currentValues = [
+        user.id,
+        user.userId,
+        user.uid,
+        user.fullName,
+        user.name,
+        user.username,
+    ].map(normalize).filter(Boolean);
+
+    return assignedValues.some((value) => currentValues.includes(value));
+}
+
 const emptyTaskForm = {
     assetId: "",
     assetName: "",
@@ -256,13 +283,13 @@ function MaintenanceHome() {
     }), [maintenanceList]);
 
     const updateStatus = async (id, nextStatus, completionCondition) => {
-        if (!canEdit) return;
+        const record = maintenanceList.find((item) => item.id === id);
+        if (!record) return;
+
+        if (!(canEdit || isUserAssignedToMaintenanceTask(user, record))) return;
         setStatusActionError("");
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
-        const record = maintenanceList.find((item) => item.id === id);
-
-        if (!record) return;
 
         const asset = assetOptions.find(
             (item) => String(item.id) === String(record.asset?.id)
@@ -380,6 +407,8 @@ function MaintenanceHome() {
         }
     };
 
+    const canManageTask = (task) => canEdit || isUserAssignedToMaintenanceTask(user, task);
+
     const openAddTaskModal = () => {
         if (!canCreate) return;
         setTaskForm({
@@ -391,7 +420,7 @@ function MaintenanceHome() {
     };
 
     const openEditTaskModal = (task) => {
-        if (!canEdit) return;
+        if (!canManageTask(task)) return;
         setTaskForm({
             assetId: task.asset?.id ? String(task.asset.id) : "",
             assetName: task.asset?.name || "",
@@ -431,7 +460,11 @@ function MaintenanceHome() {
 
     const handleSaveTask = async (event) => {
         event.preventDefault();
-        if (taskModal?.mode === "edit" ? !canEdit : !canCreate) return;
+        const currentTask = taskModal?.mode === "edit"
+            ? maintenanceList.find((item) => String(item.id) === String(taskModal.id))
+            : null;
+
+        if (taskModal?.mode === "edit" ? !canManageTask(currentTask) : !canCreate) return;
 
         if (!taskForm.assetId || !taskForm.userId) {
             setError("Please select both an asset and an assigned user.");
@@ -441,9 +474,6 @@ function MaintenanceHome() {
         const selectedUser = userOptions.find(
             (item) => String(item.id) === String(taskForm.userId)
         );
-        const currentTask = taskModal?.mode === "edit"
-            ? maintenanceList.find((item) => String(item.id) === String(taskModal.id))
-            : null;
         const keepingExistingAssignee =
             currentTask &&
             String(currentTask.assignedTo?.id) === String(taskForm.userId);
@@ -492,6 +522,13 @@ function MaintenanceHome() {
                 const response = await MaintenanceService.update(taskModal.id, payload);
                 const updatedRecord = normalizeMaintenanceRecord(response.data, userOptions);
 
+                if (["SCHEDULED", "IN_PROGRESS"].includes(payload.status)) {
+                    await AssetService.update(chosenAsset.id, {
+                        ...chosenAsset,
+                        status: "Under Maintenance",
+                    });
+                }
+
                 setMaintenanceList((prev) =>
                     prev.map((item) => (item.id === updatedRecord.id ? updatedRecord : item))
                 );
@@ -499,6 +536,11 @@ function MaintenanceHome() {
             } else {
                 const response = await MaintenanceService.create(payload);
                 const createdRecord = normalizeMaintenanceRecord(response.data, userOptions);
+
+                await AssetService.update(chosenAsset.id, {
+                    ...chosenAsset,
+                    status: "Under Maintenance",
+                });
 
                 setMaintenanceList((prev) => [createdRecord, ...prev]);
                 setSelectedRecord(createdRecord);
@@ -665,7 +707,7 @@ function MaintenanceHome() {
                                                 >
                                                     <Eye size={15} />
                                                 </button>
-                                                {canEdit && <button
+                                                {canManageTask(item) && <button
                                                     type="button"
                                                     className="edit-btn"
                                                     onClick={() => openEditTaskModal(item)}
@@ -781,46 +823,7 @@ function DetailModal({
     canEdit,
     statusActionError,
 }) {
-    const normalizeUserKey = (value) =>
-        value == null ? "" : String(value).trim();
-
-    const assignedUserIds = [
-        record.assignedTo?.id,
-        record.assignedTo?.userId,
-        record.assignedTo?.user?.id,
-    ]
-        .map(normalizeUserKey)
-        .filter(Boolean);
-
-    const currentUserIds = [
-        currentUser?.id,
-        currentUser?.userId,
-        currentUser?.uid,
-    ]
-        .map(normalizeUserKey)
-        .filter(Boolean);
-
-    const sameAssignedUserById =
-        currentUser &&
-        assignedUserIds.some((value) => currentUserIds.includes(value));
-
-    const sameAssignedUserByName =
-        currentUser &&
-        [
-            record.assignedTo?.name,
-            record.assignedTo?.fullName,
-            record.assignedTo?.username,
-            currentUser?.fullName,
-            currentUser?.username,
-            currentUser?.name,
-        ]
-            .filter(Boolean)
-            .map((value) => String(value).trim().toLowerCase())
-            .some((value, index, arr) =>
-                index > 0 && arr[0] && value === arr[0]
-            );
-
-    const isAssignedUser = sameAssignedUserById || sameAssignedUserByName;
+    const isAssignedUser = isUserAssignedToMaintenanceTask(currentUser, record);
     const canManageTrackProcess = canEdit || isAssignedUser;
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
@@ -871,7 +874,9 @@ function DetailModal({
         record.completionCondition || "GOOD"
     );
     const requiresCondition =
-        nextStatus === "COMPLETED" || record.status === "IN_PROGRESS";
+        canManageTrackProcess &&
+        !["COMPLETED", "CANCELLED"].includes(record.status) &&
+        (nextStatus === "COMPLETED" || record.status === "IN_PROGRESS");
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -882,7 +887,7 @@ function DetailModal({
                         <span className="modal-subtitle">Tracking and issue details</span>
                     </div>
                     <div className="modal-actions">
-                        {canManageTrackProcess && (
+                        {(canEdit || isAssignedUser) && (
                             <button type="button" className="edit-inline-btn" onClick={() => onEdit(record)}>
                                 <Pencil size={14} />
                                 Edit

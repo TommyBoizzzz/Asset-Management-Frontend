@@ -607,15 +607,6 @@ function Assets() {
             ? "Damaged"
             : assetForm.status;
 
-        if (
-            editingAsset &&
-            ["Assigned", "Under Maintenance", "Retired"].includes(currentStatus) &&
-            nextStatus !== currentStatus
-        ) {
-            alert("Assigned, under-maintenance, and retired asset statuses cannot be changed here.");
-            return;
-        }
-
         if (nextStatus === "Damaged" && condition.toUpperCase() !== "DAMAGED") {
             alert("Set the asset condition to Damaged before marking its status as Damaged.");
             return;
@@ -2446,17 +2437,19 @@ function Assets() {
                                                 onChange={
                                                     handleAssetChange
                                                 }
-                                                disabled={
-                                                    !editingAsset ||
-                                                    ["Assigned", "Under Maintenance", "Retired"].includes(
-                                                        normalizeAssetStatus(editingAsset?.status)
-                                                    )
-                                                }
                                                 required
                                             >
 
                                                 <option value="Available">
                                                     Available
+                                                </option>
+
+                                                <option value="Assigned">
+                                                    Assigned
+                                                </option>
+
+                                                <option value="Under Maintenance">
+                                                    Under Maintenance
                                                 </option>
 
                                                 <option value="Damaged">
@@ -2466,14 +2459,6 @@ function Assets() {
                                                 <option value="Retired">
                                                     Retired
                                                 </option>
-
-                                                {["Assigned", "Under Maintenance"].includes(
-                                                    normalizeAssetStatus(editingAsset?.status)
-                                                ) && (
-                                                    <option value={normalizeAssetStatus(editingAsset.status)}>
-                                                        {normalizeAssetStatus(editingAsset.status)}
-                                                    </option>
-                                                )}
                                             </select>
 
                                             <ChevronDown size={16} />
