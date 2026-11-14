@@ -153,6 +153,9 @@ function MaintenanceHome() {
     const user = getStoredUser();
     const canCreate = hasPermission(user, "maintenance", "create");
     const canEdit = hasPermission(user, "maintenance", "edit");
+    const canUseMaintenanceProcess = canAssignMaintenanceUser(user) && (canCreate || canEdit);
+    const canCreateTask = canUseMaintenanceProcess && canCreate;
+    const canEditTask = canUseMaintenanceProcess && canEdit;
 
     const [maintenanceList, setMaintenanceList] = useState([]);
     const [filterStatus, setFilterStatus] = useState("ALL");
@@ -256,7 +259,7 @@ function MaintenanceHome() {
     }), [maintenanceList]);
 
     const updateStatus = async (id, nextStatus, completionCondition) => {
-        if (!canEdit) return;
+        if (!canEditTask) return;
         setStatusActionError("");
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
@@ -381,7 +384,7 @@ function MaintenanceHome() {
     };
 
     const openAddTaskModal = () => {
-        if (!canCreate) return;
+        if (!canCreateTask) return;
         setTaskForm({
             ...emptyTaskForm,
             assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
@@ -391,7 +394,7 @@ function MaintenanceHome() {
     };
 
     const openEditTaskModal = (task) => {
-        if (!canEdit) return;
+        if (!canEditTask) return;
         setTaskForm({
             assetId: task.asset?.id ? String(task.asset.id) : "",
             assetName: task.asset?.name || "",
@@ -431,7 +434,7 @@ function MaintenanceHome() {
 
     const handleSaveTask = async (event) => {
         event.preventDefault();
-        if (taskModal?.mode === "edit" ? !canEdit : !canCreate) return;
+        if (taskModal?.mode === "edit" ? !canEditTask : !canCreateTask) return;
 
         if (!taskForm.assetId || !taskForm.userId) {
             setError("Please select both an asset and an assigned user.");
@@ -522,7 +525,7 @@ function MaintenanceHome() {
                         <p>Manage and track scheduled service records.</p>
                     </div>
 
-                    {canCreate && <button type="button" className="add-maintenance-btn maintenance-primary-action" onClick={openAddTaskModal}>
+                    {canCreateTask && <button type="button" className="add-maintenance-btn maintenance-primary-action" onClick={openAddTaskModal}>
                         <Plus size={16} />
                         <span>Add Task</span>
                     </button>}
@@ -665,7 +668,7 @@ function MaintenanceHome() {
                                                 >
                                                     <Eye size={15} />
                                                 </button>
-                                                {canEdit && <button
+                                                {canEditTask && <button
                                                     type="button"
                                                     className="edit-btn"
                                                     onClick={() => openEditTaskModal(item)}
@@ -734,7 +737,7 @@ function MaintenanceHome() {
                         }}
                         onStatusUpdate={updateStatus}
                         onEdit={openEditTaskModal}
-                        canEdit={canEdit}
+                        canEdit={canEditTask}
                         statusActionError={statusActionError}
                     />
                 )}
