@@ -153,9 +153,6 @@ function MaintenanceHome() {
     const user = getStoredUser();
     const canCreate = hasPermission(user, "maintenance", "create");
     const canEdit = hasPermission(user, "maintenance", "edit");
-    const canUseMaintenanceProcess = canAssignMaintenanceUser(user) && (canCreate || canEdit);
-    const canCreateTask = canUseMaintenanceProcess && canCreate;
-    const canEditTask = canUseMaintenanceProcess && canEdit;
 
     const [maintenanceList, setMaintenanceList] = useState([]);
     const [filterStatus, setFilterStatus] = useState("ALL");
@@ -259,7 +256,7 @@ function MaintenanceHome() {
     }), [maintenanceList]);
 
     const updateStatus = async (id, nextStatus, completionCondition) => {
-        if (!canEditTask) return;
+        if (!canEdit) return;
         setStatusActionError("");
         const timestamp = new Date();
         const formattedDate = timestamp.toISOString().slice(0, 10);
@@ -384,7 +381,7 @@ function MaintenanceHome() {
     };
 
     const openAddTaskModal = () => {
-        if (!canCreateTask) return;
+        if (!canCreate) return;
         setTaskForm({
             ...emptyTaskForm,
             assetId: assetOptions[0]?.id ? String(assetOptions[0].id) : "",
@@ -394,7 +391,7 @@ function MaintenanceHome() {
     };
 
     const openEditTaskModal = (task) => {
-        if (!canEditTask) return;
+        if (!canEdit) return;
         setTaskForm({
             assetId: task.asset?.id ? String(task.asset.id) : "",
             assetName: task.asset?.name || "",
@@ -434,7 +431,7 @@ function MaintenanceHome() {
 
     const handleSaveTask = async (event) => {
         event.preventDefault();
-        if (taskModal?.mode === "edit" ? !canEditTask : !canCreateTask) return;
+        if (taskModal?.mode === "edit" ? !canEdit : !canCreate) return;
 
         if (!taskForm.assetId || !taskForm.userId) {
             setError("Please select both an asset and an assigned user.");
@@ -525,7 +522,7 @@ function MaintenanceHome() {
                         <p>Manage and track scheduled service records.</p>
                     </div>
 
-                    {canCreateTask && <button type="button" className="add-maintenance-btn maintenance-primary-action" onClick={openAddTaskModal}>
+                    {canCreate && <button type="button" className="add-maintenance-btn maintenance-primary-action" onClick={openAddTaskModal}>
                         <Plus size={16} />
                         <span>Add Task</span>
                     </button>}
@@ -668,7 +665,7 @@ function MaintenanceHome() {
                                                 >
                                                     <Eye size={15} />
                                                 </button>
-                                                {canEditTask && <button
+                                                {canEdit && <button
                                                     type="button"
                                                     className="edit-btn"
                                                     onClick={() => openEditTaskModal(item)}
@@ -731,13 +728,14 @@ function MaintenanceHome() {
                 {selectedRecord && (
                     <DetailModal
                         record={selectedRecord}
+                        currentUser={user}
                         onClose={() => {
                             setSelectedRecord(null);
                             setStatusActionError("");
                         }}
                         onStatusUpdate={updateStatus}
                         onEdit={openEditTaskModal}
-                        canEdit={canEditTask}
+                        canEdit={canEdit}
                         statusActionError={statusActionError}
                     />
                 )}
@@ -776,12 +774,54 @@ function StatCard({ label, value, desc, icon, theme }) {
 
 function DetailModal({
     record,
+    currentUser,
     onClose,
     onStatusUpdate,
     onEdit,
     canEdit,
     statusActionError,
 }) {
+    const normalizeUserKey = (value) =>
+        value == null ? "" : String(value).trim();
+
+    const assignedUserIds = [
+        record.assignedTo?.id,
+        record.assignedTo?.userId,
+        record.assignedTo?.user?.id,
+    ]
+        .map(normalizeUserKey)
+        .filter(Boolean);
+
+    const currentUserIds = [
+        currentUser?.id,
+        currentUser?.userId,
+        currentUser?.uid,
+    ]
+        .map(normalizeUserKey)
+        .filter(Boolean);
+
+    const sameAssignedUserById =
+        currentUser &&
+        assignedUserIds.some((value) => currentUserIds.includes(value));
+
+    const sameAssignedUserByName =
+        currentUser &&
+        [
+            record.assignedTo?.name,
+            record.assignedTo?.fullName,
+            record.assignedTo?.username,
+            currentUser?.fullName,
+            currentUser?.username,
+            currentUser?.name,
+        ]
+            .filter(Boolean)
+            .map((value) => String(value).trim().toLowerCase())
+            .some((value, index, arr) =>
+                index > 0 && arr[0] && value === arr[0]
+            );
+
+    const isAssignedUser = sameAssignedUserById || sameAssignedUserByName;
+    const canManageTrackProcess = canEdit || isAssignedUser;
     const progress = getStatusProgress(record.status);
     const nextStatus = getNextStatus(record.status);
     const canAdvance = nextStatus !== record.status;
@@ -842,7 +882,7 @@ function DetailModal({
                         <span className="modal-subtitle">Tracking and issue details</span>
                     </div>
                     <div className="modal-actions">
-                        {canEdit && (
+                        {canManageTrackProcess && (
                             <button type="button" className="edit-inline-btn" onClick={() => onEdit(record)}>
                                 <Pencil size={14} />
                                 Edit
@@ -880,7 +920,7 @@ function DetailModal({
                                 <strong>{progress}%</strong>
                             </div>
 
-                            {canEdit && <div className="status-actions">
+                            {canManageTrackProcess && <div className="status-actions">
                                 {requiresCondition && (
                                     <label className="form-field">
                                         <span>Condition after maintenance</span>
@@ -1127,11 +1167,11 @@ function TaskModal({ mode, form, assetOptions, userOptions, onClose, onChange, o
                                             <option
                                                 key={user.id}
                                                 value={user.id}
-                                                disabled={!roleCanAssign}
+                                                disabled={selectedUser && !roleCanAssign && String(selectedUser.id) !== String(user.id)}
                                             >
                                                 {user.fullName || user.username || `User #${user.id}`}
                                                 {user.role?.name ? ` (${user.role.name})` : ""}
-                                                {!roleCanAssign ? " (role not enabled)" : ""}
+                                                {!roleCanAssign && String(selectedUser?.id) === String(user.id) ? " (current selection)" : ""}
                                             </option>
                                         );
                                     })}
